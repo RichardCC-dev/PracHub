@@ -11,7 +11,7 @@ El frontend será responsable de la interactividad en tiempo real y la gestión 
 | **React** | Framework principal para la construcción de interfaces modulares bajo el modelo SPA.
 | **Zustand / Redux Toolkit** | Gestión centralizada de estados complejos y datos del perfil del usuario.
 | **React Hook Form** | Optimización de rendimiento y validación para formularios extensos (ej. Constructor de CV).
-| **Tailwind CSS / Material-UI** | Sistema de diseño o UI Kit unificado para garantizar la coherencia visual en todas las vistas y acelerar el desarrollo.
+| **Tailwind CSS** | Sistema de diseño unificado para garantizar la coherencia visual en todas las vistas y acelerar el desarrollo.
 
 ---
 
@@ -45,12 +45,7 @@ El sistema delegará funcionalidades operativas a proveedores externos de alta d
 
 * **Modelos de Inteligencia Artificial:** Integración con la API de Google Gemini. Esta conexión debe realizarse obligatoriamente desde el entorno seguro de Node.js, nunca desde React. El módulo debe estar desacoplado para permitir cambiar de proveedor en el futuro.
 
-
-* **Autenticación de Terceros:** Implementación del flujo de Google OAuth 2.0 para el registro e inicio de sesión rápido de estudiantes.
-
-
-* **Mensajería Transaccional (Email):** Uso de SendGrid o AWS SES para el envío de notificaciones y recuperación de contraseñas.
-
+* **Mensajería Transaccional (Email):** Para el envío de notificaciones y recuperación de contraseñas.
 
 * **Mensajería Instantánea (WhatsApp):** Integración con la API oficial de WhatsApp Business (mediante Twilio o Vonage) para notificaciones prioritarias.
 
@@ -67,6 +62,3 @@ Para mantener la escalabilidad y un código limpio, el equipo y los agentes de g
 
 
 * **Seguridad:** El código generado debe proteger contra las vulnerabilidades del OWASP Top 10 (CSRF, XSS, exposición de datos).
-
-
-* **Pruebas Unitarias:** La lógica de negocio debe apuntar a un 70% de cobertura general, exigiendo un 90% en funciones críticas como autenticación y el motor de recomendación.

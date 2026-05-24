@@ -1,0 +1,43 @@
+## **2\. Requerimientos No Funcionales (RNF)**
+
+| Categoría | ID | Prioridad | Descripción del Requisito No Funcional |
+| :---- | :---- | :---- | :---- |
+| **Rendimiento y velocidad** | RNF-01.1 | Alta | El tiempo de carga inicial de cualquier página de la plataforma no debe superar los 3 segundos en una conexión estándar de 10 Mbps. |
+|  | RNF-01.2 | Alta | Las sugerencias de la IA en el constructor de CV deben generarse y mostrarse en menos de 3 segundos tras cada interacción del usuario. |
+|  | RNF-01.3 | Alta | El análisis de un documento CV o carta de presentación (feedback) debe completarse en menos de 10 segundos para archivos de hasta 5 MB. |
+|  | RNF-01.4 | Alta | El motor de recomendación debe actualizar el ranking de ofertas del estudiante en menos de 5 segundos tras cualquier cambio en su perfil o puntuación. |
+|  | RNF-01.5 | Media | La generación y descarga del CV en PDF debe completarse en menos de 5 segundos para cualquier plantilla seleccionada. |
+|  | RNF-01.6 | Alta | Las notificaciones externas (correo electrónico) deben enviarse en un máximo de 2 minutos tras el evento que las origina. Los mensajes de WhatsApp en menos de 30 segundos. |
+| **Seguridad y privacidad** | RNF-02.1 | Alta | Toda la comunicación entre el cliente y el servidor debe realizarse sobre HTTPS con TLS 1.2 o superior. El tráfico HTTP debe redirigirse automáticamente a HTTPS. |
+|  | RNF-02.2 | Alta | Las contraseñas de los usuarios deben almacenarse en la base de datos usando un algoritmo de hashing con sal (bcrypt o Argon2). Nunca en texto plano. |
+|  | RNF-02.3 | Alta | El sistema debe implementar protección contra ataques comunes de OWASP Top 10: inyección SQL, XSS, CSRF, autenticación rota y exposición de datos sensibles. |
+|  | RNF-02.4 | Alta | Los tokens de autenticación (JWT u OAuth) deben expirar en un máximo de 24 horas para sesiones activas y en 15 minutos para tokens de acceso puntual (ej. recuperación de contraseña). |
+|  | RNF-02.5 | Alta | Los documentos subidos por los usuarios (CVs, cartas) deben almacenarse cifrados en reposo (AES-256) y solo ser accesibles mediante URLs firmadas con tiempo de expiración. |
+|  | RNF-02.6 | Media | El sistema debe registrar en logs de auditoría los accesos a perfiles de candidatos por parte de empresas, indicando empresa, fecha, hora e IP. Los logs deben retenerse al menos 90 días. |
+|  | RNF-02.7 | Alta | El sistema debe cumplir con la normativa de protección de datos aplicable (Ley N.° 29733 en Perú / GDPR en contexto europeo): consentimiento explícito, derecho al olvido y portabilidad de datos. |
+| **Disponibilidad y fiabilidad** | RNF-03.1 | Alta | La plataforma debe tener una disponibilidad mínima del 99.5% mensual, lo que equivale a un tiempo máximo de inactividad no planificada de 3.6 horas al mes. |
+|  | RNF-03.2 | Alta | El sistema debe contar con backups automáticos de la base de datos con una frecuencia mínima de cada 24 horas. La restauración a partir de un backup no debe tardar más de 2 horas. |
+|  | RNF-03.3 | Media | Ante una falla en el servicio de IA (generación de sugerencias, análisis de documentos), el sistema debe degradarse de forma elegante: mostrar un mensaje claro al usuario y permitir seguir usando las funciones no dependientes de IA. |
+|  | RNF-03.4 | Media | Las ventanas de mantenimiento planificado deben notificarse con al menos 48 horas de anticipación mediante banner en la plataforma y correo a los usuarios activos. Deben programarse en horario de baja demanda. |
+| **Escalabilidad y capacidad** | RNF-04.1 | Alta | La arquitectura debe soportar al menos 500 usuarios concurrentes en la fase de lanzamiento y escalar horizontalmente para soportar 5,000 usuarios concurrentes sin modificaciones de código. |
+|  | RNF-04.2 | Alta | El motor de recomendación debe ser capaz de calcular el score de compatibilidad para un estudiante sobre un catálogo de hasta 10,000 ofertas activas en menos de 5 segundos. |
+|  | RNF-04.3 | Media | El sistema de mensajería directa debe soportar un volumen de hasta 10,000 mensajes diarios sin degradación del tiempo de entrega. Los mensajes deben almacenarse con paginación para no afectar el rendimiento del inbox. |
+|  | RNF-04.4 | Media | El almacenamiento de documentos debe soportar hasta 50,000 archivos subidos sin impacto en los tiempos de acceso. Los archivos no descargados en 12 meses deben moverse automáticamente a almacenamiento frío. |
+| **Usabilidad y accesibilidad** | RNF-05.1 | Alta | La interfaz debe ser completamente responsiva y funcionar correctamente en dispositivos móviles (≥ 360px de ancho), tablets y escritorio, sin pérdida de funcionalidad en ningún tamaño de pantalla. |
+|  | RNF-05.2 | Alta | La plataforma debe cumplir con el estándar WCAG 2.1 nivel AA de accesibilidad: contraste de color mínimo 4.5:1, navegación completa por teclado, y compatibilidad con lectores de pantalla. |
+|  | RNF-05.3 | Media | Un estudiante nuevo debe poder completar su registro, construir un CV básico y realizar su primera postulación en menos de 20 minutos sin asistencia externa. El onboarding debe guiarlo paso a paso. |
+|  | RNF-05.4 | Media | La plataforma debe estar disponible en español como idioma principal. Los textos de la IA (sugerencias, feedback, chat) deben generarse en el idioma del usuario. |
+|  | RNF-05.5 | Baja | El sistema debe guardar el progreso del usuario automáticamente cada 30 segundos en formularios largos (constructor de CV, configuración de perfil) para evitar pérdida de información ante cierres accidentales. |
+| **Mantenibilidad y calidad de código** | RNF-06.1 | Alta | El código fuente debe organizarse en módulos independientes por funcionalidad (CV, feedback, simulador, bolsa), de modo que modificar un módulo no afecte el funcionamiento de los demás. |
+|  | RNF-06.2 | Alta | La cobertura de pruebas unitarias debe ser al menos del 70% del código de lógica de negocio. Las funciones críticas (autenticación, motor de recomendación, postulación) deben tener cobertura del 90%. |
+|  | RNF-06.3 | Media | El proyecto debe contar con un pipeline de CI/CD que ejecute pruebas automáticamente ante cada pull request y despliegue automáticamente a producción solo si todas las pruebas pasan. |
+|  | RNF-06.4 | Media | Toda función pública del backend debe contar con documentación inline (JSDoc o equivalente) y los endpoints de la API deben estar documentados con OpenAPI/Swagger y accesibles en un entorno de staging. |
+| **Integraciones y interoperabilidad** | RNF-07.1 | Alta | La integración con la API del modelo de IA (generación de sugerencias, análisis de documentos, simulación de entrevistas) debe realizarse mediante un módulo desacoplado que permita cambiar de proveedor sin reescribir la lógica de negocio. |
+|  | RNF-07.2 | Alta | El envío de correos transaccionales debe realizarse mediante un proveedor externo (SendGrid, AWS SES o similar) con soporte para plantillas HTML, seguimiento de aperturas y gestión de rebotes. |
+|  | RNF-07.3 | Alta | Las notificaciones por WhatsApp deben integrarse a través de la API oficial de WhatsApp Business (Meta) o un proveedor autorizado (Twilio, Vonage), usando plantillas aprobadas para mensajes transaccionales. |
+|  | RNF-07.4 | Media | La autenticación con Google OAuth 2.0 debe implementarse siguiendo el flujo estándar de autorización y revocación, sin almacenar tokens de Google en la base de datos propia de la plataforma. |
+|  | RNF-07.5 | Media | Todos los endpoints de la API REST deben responder con códigos HTTP estándar, en formato JSON y con versionado en la ruta (ej. /api/v1/...) para garantizar compatibilidad hacia atrás ante futuras actualizaciones. |
+| **Cumplimiento legal y ético** | RNF-08.1 | Alta | La plataforma debe mostrar un aviso de cookies y política de privacidad al primer acceso, requiriendo consentimiento explícito antes de activar cookies no esenciales (analíticas, de marketing). |
+|  | RNF-08.2 | Alta | El sistema no debe utilizar los documentos ni respuestas de los usuarios para entrenar modelos de IA sin consentimiento explícito y documentado del usuario, conforme a la normativa de protección de datos. |
+|  | RNF-08.3 | Media | Las ofertas de prácticas publicadas deben cumplir con la Ley de Modalidades Formativas Laborales (Ley N.° 28518 en Perú) o la normativa vigente del país de operación. El sistema debe incluir validaciones de campos obligatorios para el cumplimiento. |
+|  | RNF-08.4 | Media | El sistema de mensajería directa debe proporcionar mecanismos de reporte de contenido inapropiado. Los reportes deben quedar registrados y ser revisables por el administrador en un plazo máximo de 48 horas. |

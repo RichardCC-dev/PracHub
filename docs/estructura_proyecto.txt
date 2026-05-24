@@ -1,0 +1,30 @@
+prachub-project/
+├── client/                 # Contenedor Frontend (React)
+│   ├── public/             # Archivos estáticos
+│   ├── src/
+│   │   ├── assets/         # Imágenes, iconos y CSS global
+│   │   ├── components/     # Componentes reutilizables (Botones, Inputs, Tarjetas)
+│   │   ├── pages/          # Vistas principales (Login, Dashboard, Constructor CV)
+│   │   ├── hooks/          # Custom hooks (ej. useAuth)
+│   │   ├── store/          # Estado global (Zustand o Redux)
+│   │   ├── services/       # Integración con el API Backend (Axios o Fetch)
+│   │   └── utils/          # Funciones de ayuda (formateo de fechas, etc.)
+│   ├── package.json
+│   └── vite.config.js      # Si usan Vite para inicializar React
+│
+├── server/                 # Contenedor Backend (Node.js + Express)
+│   ├── src/
+│   │   ├── config/         # Conexión a MySQL y constantes
+│   │   ├── controllers/    # Procesan req/res y delegan a los servicios
+│   │   ├── middlewares/    # Interceptores (Verificación JWT, subida de archivos)
+│   │   ├── models/         # Entidades de datos (Usuarios, Ofertas, Postulaciones)
+│   │   ├── routes/         # Enrutador principal (/api/v1/users, /api/v1/auth)
+│   │   ├── services/       # El "cerebro": Lógica de IA, matching y reglas B2B
+│   │   └── utils/          # Utilidades (encriptación de contraseñas Bcrypt)
+│   ├── .env                # Variables de entorno (¡Nunca subir a GitHub!)
+│   ├── app.js              # Configuración y montaje de middlewares de Express
+│   ├── server.js           # Punto de entrada que levanta el puerto
+│   └── package.json
+│
+├── .gitignore              # Ignora node_modules y .env
+└── README.md               # Documentación general de PracHub

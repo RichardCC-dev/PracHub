@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import {
+  loginUser,
   registerStudent,
   requestPasswordReset,
   resetPassword,
@@ -10,6 +11,18 @@ const useAuthStore = create((set) => ({
   token: localStorage.getItem('prachub_token'),
   isLoading: false,
   error: null,
+  login: async (payload) => {
+    set({ isLoading: true, error: null });
+    try {
+      const data = await loginUser(payload);
+      localStorage.setItem('prachub_token', data.token);
+      set({ user: data.user, token: data.token, isLoading: false });
+      return data;
+    } catch (error) {
+      set({ error: error.message, isLoading: false });
+      throw error;
+    }
+  },
   registerStudent: async (payload) => {
     set({ isLoading: true, error: null });
 

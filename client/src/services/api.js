@@ -21,3 +21,27 @@ export const registerStudent = async (payload) => {
 
   return parseResponse(response);
 };
+
+export const requestPasswordReset = async (payload) => {
+  const response = await fetch(`${API_URL}/auth/forgot-password`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(payload),
+  });
+
+  return parseResponse(response);
+};
+
+export const resetPassword = async (payload) => {
+  const response = await fetch(`${API_URL}/auth/reset-password`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(payload),
+  });
+
+  return parseResponse(response);
+};

@@ -3,7 +3,7 @@ import { useForm } from 'react-hook-form';
 import useAuthStore from '../store/authStore';
 import { sanitizePayload } from '../utils/security';
 
-const StudentRegistrationForm = () => {
+const StudentRegistrationForm = ({ onForgotPassword }) => {
   const [successMessage, setSuccessMessage] = useState('');
   const { registerStudent, isLoading, error } = useAuthStore();
   const {
@@ -43,7 +43,7 @@ const StudentRegistrationForm = () => {
       <div>
         <p className="text-sm font-semibold uppercase tracking-[0.2em] text-emerald-700"></p>
         <h1 className="mt-2 text-3xl font-bold text-gray-950">Registro de estudiante</h1>
-        <p className="mt-2 text-sm text-gray-600">Usa tu correo institucional para validar que perteneces a una universidad reconocida.</p>
+        <p className="mt-2 text-sm text-gray-600">Crea tu cuenta con un correo válido y completa tu perfil básico para acceder a PracHub.</p>
       </div>
 
       {error && <div className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{error}</div>}
@@ -133,6 +133,10 @@ const StudentRegistrationForm = () => {
 
       <button type="button" className="w-full rounded-2xl border border-emerald-800 px-5 py-3 font-semibold text-emerald-900 transition hover:bg-emerald-50">
         Registrarse con Google próximamente
+      </button>
+
+      <button type="button" onClick={onForgotPassword} className="w-full text-sm font-semibold text-emerald-800 transition hover:text-emerald-700">
+        ¿Olvidaste tu contraseña?
       </button>
     </form>
   );

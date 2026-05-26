@@ -5,6 +5,7 @@ import CompanyOnboardingPage from './pages/CompanyOnboardingPage';
 import WelcomePage from './pages/WelcomePage';
 import CompanyProfilePage from './pages/CompanyProfilePage';
 import useAuthStore from './store/authStore';
+import CVBuilderPage from './pages/CVBuilderPage';
 
 const App = () => {
   const { user, token, logout, setUser } = useAuthStore();
@@ -15,6 +16,11 @@ const App = () => {
   const verifyToken = searchParams.get('token');
 
   const [page, setPage] = useState(() => {
+    const path = window.location.pathname;
+    if (path === '/cv-builder') {
+      if (token && user) return 'cv-builder';
+      return 'home';
+    }
     if (resetToken) return 'auth';
     if (token && user) return 'welcome';
     return 'home';
@@ -91,6 +97,8 @@ const App = () => {
   const handleLogout = () => {
     setPage('home');
   };
+  
+  const goToCVBuilder = () => setPage('cv-builder');
 
   // Pantalla de verificación de email - solo mostrar si hay token y no hemos procesado la navegación
   if ((verifyToken || isVerifying || verifySuccess || verifyError) && !hasProcessedToken) {
@@ -155,17 +163,23 @@ const App = () => {
     );
   }
 
+  // Lógica de ruteo unificada
   if (page === 'welcome' && token && user) {
     return (
       <WelcomePage
         onLogout={handleLogout}
         onEditProfile={() => setPage('company-profile')}
+        onGoToCVBuilder={goToCVBuilder}
       />
     );
   }
 
   if (page === 'company-profile' && token && user?.role === 'company') {
     return <CompanyProfilePage onBack={() => setPage('welcome')} />;
+  }
+
+  if (page === 'cv-builder' && token && user) {
+    return <CVBuilderPage />;
   }
 
   if (page === 'home') {

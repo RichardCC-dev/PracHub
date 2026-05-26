@@ -92,17 +92,42 @@ export const updateCompanyProfile = async (token, payload) => {
   return parseResponse(response);
 };
 
-export const uploadLogo = async (token, file) => {
-  const formData = new FormData();
-  formData.append('logo', file);
+const getAuthHeaders = () => {
+  const token = localStorage.getItem('prachub_token');
+  return {
+    'Content-Type': 'application/json',
+    ...(token && { Authorization: `Bearer ${token}` }),
+  };
+};
 
-  const response = await fetch(`${API_URL}/upload/logo`, {
-    method: 'POST',
-    headers: {
-      'Authorization': `Bearer ${token}`,
-    },
-    body: formData,
+export const getResume = async () => {
+  const response = await fetch(`${API_URL}/resume`, {
+    headers: getAuthHeaders(),
   });
+  return parseResponse(response);
+};
 
+export const updateResumeSection = async (section, payload) => {
+  const response = await fetch(`${API_URL}/resume/${section}`, {
+    method: 'PUT',
+    headers: getAuthHeaders(),
+    body: JSON.stringify(payload),
+  });
+  return parseResponse(response);
+};
+
+export const improveField = async (section, field) => {
+  const response = await fetch(`${API_URL}/resume/improve/${section}/${field}`, {
+    method: 'POST',
+    headers: getAuthHeaders(),
+  });
+  return parseResponse(response);
+};
+
+export const improveSection = async (section) => {
+  const response = await fetch(`${API_URL}/resume/improve-section/${section}`, {
+    method: 'POST',
+    headers: getAuthHeaders(),
+  });
   return parseResponse(response);
 };

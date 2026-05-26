@@ -1,6 +1,6 @@
 import useAuthStore from '../store/authStore';
 
-const WelcomePage = ({ onLogout, onGoToCVBuilder, onEditProfile }) => {
+const WelcomePage = ({ onLogout, onGoToCVBuilder, onEditProfile, onGoToAdmin }) => {
   const { user, logout } = useAuthStore();
 
   const handleLogout = async () => {
@@ -9,10 +9,14 @@ const WelcomePage = ({ onLogout, onGoToCVBuilder, onEditProfile }) => {
   };
 
   const isCompany = user?.role === 'company';
+  const isAdmin = user?.role === 'admin';
   const companyProfile = user?.companyProfile;
   const studentProfile = user?.studentProfile;
 
   const getWelcomeTitle = () => {
+    if (isAdmin) {
+      return 'Panel de Administración';
+    }
     if (isCompany && companyProfile) {
       return `¡Bienvenido a PracHub, ${companyProfile.legalName}!`;
     }
@@ -89,7 +93,9 @@ const WelcomePage = ({ onLogout, onGoToCVBuilder, onEditProfile }) => {
                   Correo: <span className="font-medium text-gray-900">{user?.email}</span>
                 </p>
                 <p className="text-sm text-gray-600">
-                  Rol: <span className="font-medium text-gray-900">{isCompany ? 'Empresa' : 'Estudiante'}</span>
+                  Rol: <span className="font-medium text-gray-900">
+                    {isAdmin ? 'Administrador' : isCompany ? 'Empresa' : 'Estudiante'}
+                  </span>
                 </p>
                 <p className="text-sm text-gray-600">
                   Correo verificado: <span className="font-medium text-gray-900">{user?.isEmailVerified ? 'Sí' : 'No'}</span>
@@ -116,7 +122,16 @@ const WelcomePage = ({ onLogout, onGoToCVBuilder, onEditProfile }) => {
               </div>
 
               <div className="pt-4 space-y-3">
-                {isCompany ? (
+                {isAdmin ? (
+                  <>
+                    <button
+                      onClick={onGoToAdmin}
+                      className="w-full rounded-2xl bg-purple-800 px-5 py-3 font-semibold text-white transition hover:bg-purple-700"
+                    >
+                      Moderar ofertas
+                    </button>
+                  </>
+                ) : isCompany ? (
                   <>
                     <button
                       onClick={onEditProfile}

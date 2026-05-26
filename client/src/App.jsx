@@ -2,16 +2,22 @@ import { useEffect, useMemo, useState } from 'react';
 import HomePage from './pages/HomePage';
 import StudentOnboardingPage from './pages/StudentOnboardingPage';
 import WelcomePage from './pages/WelcomePage';
+import CVBuilderPage from './pages/CVBuilderPage';
 import useAuthStore from './store/authStore';
 
 const App = () => {
-  const { user, token, logout } = useAuthStore();
+  const { user, token } = useAuthStore();
   const searchParams = useMemo(() => new URLSearchParams(window.location.search), []);
 
   const resetToken = searchParams.get('resetToken');
   const verifyToken = searchParams.get('token');
 
   const [page, setPage] = useState(() => {
+    const path = window.location.pathname;
+    if (path === '/cv-builder') {
+      if (token && user) return 'cv-builder';
+      return 'home';
+    }
     if (resetToken) return 'auth';
     if (verifyToken) return 'verify';
     if (token && user) return 'welcome';
@@ -50,8 +56,14 @@ const App = () => {
     setPage('home');
   };
 
+  const goToCVBuilder = () => setPage('cv-builder');
+
   if (page === 'welcome' && token && user) {
-    return <WelcomePage onLogout={handleLogout} />;
+    return <WelcomePage onLogout={handleLogout} onGoToCVBuilder={goToCVBuilder} />;
+  }
+
+  if (page === 'cv-builder' && token && user) {
+    return <CVBuilderPage />;
   }
 
   if (page === 'home') {

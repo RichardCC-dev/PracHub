@@ -3,18 +3,24 @@ import HomePage from './pages/HomePage';
 import StudentOnboardingPage from './pages/StudentOnboardingPage';
 import CompanyOnboardingPage from './pages/CompanyOnboardingPage';
 import WelcomePage from './pages/WelcomePage';
+import CVBuilderPage from './pages/CVBuilderPage';
 import CompanyProfilePage from './pages/CompanyProfilePage';
 import useAuthStore from './store/authStore';
 
 const App = () => {
-  const { user, token, logout, setUser } = useAuthStore();
-  const searchParams = useMemo(() => new URLSearchParams(window.location.search), []);
+  const { user, token, setUser } = useAuthStore();
+  const searchParams = useMemo(() => new URLSearchParams(globalThis.location.search), []);
   const hasVerified = useRef(false);
 
   const resetToken = searchParams.get('resetToken');
   const verifyToken = searchParams.get('token');
 
   const [page, setPage] = useState(() => {
+    const path = globalThis.location.pathname;
+    if (path === '/cv-builder') {
+      if (token && user) return 'cv-builder';
+      return 'home';
+    }
     if (resetToken) return 'auth';
     if (token && user) return 'welcome';
     return 'home';
@@ -76,7 +82,7 @@ const App = () => {
         .catch((err) => setVerifyError(err.message))
         .finally(() => {
           setIsVerifying(false);
-          window.history.replaceState({}, '', window.location.pathname);
+          globalThis.history.replaceState({}, '', globalThis.location.pathname);
         });
     }
   }, [verifyToken, setUser]);
@@ -91,6 +97,8 @@ const App = () => {
   const handleLogout = () => {
     setPage('home');
   };
+
+const goToCVBuilder = () => setPage('cv-builder');
 
   // Pantalla de verificación de email - solo mostrar si hay token y no hemos procesado la navegación
   if ((verifyToken || isVerifying || verifySuccess || verifyError) && !hasProcessedToken) {
@@ -159,9 +167,14 @@ const App = () => {
     return (
       <WelcomePage
         onLogout={handleLogout}
+        onGoToCVBuilder={goToCVBuilder}
         onEditProfile={() => setPage('company-profile')}
       />
     );
+  }
+
+  if (page === 'cv-builder' && token && user) {
+    return <CVBuilderPage />;
   }
 
   if (page === 'company-profile' && token && user?.role === 'company') {

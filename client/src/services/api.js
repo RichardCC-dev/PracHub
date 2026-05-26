@@ -55,6 +55,46 @@ export const resetPassword = async (payload) => {
   return parseResponse(response);
 };
 
+const getAuthHeaders = () => {
+  const token = localStorage.getItem('prachub_token');
+  return {
+    'Content-Type': 'application/json',
+    ...(token && { Authorization: `Bearer ${token}` }),
+  };
+};
+
+export const getResume = async () => {
+  const response = await fetch(`${API_URL}/resume`, {
+    headers: getAuthHeaders(),
+  });
+  return parseResponse(response);
+};
+
+export const updateResumeSection = async (section, payload) => {
+  const response = await fetch(`${API_URL}/resume/${section}`, {
+    method: 'PUT',
+    headers: getAuthHeaders(),
+    body: JSON.stringify(payload),
+  });
+  return parseResponse(response);
+};
+
+export const improveField = async (section, field) => {
+  const response = await fetch(`${API_URL}/resume/improve/${section}/${field}`, {
+    method: 'POST',
+    headers: getAuthHeaders(),
+  });
+  return parseResponse(response);
+};
+
+export const improveSection = async (section) => {
+  const response = await fetch(`${API_URL}/resume/improve-section/${section}`, {
+    method: 'POST',
+    headers: getAuthHeaders(),
+  });
+  return parseResponse(response);
+};
+
 export const registerCompany = async (payload) => {
   const response = await fetch(`${API_URL}/companies/register`, {
     method: 'POST',

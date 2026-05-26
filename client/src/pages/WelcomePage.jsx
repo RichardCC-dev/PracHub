@@ -1,6 +1,6 @@
 import useAuthStore from '../store/authStore';
 
-const WelcomePage = ({ onLogout, onEditProfile }) => {
+const WelcomePage = ({ onLogout, onGoToCVBuilder, onEditProfile }) => {
   const { user, logout } = useAuthStore();
 
   const handleLogout = async () => {
@@ -127,7 +127,7 @@ const WelcomePage = ({ onLogout, onEditProfile }) => {
                     <button
                       className="w-full rounded-2xl bg-emerald-800 px-5 py-3 font-semibold text-white transition hover:bg-emerald-700 disabled:bg-gray-400"
                       disabled={!companyProfile?.canPublishOffers}
-                      title={!companyProfile?.canPublishOffers ? 'Pendiente de verificación legal de empresa' : ''}
+                      title={companyProfile?.canPublishOffers ? '' : 'Pendiente de verificación legal de empresa'}
                     >
                       {companyProfile?.canPublishOffers ? 'Publicar oferta' : 'Publicar oferta (verificación legal pendiente)'}
                     </button>
@@ -141,7 +141,13 @@ const WelcomePage = ({ onLogout, onEditProfile }) => {
                 ) : (
                   <>
                     <button
+                      onClick={onGoToCVBuilder}
                       className="w-full rounded-2xl bg-emerald-800 px-5 py-3 font-semibold text-white transition hover:bg-emerald-700"
+                    >
+                      Constructor de CV con IA
+                    </button>
+                    <button
+                      className="w-full rounded-2xl border border-emerald-800 px-5 py-3 font-semibold text-emerald-900 transition hover:bg-emerald-50"
                       disabled
                     >
                       Ver prácticas (próximamente)

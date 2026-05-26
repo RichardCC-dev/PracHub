@@ -1,8 +1,9 @@
 const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
-const path = require('path');
+const path = require('node:path');
 const authRoutes = require('./routes/authRoutes');
+const resumeRoutes = require('./routes/resumeRoutes');
 const companyRoutes = require('./routes/companyRoutes');
 const uploadRoutes = require('./routes/uploadRoutes');
 const errorHandler = require('./middlewares/errorHandler');
@@ -32,6 +33,7 @@ app.get('/health', (req, res) => {
 });
 
 app.use('/api/auth', authRoutes);
+app.use('/api/resume', resumeRoutes);
 app.use('/api/companies', companyRoutes);
 app.use('/api/upload', uploadRoutes);
 app.use(errorHandler);

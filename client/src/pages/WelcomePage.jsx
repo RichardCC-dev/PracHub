@@ -1,6 +1,6 @@
 import useAuthStore from '../store/authStore';
 
-const WelcomePage = ({ onLogout }) => {
+const WelcomePage = ({ onLogout, onEditProfile }) => {
   const { user, logout } = useAuthStore();
 
   const handleLogout = async () => {
@@ -118,6 +118,12 @@ const WelcomePage = ({ onLogout }) => {
               <div className="pt-4 space-y-3">
                 {isCompany ? (
                   <>
+                    <button
+                      onClick={onEditProfile}
+                      className="w-full rounded-2xl border border-emerald-800 px-5 py-3 font-semibold text-emerald-900 transition hover:bg-emerald-50"
+                    >
+                      Editar perfil de empresa
+                    </button>
                     <button
                       className="w-full rounded-2xl bg-emerald-800 px-5 py-3 font-semibold text-white transition hover:bg-emerald-700 disabled:bg-gray-400"
                       disabled={!companyProfile?.canPublishOffers}

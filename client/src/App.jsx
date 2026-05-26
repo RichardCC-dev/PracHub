@@ -3,6 +3,7 @@ import HomePage from './pages/HomePage';
 import StudentOnboardingPage from './pages/StudentOnboardingPage';
 import CompanyOnboardingPage from './pages/CompanyOnboardingPage';
 import WelcomePage from './pages/WelcomePage';
+import CompanyProfilePage from './pages/CompanyProfilePage';
 import useAuthStore from './store/authStore';
 
 const App = () => {
@@ -24,6 +25,7 @@ const App = () => {
   const [isVerifying, setIsVerifying] = useState(!!verifyToken);
   const [verifyError, setVerifyError] = useState(null);
   const [verifySuccess, setVerifySuccess] = useState(false);
+  const [hasProcessedToken, setHasProcessedToken] = useState(false);
 
   useEffect(() => {
     if (verifyToken && !hasVerified.current) {
@@ -90,8 +92,8 @@ const App = () => {
     setPage('home');
   };
 
-  // Pantalla de verificación de email - solo mostrar si hay token o estamos en proceso/resultado
-  if (verifyToken || isVerifying || verifySuccess || verifyError) {
+  // Pantalla de verificación de email - solo mostrar si hay token y no hemos procesado la navegación
+  if ((verifyToken || isVerifying || verifySuccess || verifyError) && !hasProcessedToken) {
     return (
       <main className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="w-full max-w-md p-8">
@@ -108,6 +110,7 @@ const App = () => {
               <button
                 onClick={() => {
                   setVerifySuccess(false);
+                  setHasProcessedToken(true);
                   setPage('welcome');
                 }}
                 className="mt-4 rounded-2xl bg-emerald-800 px-5 py-3 font-semibold text-white transition hover:bg-emerald-700"
@@ -127,6 +130,7 @@ const App = () => {
               <button
                 onClick={() => {
                   setVerifyError(null);
+                  setHasProcessedToken(true);
                   setPage('home');
                 }}
                 className="mt-4 rounded-2xl bg-emerald-800 px-5 py-3 font-semibold text-white transition hover:bg-emerald-700"
@@ -152,7 +156,16 @@ const App = () => {
   }
 
   if (page === 'welcome' && token && user) {
-    return <WelcomePage onLogout={handleLogout} />;
+    return (
+      <WelcomePage
+        onLogout={handleLogout}
+        onEditProfile={() => setPage('company-profile')}
+      />
+    );
+  }
+
+  if (page === 'company-profile' && token && user?.role === 'company') {
+    return <CompanyProfilePage onBack={() => setPage('welcome')} />;
   }
 
   if (page === 'home') {

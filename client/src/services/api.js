@@ -91,3 +91,18 @@ export const updateCompanyProfile = async (token, payload) => {
 
   return parseResponse(response);
 };
+
+export const uploadLogo = async (token, file) => {
+  const formData = new FormData();
+  formData.append('logo', file);
+
+  const response = await fetch(`${API_URL}/upload/logo`, {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${token}`,
+    },
+    body: formData,
+  });
+
+  return parseResponse(response);
+};

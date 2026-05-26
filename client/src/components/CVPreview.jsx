@@ -44,7 +44,7 @@ const CVPreview = ({ resume }) => {
         return (
           <div className="mb-6">
             <h3 className="text-lg font-bold text-gray-950 mb-2">{title}</h3>
-            <p className="text-sm text-gray-600">No has añadido ningún proyecto</p>
+            <p className="text-sm text-gray-600">Sin proyectos previos realizados</p>
           </div>
         );
       }

@@ -1,4 +1,4 @@
-const HomePage = ({ onLogin, onRegister }) => (
+const HomePage = ({ onLogin, onRegisterStudent, onRegisterCompany }) => (
   <main className="min-h-screen bg-gray-50">
     <section className="grid min-h-screen lg:grid-cols-[1fr_1fr]">
 
@@ -34,7 +34,7 @@ const HomePage = ({ onLogin, onRegister }) => (
             ))}
           </div>
         </div>
-        
+
       </aside>
 
       {/* Panel derecho — CTAs */}
@@ -46,7 +46,7 @@ const HomePage = ({ onLogin, onRegister }) => (
               P
             </div>
             <h2 className="text-3xl font-bold text-gray-950">Bienvenido a PracHub</h2>
-            <p className="mt-2 text-gray-500">¿Eres nuevo o ya tienes una cuenta?</p>
+            <p className="mt-2 text-gray-500">¿Eres estudiante o empresa?</p>
           </div>
 
           <div className="rounded-3xl bg-white p-8 shadow-xl shadow-emerald-950/10 space-y-4">
@@ -58,12 +58,29 @@ const HomePage = ({ onLogin, onRegister }) => (
               Iniciar sesión
             </button>
 
-            <button
-              onClick={onRegister}
-              className="w-full rounded-2xl border-2 border-emerald-800 px-5 py-4 text-base font-semibold text-emerald-900 transition hover:bg-emerald-50 active:scale-[0.98]"
-            >
-              Crear cuenta
-            </button>
+            <div className="relative flex items-center py-2">
+              <div className="flex-1 border-t border-gray-200" />
+              <span className="mx-4 text-xs text-gray-400">Registrarse como</span>
+              <div className="flex-1 border-t border-gray-200" />
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <button
+                onClick={onRegisterStudent}
+                className="w-full rounded-2xl border-2 border-emerald-800 px-4 py-4 text-sm font-semibold text-emerald-900 transition hover:bg-emerald-50 active:scale-[0.98]"
+              >
+                <span className="block text-lg mb-1">🎓</span>
+                Estudiante
+              </button>
+
+              <button
+                onClick={onRegisterCompany}
+                className="w-full rounded-2xl border-2 border-emerald-800 px-4 py-4 text-sm font-semibold text-emerald-900 transition hover:bg-emerald-50 active:scale-[0.98]"
+              >
+                <span className="block text-lg mb-1">🏢</span>
+                Empresa
+              </button>
+            </div>
 
             <div className="relative flex items-center py-1">
               <div className="flex-1 border-t border-gray-200" />

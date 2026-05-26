@@ -1,6 +1,7 @@
 const sequelize = require('../config/database');
 const User = require('./User');
 const Student = require('./Student');
+const Company = require('./Company');
 const PasswordResetToken = require('./PasswordResetToken');
 const EmailVerificationToken = require('./EmailVerificationToken');
 const Resume = require('./Resume');
@@ -8,6 +9,7 @@ const Resume = require('./Resume');
 [
   { name: 'User', model: User },
   { name: 'Student', model: Student },
+  { name: 'Company', model: Company },
   { name: 'PasswordResetToken', model: PasswordResetToken },
   { name: 'EmailVerificationToken', model: EmailVerificationToken },
   { name: 'Resume', model: Resume }
@@ -24,6 +26,17 @@ User.hasOne(Student, {
 });
 
 Student.belongsTo(User, {
+  foreignKey: 'userId',
+  as: 'user',
+});
+
+User.hasOne(Company, {
+  foreignKey: 'userId',
+  as: 'companyProfile',
+  onDelete: 'CASCADE',
+});
+
+Company.belongsTo(User, {
   foreignKey: 'userId',
   as: 'user',
 });
@@ -65,6 +78,7 @@ module.exports = {
   sequelize,
   User,
   Student,
+  Company,
   PasswordResetToken,
   EmailVerificationToken,
   Resume,

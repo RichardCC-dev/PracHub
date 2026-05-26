@@ -19,10 +19,11 @@ const ExperienceSection = ({ section, title, data }) => {
     setExperiences([...experiences, { company: '', role: '', description: '' }]);
   };
 
-  const removeExperience = (index) => {
+  const removeExperience = async (index) => {
     const updated = experiences.filter((_, i) => i !== index);
     setExperiences(updated);
-    handleSubmit(onSubmit)();
+    // Usar los datos actualizados directamente
+    await updateSection(section, { items: updated });
   };
 
   const updateExperience = (index, field, value) => {
@@ -95,15 +96,13 @@ const ExperienceSection = ({ section, title, data }) => {
             <div key={index} className="border border-gray-200 rounded-2xl p-6">
               <div className="flex justify-between items-center mb-4">
                 <h3 className="text-lg font-semibold text-gray-950">Experiencia {index + 1}</h3>
-                {experiences.length > 1 && (
-                  <button
+                <button
                     type="button"
                     onClick={() => removeExperience(index)}
                     className="text-red-600 hover:text-red-700 text-sm font-medium"
                   >
                     Eliminar
                   </button>
-                )}
               </div>
               <div className="space-y-4">
                 <div>

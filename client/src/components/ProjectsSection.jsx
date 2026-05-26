@@ -19,10 +19,11 @@ const ProjectsSection = ({ section, title, data }) => {
     setProjects([...projects, { title: '', description: '' }]);
   };
 
-  const removeProject = (index) => {
+  const removeProject = async (index) => {
     const updated = projects.filter((_, i) => i !== index);
     setProjects(updated);
-    handleSubmit(onSubmit)();
+    // Usar los datos actualizados directamente
+    await updateSection(section, { items: updated });
   };
 
   const updateProject = (index, field, value) => {
@@ -95,15 +96,13 @@ const ProjectsSection = ({ section, title, data }) => {
             <div key={index} className="border border-gray-200 rounded-2xl p-6">
               <div className="flex justify-between items-center mb-4">
                 <h3 className="text-lg font-semibold text-gray-950">Proyecto {index + 1}</h3>
-                {projects.length > 1 && (
-                  <button
+                <button
                     type="button"
                     onClick={() => removeProject(index)}
                     className="text-red-600 hover:text-red-700 text-sm font-medium"
                   >
                     Eliminar
                   </button>
-                )}
               </div>
               <div className="space-y-4">
                 <div>

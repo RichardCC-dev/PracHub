@@ -11,15 +11,30 @@ const calculateCompletion = (resume) => {
     resume.education?.institution,
     resume.education?.startDate,
     resume.education?.endDate,
-    resume.experience?.company,
-    resume.experience?.role,
-    resume.experience?.description,
     resume.skills?.technical,
     resume.skills?.soft,
     resume.languages?.list,
-    resume.projects?.title,
-    resume.projects?.description,
   ];
+
+  // Agregar campos de experiencia si hay items
+  if (resume.experience?.items && Array.isArray(resume.experience.items)) {
+    resume.experience.items.forEach((exp, index) => {
+      fields.push(exp.company, exp.role, exp.description);
+    });
+  } else {
+    // Si no hay items, agregar campos vacíos para mantener el conteo
+    fields.push(null, null, null);
+  }
+
+  // Agregar campos de proyectos si hay items
+  if (resume.projects?.items && Array.isArray(resume.projects.items)) {
+    resume.projects.items.forEach((proj, index) => {
+      fields.push(proj.title, proj.description);
+    });
+  } else {
+    // Si no hay items, agregar campos vacíos para mantener el conteo
+    fields.push(null, null);
+  }
 
   const filled = fields.filter((field) => field && field.trim() !== '').length;
   return Math.round((filled / fields.length) * 100);

@@ -94,3 +94,55 @@ export const improveSection = async (section) => {
   });
   return parseResponse(response);
 };
+
+export const registerCompany = async (payload) => {
+  const response = await fetch(`${API_URL}/companies/register`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(payload),
+  });
+
+  return parseResponse(response);
+};
+
+export const getCompanyProfile = async (token) => {
+  const response = await fetch(`${API_URL}/companies/profile`, {
+    method: 'GET',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`,
+    },
+  });
+
+  return parseResponse(response);
+};
+
+export const updateCompanyProfile = async (token, payload) => {
+  const response = await fetch(`${API_URL}/companies/profile`, {
+    method: 'PATCH',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`,
+    },
+    body: JSON.stringify(payload),
+  });
+
+  return parseResponse(response);
+};
+
+export const uploadLogo = async (token, file) => {
+  const formData = new FormData();
+  formData.append('logo', file);
+
+  const response = await fetch(`${API_URL}/upload/logo`, {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${token}`,
+    },
+    body: formData,
+  });
+
+  return parseResponse(response);
+};

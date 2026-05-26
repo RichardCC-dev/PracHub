@@ -5,6 +5,7 @@ import CompanyOnboardingPage from './pages/CompanyOnboardingPage';
 import WelcomePage from './pages/WelcomePage';
 import CVBuilderPage from './pages/CVBuilderPage';
 import CompanyProfilePage from './pages/CompanyProfilePage';
+import AdminDashboardPage from './pages/AdminDashboardPage';
 import useAuthStore from './store/authStore';
 
 const App = () => {
@@ -99,6 +100,7 @@ const App = () => {
   };
 
 const goToCVBuilder = () => setPage('cv-builder');
+const goToAdmin = () => setPage('admin');
 
   // Pantalla de verificación de email - solo mostrar si hay token y no hemos procesado la navegación
   if ((verifyToken || isVerifying || verifySuccess || verifyError) && !hasProcessedToken) {
@@ -169,6 +171,7 @@ const goToCVBuilder = () => setPage('cv-builder');
         onLogout={handleLogout}
         onGoToCVBuilder={goToCVBuilder}
         onEditProfile={() => setPage('company-profile')}
+        onGoToAdmin={goToAdmin}
       />
     );
   }
@@ -179,6 +182,10 @@ const goToCVBuilder = () => setPage('cv-builder');
 
   if (page === 'company-profile' && token && user?.role === 'company') {
     return <CompanyProfilePage onBack={() => setPage('welcome')} />;
+  }
+
+  if (page === 'admin' && token && user?.role === 'admin') {
+    return <AdminDashboardPage />;
   }
 
   if (page === 'home') {

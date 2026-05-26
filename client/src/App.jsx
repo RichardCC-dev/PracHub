@@ -4,6 +4,7 @@ import StudentOnboardingPage from './pages/StudentOnboardingPage';
 import CompanyOnboardingPage from './pages/CompanyOnboardingPage';
 import WelcomePage from './pages/WelcomePage';
 import CompanyProfilePage from './pages/CompanyProfilePage';
+import AdminDashboardPage from './pages/AdminDashboardPage';
 import useAuthStore from './store/authStore';
 
 const App = () => {
@@ -92,6 +93,8 @@ const App = () => {
     setPage('home');
   };
 
+const goToAdmin = () => setPage('admin');
+
   // Pantalla de verificación de email - solo mostrar si hay token y no hemos procesado la navegación
   if ((verifyToken || isVerifying || verifySuccess || verifyError) && !hasProcessedToken) {
     return (
@@ -160,12 +163,17 @@ const App = () => {
       <WelcomePage
         onLogout={handleLogout}
         onEditProfile={() => setPage('company-profile')}
+        onGoToAdmin={goToAdmin}
       />
     );
   }
 
   if (page === 'company-profile' && token && user?.role === 'company') {
     return <CompanyProfilePage onBack={() => setPage('welcome')} />;
+  }
+
+  if (page === 'admin' && token && user?.role === 'admin') {
+    return <AdminDashboardPage />;
   }
 
   if (page === 'home') {

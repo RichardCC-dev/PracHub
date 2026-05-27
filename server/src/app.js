@@ -5,7 +5,7 @@ const path = require('path');
 const authRoutes = require('./routes/authRoutes');
 const companyRoutes = require('./routes/companyRoutes');
 const uploadRoutes = require('./routes/uploadRoutes');
-const adminRoutes = require('./routes/adminRoutes');
+const resumeRoutes = require('./routes/resumeRoutes');
 const errorHandler = require('./middlewares/errorHandler');
 
 const app = express();
@@ -35,7 +35,7 @@ app.get('/health', (req, res) => {
 app.use('/api/auth', authRoutes);
 app.use('/api/companies', companyRoutes);
 app.use('/api/upload', uploadRoutes);
-app.use('/api/admin', adminRoutes);
+app.use('/api/resume', resumeRoutes);
 app.use(errorHandler);
 
 module.exports = app;

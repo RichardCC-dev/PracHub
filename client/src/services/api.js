@@ -171,3 +171,26 @@ export const uploadLogo = async (token, file) => {
   });
   return parseResponse(response);
 };
+
+export const getResumeVersions = async (limit = 20) => {
+  const response = await fetch(`${API_URL}/resume/versions?limit=${limit}`, {
+    headers: getAuthHeaders(),
+  });
+  return parseResponse(response);
+};
+
+export const restoreResumeVersion = async (versionId) => {
+  const response = await fetch(`${API_URL}/resume/versions/${versionId}/restore`, {
+    method: 'POST',
+    headers: getAuthHeaders(),
+  });
+  return parseResponse(response);
+};
+
+export const deleteResumeVersion = async (versionId) => {
+  const response = await fetch(`${API_URL}/resume/versions/${versionId}`, {
+    method: 'DELETE',
+    headers: getAuthHeaders(),
+  });
+  return parseResponse(response);
+};

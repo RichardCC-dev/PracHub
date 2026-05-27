@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback } from 'react';
+import { useState, useRef, useCallback, useEffect } from 'react';
 import useCVStore from '../store/cvStore';
 
 const CertificationsSection = ({ section, title, data }) => {
@@ -6,6 +6,13 @@ const CertificationsSection = ({ section, title, data }) => {
   const [certifications, setCertifications] = useState(data?.items || []);
 
   const saveTimeoutRef = useRef(null);
+
+  // Sincronizar cuando cambian los datos externos (ej: restaurar versión)
+  const dataItemsKey = JSON.stringify(data?.items);
+  useEffect(() => {
+    setCertifications(data?.items || []);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [dataItemsKey]);
 
   const debouncedSave = useCallback((items) => {
     if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);

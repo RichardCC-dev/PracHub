@@ -1,5 +1,54 @@
 import { create } from 'zustand';
-import { getResume, updateResumeSection, improveField, improveSection, exportResumePdf } from '../services/api';
+import {
+  getResume,
+  updateResumeSection,
+  improveField,
+  improveSection,
+  exportResumePdf,
+  getResumeVersions,
+  restoreResumeVersion,
+  deleteResumeVersion,
+} from '../services/api';
+
+const EMPTY_RESUME_SECTIONS = {
+  personal: { fullName: '', email: '', phone: '', linkedin: '' },
+  profile: { summary: '' },
+  education: { items: [] },
+  experience: { items: [] },
+  projects: { items: [] },
+  certifications: { items: [] },
+  skills: { areas: [{ area: '', skills: '' }], soft: '' },
+  languages: { list: '' },
+};
+
+const JSON_FIELDS = ['profile', 'personal', 'education', 'certifications', 'experience', 'skills', 'languages', 'projects'];
+
+const forceParseField = (value, fieldName) => {
+  // Parsear hasta obtener un objeto (maneja double-encoding)
+  let parsed = value;
+  let iterations = 0;
+  while (typeof parsed === 'string' && iterations < 3) {
+    try { parsed = JSON.parse(parsed); } catch { parsed = {}; break; }
+    iterations++;
+  }
+  if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
+    // Valores por defecto seguros según el campo
+    if (['education', 'experience', 'projects', 'certifications'].includes(fieldName)) {
+      return { items: [] };
+    }
+    return {};
+  }
+  return parsed;
+};
+
+const parsePlainResume = (raw) => {
+  if (!raw || typeof raw !== 'object') return raw;
+  const result = { ...raw };
+  JSON_FIELDS.forEach((f) => {
+    result[f] = forceParseField(result[f], f);
+  });
+  return result;
+};
 
 const useCVStore = create((set, get) => ({
   resume: null,
@@ -12,6 +61,13 @@ const useCVStore = create((set, get) => ({
   suggestion: null,
   activeSection: null,
   selectedTemplate: 'harvard',
+  versions: [],
+  isLoadingVersions: false,
+  versionsError: null,
+  isRestoring: false,
+  showRestoreConfirm: false,
+  versionToRestore: null,
+  restoreCount: 0,
 
   setSelectedTemplate: (template) => set({ selectedTemplate: template }),
 
@@ -19,10 +75,28 @@ const useCVStore = create((set, get) => ({
     set({ isLoading: true, error: null });
     try {
       const data = await getResume();
-      set({ resume: data, isLoading: false });
+      set({ resume: parsePlainResume(data), isLoading: false });
     } catch (error) {
       set({ error: error.message, isLoading: false });
       throw error;
+    }
+  },
+
+  clearResume: async () => {
+    set({ isSaving: true, error: null });
+    try {
+      for (const [section, value] of Object.entries(EMPTY_RESUME_SECTIONS)) {
+        await updateResumeSection(section, value);
+      }
+      const data = await getResume();
+      set((state) => ({
+        resume: parsePlainResume(data),
+        isSaving: false,
+        lastSaved: new Date(),
+        restoreCount: state.restoreCount + 1,
+      }));
+    } catch (error) {
+      set({ error: error.message, isSaving: false });
     }
   },
 
@@ -30,7 +104,7 @@ const useCVStore = create((set, get) => ({
     set({ isSaving: true, error: null });
     try {
       const data = await updateResumeSection(section, payload);
-      set({ resume: data, isSaving: false, lastSaved: new Date() });
+      set({ resume: parsePlainResume(data), isSaving: false, lastSaved: new Date() });
     } catch (error) {
       set({ error: error.message, isSaving: false });
       throw error;
@@ -109,6 +183,57 @@ const useCVStore = create((set, get) => ({
   },
 
   clearSuggestion: () => set({ suggestion: null, activeSection: null }),
+
+  fetchVersions: async (limit = 20) => {
+    set({ isLoadingVersions: true, versionsError: null });
+    try {
+      const data = await getResumeVersions(limit);
+      set({ versions: data, isLoadingVersions: false });
+    } catch (error) {
+      set({ versionsError: error.message, isLoadingVersions: false });
+    }
+  },
+
+  openRestoreConfirm: (version) => set({
+    showRestoreConfirm: true,
+    versionToRestore: version,
+  }),
+
+  closeRestoreConfirm: () => set({
+    showRestoreConfirm: false,
+    versionToRestore: null,
+  }),
+
+  restoreVersion: async (versionId) => {
+    set({ isRestoring: true, error: null });
+    try {
+      const data = await restoreResumeVersion(versionId);
+      set((state) => ({
+        resume: parsePlainResume(data.resume),
+        isRestoring: false,
+        showRestoreConfirm: false,
+        versionToRestore: null,
+        restoreCount: state.restoreCount + 1,
+      }));
+      await get().fetchVersions();
+      return true;
+    } catch (error) {
+      set({ error: error.message, isRestoring: false });
+      return false;
+    }
+  },
+
+  deleteVersion: async (versionId) => {
+    set({ isLoadingVersions: true, versionsError: null });
+    try {
+      await deleteResumeVersion(versionId);
+      await get().fetchVersions();
+      return true;
+    } catch (error) {
+      set({ versionsError: error.message, isLoadingVersions: false });
+      return false;
+    }
+  },
 }));
 
 export default useCVStore;

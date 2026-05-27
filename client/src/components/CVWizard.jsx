@@ -16,13 +16,21 @@ const sections = [
 ];
 
 const CVWizard = () => {
-  const { resume, fetchResume, isLoading, error, selectedTemplate } = useCVStore();
+  const { resume, fetchResume, isLoading, error, selectedTemplate, restoreCount } = useCVStore();
 
   useEffect(() => {
     fetchResume();
+    return () => {
+      useCVStore.setState({ resume: null, error: null });
+    };
   }, [fetchResume]);
 
-  if (isLoading && !resume) return <div className="text-center py-10">Cargando CV...</div>;
+  if (!resume) return (
+    <div className="flex items-center justify-center py-16">
+      <div className="h-6 w-6 animate-spin rounded-full border-2 border-emerald-200 border-t-emerald-700 mr-3" />
+      <span className="text-sm text-gray-500">Cargando CV...</span>
+    </div>
+  );
   if (error) return <div className="text-center text-red-600 py-10">{error}</div>;
 
   return (
@@ -32,7 +40,7 @@ const CVWizard = () => {
         <div className="space-y-6">
           {sections.map((section) => (
             <CVSection
-              key={section.key}
+              key={`${section.key}-${restoreCount}`}
               section={section.key}
               title={section.title}
               fields={section.fields}
@@ -46,7 +54,7 @@ const CVWizard = () => {
           ))}
         </div>
         <div className="xl:sticky xl:top-6 xl:max-h-[calc(100vh-6rem)] xl:overflow-y-auto">
-          <CVPreview resume={resume} template={selectedTemplate} />
+          <CVPreview key={`preview-${restoreCount}`} resume={resume} template={selectedTemplate} />
         </div>
       </div>
     </div>

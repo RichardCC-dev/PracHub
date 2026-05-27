@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback } from 'react';
+import { useState, useRef, useCallback, useEffect } from 'react';
 import CVSuggestion from './CVSuggestion';
 import useCVStore from '../store/cvStore';
 
@@ -6,6 +6,13 @@ const ExperienceSection = ({ section, title, data }) => {
   const { updateSection, requestSectionSuggestion, acceptSectionSuggestion, clearSuggestion, suggestion, isLoading, activeSection } = useCVStore();
   const [experiences, setExperiences] = useState(data?.items || []);
   const saveTimeoutRef = useRef(null);
+
+  // Sincronizar cuando cambian los datos externos (ej: restaurar versión)
+  const dataItemsKey = JSON.stringify(data?.items);
+  useEffect(() => {
+    setExperiences(data?.items || []);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [dataItemsKey]);
 
   const showSuggestion = activeSection === section && suggestion;
 

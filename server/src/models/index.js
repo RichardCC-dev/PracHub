@@ -6,6 +6,7 @@ const PasswordResetToken = require('./PasswordResetToken');
 const EmailVerificationToken = require('./EmailVerificationToken');
 const Resume = require('./Resume');
 const CVTemplate = require('./CVTemplate');
+const Offer = require('./Offer');
 
 [
   { name: 'User', model: User },
@@ -14,7 +15,8 @@ const CVTemplate = require('./CVTemplate');
   { name: 'PasswordResetToken', model: PasswordResetToken },
   { name: 'EmailVerificationToken', model: EmailVerificationToken },
   { name: 'Resume', model: Resume },
-  { name: 'CVTemplate', model: CVTemplate }
+  { name: 'CVTemplate', model: CVTemplate },
+  { name: 'Offer', model: Offer }
 ].forEach(item => {
   if (!item.model?.prototype?.constructor?.name) {
     throw new Error(`¡El modelo ${item.name} no se cargó correctamente! Revisa el archivo ${item.name}.js`);
@@ -76,6 +78,28 @@ Resume.belongsTo(Student, {
   as: 'student',
 });
 
+// Relaciones de Offer
+Company.hasMany(Offer, {
+  foreignKey: 'companyId',
+  as: 'offers',
+  onDelete: 'CASCADE',
+});
+
+Offer.belongsTo(Company, {
+  foreignKey: 'companyId',
+  as: 'company',
+});
+
+User.hasMany(Offer, {
+  foreignKey: 'moderatedBy',
+  as: 'moderatedOffers',
+});
+
+Offer.belongsTo(User, {
+  foreignKey: 'moderatedBy',
+  as: 'moderator',
+});
+
 module.exports = {
   sequelize,
   User,
@@ -85,4 +109,5 @@ module.exports = {
   EmailVerificationToken,
   Resume,
   CVTemplate,
+  Offer,
 };

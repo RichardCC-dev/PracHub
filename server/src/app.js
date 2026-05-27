@@ -8,6 +8,7 @@ const companyRoutes = require('./routes/companyRoutes');
 const uploadRoutes = require('./routes/uploadRoutes');
 const pdfRoutes = require('./routes/pdfRoutes');
 const debugRoutes = require('./routes/debugRoutes');
+const adminRoutes = require('./routes/adminRoutes');
 const errorHandler = require('./middlewares/errorHandler');
 const initTemplates = require('./scripts/initTemplates');
 
@@ -41,6 +42,7 @@ app.use('/api/companies', companyRoutes);
 app.use('/api/upload', uploadRoutes);
 app.use('/api/pdf', pdfRoutes);
 app.use('/api/debug', debugRoutes);
+app.use('/api/admin', adminRoutes);
 app.use(errorHandler);
 
 // Temporalmente deshabilitado para evitar error de índices

@@ -172,8 +172,8 @@ const WelcomePage = ({ onLogout, onEditProfile, onGoToCVBuilder }) => {
       <div className="max-w-5xl mx-auto px-6 py-10">
         <h2 className="text-lg font-bold text-gray-950 mb-5">¿Qué quieres hacer hoy?</h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          {features.map((f, i) => (
-            <FeatureCard key={i} {...f} />
+          {features.map((feature, i) => (
+            <FeatureCard key={i} {...feature} />
           ))}
         </div>
 

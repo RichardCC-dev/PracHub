@@ -93,7 +93,7 @@ export const updateCompanyProfile = async (token, payload) => {
 };
 
 const getAuthHeaders = () => {
-  const token = localStorage.getItem('prachub_token');
+  const token = localStorage.getItem('prachub_token') ?? sessionStorage.getItem('prachub_token');
   return {
     'Content-Type': 'application/json',
     ...(token && { Authorization: `Bearer ${token}` }),

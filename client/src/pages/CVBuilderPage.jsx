@@ -1,4 +1,5 @@
 import CVWizard from '../components/CVWizard';
+import CVExportPanel from '../components/CVExportPanel';
 import useCVStore from '../store/cvStore';
 
 const SaveIndicator = () => {
@@ -61,6 +62,7 @@ const CVBuilderPage = ({ onBack }) => (
         <h1 className="text-3xl font-bold text-gray-950">Construye tu CV con IA</h1>
         <p className="mt-1 text-gray-500">Completa cada sección y obtén sugerencias inteligentes en tiempo real.</p>
       </div>
+      <CVExportPanel />
       <CVWizard />
     </div>
   </main>

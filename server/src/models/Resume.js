@@ -45,6 +45,16 @@ const Resume = sequelize.define(
       defaultValue: 0,
       field: 'completion_percentage',
     },
+    templateId: {
+      type: DataTypes.INTEGER.UNSIGNED,
+      allowNull: true,
+      field: 'template_id',
+    },
+    pdfUrl: {
+      type: DataTypes.STRING(255),
+      allowNull: true,
+      field: 'pdf_url',
+    },
   },
   {
     tableName: 'Resumes',

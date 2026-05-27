@@ -6,7 +6,10 @@ const authRoutes = require('./routes/authRoutes');
 const resumeRoutes = require('./routes/resumeRoutes');
 const companyRoutes = require('./routes/companyRoutes');
 const uploadRoutes = require('./routes/uploadRoutes');
+const pdfRoutes = require('./routes/pdfRoutes');
+const debugRoutes = require('./routes/debugRoutes');
 const errorHandler = require('./middlewares/errorHandler');
+const initTemplates = require('./scripts/initTemplates');
 
 const app = express();
 
@@ -36,6 +39,12 @@ app.use('/api/auth', authRoutes);
 app.use('/api/resume', resumeRoutes);
 app.use('/api/companies', companyRoutes);
 app.use('/api/upload', uploadRoutes);
+app.use('/api/pdf', pdfRoutes);
+app.use('/api/debug', debugRoutes);
 app.use(errorHandler);
+
+// Temporalmente deshabilitado para evitar error de índices
+// Inicializar plantillas de CV si no existen
+// initTemplates();
 
 module.exports = app;

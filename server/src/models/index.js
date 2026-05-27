@@ -5,6 +5,7 @@ const Company = require('./Company');
 const PasswordResetToken = require('./PasswordResetToken');
 const EmailVerificationToken = require('./EmailVerificationToken');
 const Resume = require('./Resume');
+const CVTemplate = require('./CVTemplate');
 
 [
   { name: 'User', model: User },
@@ -12,9 +13,10 @@ const Resume = require('./Resume');
   { name: 'Company', model: Company },
   { name: 'PasswordResetToken', model: PasswordResetToken },
   { name: 'EmailVerificationToken', model: EmailVerificationToken },
-  { name: 'Resume', model: Resume }
+  { name: 'Resume', model: Resume },
+  { name: 'CVTemplate', model: CVTemplate }
 ].forEach(item => {
-  if (!item.model || !item.model.prototype || !item.model.prototype.constructor.name) {
+  if (!item.model?.prototype?.constructor?.name) {
     throw new Error(`¡El modelo ${item.name} no se cargó correctamente! Revisa el archivo ${item.name}.js`);
   }
 });
@@ -82,4 +84,5 @@ module.exports = {
   PasswordResetToken,
   EmailVerificationToken,
   Resume,
+  CVTemplate,
 };

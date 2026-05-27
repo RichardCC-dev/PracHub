@@ -70,14 +70,23 @@ const useCVStore = create((set) => ({
   },
 
   acceptSectionSuggestion: async (section) => {
+    const currentState = useCVStore.getState();
+    if (!currentState.suggestion) return;
+    
+    const improvedData = currentState.suggestion.improved;
+    
+    // Actualizar estado local primero
     set((state) => {
-      if (!state.suggestion) return state;
       const updated = {
         ...state.resume,
-        [section]: state.suggestion.improved,
+        [section]: improvedData,
       };
       return { resume: updated, suggestion: null, activeSection: null };
     });
+    
+    // Guardar cambios en la base de datos
+    await updateResumeSection(section, improvedData);
+    
     // Refrescar datos para actualizar vista previa
     await get().fetchResume();
   },

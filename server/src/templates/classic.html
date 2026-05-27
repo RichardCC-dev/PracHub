@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CV - {{FULL_NAME}}</title>
+    <link href="https://fonts.googleapis.com/css2?family=Times+New+Roman:wght@400;700&family=Arial:wght@400;700&display=swap" rel="stylesheet">
+</head>
+<body style="font-family: 'Times New Roman', serif; margin: 0; padding: 0; background: white; color: #000; line-height: 1.6;">
+    <div style="max-width: 850px; margin: 0 auto; padding: 50px;">
+        <!-- Header -->
+        <header style="text-align: center; margin-bottom: 40px; border-bottom: 2px solid #000; padding-bottom: 20px;">
+            <h1 style="margin: 0; font-size: 2.8em; font-weight: 700; text-transform: uppercase; letter-spacing: 2px;">{{FULL_NAME}}</h1>
+            <div style="margin-top: 15px; font-family: Arial, sans-serif;">
+                <p style="margin: 5px 0; font-size: 1.1em;">{{EMAIL}} • {{PHONE}}</p>
+                {{#if LINKEDIN}}
+                <p style="margin: 5px 0; font-size: 1em;">LinkedIn: {{LINKEDIN}}</p>
+                {{/if}}
+            </div>
+        </header>
+
+        <!-- Educación -->
+        <section style="margin-bottom: 30px;">
+            <h2 style="font-size: 1.4em; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 15px;">EDUCACIÓN</h2>
+            <div style="margin-left: 20px;">
+                <p style="margin: 0; font-weight: 700;">{{DEGREE}}</p>
+                <p style="margin: 5px 0; font-style: italic;">{{INSTITUTION}}</p>
+                <p style="margin: 5px 0; color: #666;">{{START_DATE}} - {{END_DATE}}</p>
+            </div>
+        </section>
+
+        <!-- Experiencia -->
+        <section style="margin-bottom: 30px;">
+            <h2 style="font-size: 1.4em; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 15px;">EXPERIENCIA LABORAL</h2>
+            {{EXPERIENCE}}
+        </section>
+
+        <!-- Proyectos -->
+        <section style="margin-bottom: 30px;">
+            <h2 style="font-size: 1.4em; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 15px;">PROYECTOS</h2>
+            {{PROJECTS}}
+        </section>
+
+        <!-- Habilidades -->
+        <section>
+            <h2 style="font-size: 1.4em; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 15px;">HABILIDADES</h2>
+            <div style="margin-left: 20px;">
+                {{#if TECHNICAL_SKILLS}}
+                <p style="margin: 0 0 10px 0;"><strong>Habilidades Técnicas:</strong> {{TECHNICAL_SKILLS}}</p>
+                {{/if}}
+                {{#if SOFT_SKILLS}}
+                <p style="margin: 0 0 10px 0;"><strong>Habilidades Blandas:</strong> {{SOFT_SKILLS}}</p>
+                {{/if}}
+                {{#if LANGUAGES}}
+                <p style="margin: 0;"><strong>Idiomas:</strong> {{LANGUAGES}}</p>
+                {{/if}}
+            </div>
+        </section>
+    </div>
+
+    <style>
+        .experience-item, .project-item {
+            margin-bottom: 20px;
+            margin-left: 20px;
+        }
+        
+        .experience-item:last-child, .project-item:last-child {
+            margin-bottom: 0;
+        }
+        
+        .experience-item h4, .project-item h4 {
+            margin: 0 0 5px 0;
+            font-weight: 700;
+            font-size: 1.1em;
+        }
+        
+        .experience-item .role {
+            margin: 0 0 8px 0;
+            font-style: italic;
+            color: #333;
+        }
+        
+        .experience-item .description, .project-item .description {
+            margin: 0;
+            text-align: justify;
+        }
+        
+        .no-experience, .no-projects {
+            font-style: italic;
+            color: #666;
+            margin: 0 0 0 20px;
+        }
+    </style>
+</body>
+</html>

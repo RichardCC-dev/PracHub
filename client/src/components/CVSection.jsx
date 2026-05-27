@@ -46,12 +46,13 @@ const CVSection = ({ section, title, fields, data, isExperience, isProjects }) =
 
   const handleAcceptSuggestion = async () => {
     if (suggestion) {
-      Object.entries(suggestion.improved).forEach(([field, value]) => {
+      const improvedValues = suggestion.improved;
+      // Actualizar valores en el formulario
+      Object.entries(improvedValues).forEach(([field, value]) => {
         setValue(field, value);
       });
+      // El store ya guarda automáticamente al aceptar
       await acceptSectionSuggestion(section);
-      handleSubmit(onSubmit)();
-      clearSuggestion();
     }
   };
 

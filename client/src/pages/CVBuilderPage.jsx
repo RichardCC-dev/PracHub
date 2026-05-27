@@ -3,7 +3,7 @@ import CVWizard from '../components/CVWizard';
 const CVBuilderPage = () => {
   const handleGoBack = () => {
     // Cambiar la página directamente sin router
-    window.location.href = '/welcome';
+    globalThis.location.href = '/welcome';
   };
 
   return (
@@ -19,7 +19,7 @@ const CVBuilderPage = () => {
         </svg>
       </button>
 
-      <section className="grid min-h-screen lg:grid-cols-[0.9fr_1.1fr]">
+      <section className="grid min-h-screen lg:grid-cols-[0.4fr_1.6fr]">
         <aside className="hidden bg-emerald-950 p-12 text-white lg:flex lg:flex-col lg:justify-between">
           <div>
             <div className="inline-flex h-14 w-14 items-center justify-center rounded-2xl bg-white text-2xl font-black text-emerald-950">P</div>
@@ -32,8 +32,8 @@ const CVBuilderPage = () => {
           </div>
         </aside>
 
-        <div className="flex items-start justify-center px-5 py-10 overflow-y-auto">
-          <div className="w-full max-w-3xl">
+        <div className="flex items-start justify-center px-2 py-6 overflow-y-auto">
+          <div className="w-full max-w-7xl">
             <CVWizard />
           </div>
         </div>

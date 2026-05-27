@@ -39,10 +39,10 @@ const ExperienceSection = ({ section, title, data }) => {
 
   const handleAcceptSuggestion = async () => {
     if (suggestion && suggestion.improved?.items) {
-      setExperiences(suggestion.improved.items);
+      const improvedItems = suggestion.improved.items;
+      setExperiences(improvedItems);
+      // El store ya guarda automáticamente al aceptar
       await acceptSectionSuggestion(section);
-      handleSubmit(onSubmit)();
-      clearSuggestion();
     }
   };
 

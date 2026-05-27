@@ -39,10 +39,10 @@ const ProjectsSection = ({ section, title, data }) => {
 
   const handleAcceptSuggestion = async () => {
     if (suggestion && suggestion.improved?.items) {
-      setProjects(suggestion.improved.items);
+      const improvedItems = suggestion.improved.items;
+      setProjects(improvedItems);
+      // El store ya guarda automáticamente al aceptar
       await acceptSectionSuggestion(section);
-      handleSubmit(onSubmit)();
-      clearSuggestion();
     }
   };
 

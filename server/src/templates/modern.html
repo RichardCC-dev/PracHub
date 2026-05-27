@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CV Moderno - {{FULL_NAME}}</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body style="margin: 0; padding: 0; font-family: 'Inter', sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: #333;">
+    
+    <div style="max-width: 1200px; margin: 0 auto; background: white; min-height: 100vh; box-shadow: 0 0 50px rgba(0,0,0,0.1);">
+        
+        <!-- Header con gradiente moderno -->
+        <header style="background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%); padding: 40px 30px; color: white; position: relative; overflow: hidden;">
+            <div style="position: absolute; top: -30px; right: -30px; width: 120px; height: 120px; background: rgba(255,255,255,0.05); border-radius: 50%;"></div>
+            <div style="position: absolute; bottom: -20px; left: -20px; width: 100px; height: 100px; background: rgba(255,255,255,0.03); border-radius: 50%;"></div>
+            
+            <div style="position: relative; z-index: 1; display: flex; align-items: center; gap: 30px;">
+                <!-- Avatar profesional -->
+                <div style="width: 80px; height: 80px; background: linear-gradient(135deg, #3498db 0%, #2980b9 100%); border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 32px; font-weight: 600; box-shadow: 0 4px 15px rgba(0,0,0,0.2);">
+                    {{FULL_NAME_INITIAL}}
+                </div>
+                
+                <!-- Información personal -->
+                <div style="flex: 1;">
+                    <h1 style="margin: 0; font-size: 2em; font-weight: 600; text-shadow: 1px 1px 3px rgba(0,0,0,0.2);">{{FULL_NAME}}</h1>
+                    <div style="margin-top: 15px; font-size: 0.95em; line-height: 1.6; opacity: 0.9;">
+                        <p style="margin: 6px 0; display: flex; align-items: center; gap: 8px;">
+                            <span style="width: 16px; text-align: center;">📧</span> {{EMAIL}}
+                        </p>
+                        <p style="margin: 6px 0; display: flex; align-items: center; gap: 8px;">
+                            <span style="width: 16px; text-align: center;">📱</span> {{PHONE}}
+                        </p>
+                        {{#if LINKEDIN}}
+                        <p style="margin: 6px 0; display: flex; align-items: center; gap: 8px;">
+                            <span style="width: 16px; text-align: center;">💼</span> {{LINKEDIN}}
+                        </p>
+                        {{/if}}
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <div style="padding: 40px;">
+            <!-- Sección Superior: 2 Columnas para Educación y Habilidades -->
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 30px;">
+                <!-- Columna Izquierda Superior -->
+                <div>
+                    <!-- Educación -->
+                    <section style="background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%); padding: 25px; border-radius: 12px; border-left: 4px solid #3498db; box-shadow: 0 3px 10px rgba(52, 152, 219, 0.1);">
+                        <h2 style="color: #2c3e50; font-size: 1.2em; font-weight: 600; margin: 0 0 15px 0;">
+                            Educación
+                        </h2>
+                        <div style="font-size: 0.95em;">
+                            <p style="margin: 0; font-weight: 600; color: #2c3e50; font-size: 1.1em;">{{DEGREE}}</p>
+                            <p style="margin: 10px 0; color: #666; font-size: 1em;">{{INSTITUTION}}</p>
+                            <p style="margin: 10px 0 0 0; color: #888; font-size: 0.9em; display: flex; align-items: center; gap: 8px;">
+                                <span>📅</span> {{START_DATE}} - {{END_DATE}}
+                            </p>
+                        </div>
+                    </section>
+                    
+                    <!-- Idiomas -->
+                    <section style="background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%); padding: 25px; border-radius: 12px; border-left: 4px solid #3498db; box-shadow: 0 3px 10px rgba(52, 152, 219, 0.1); margin-top: 20px;">
+                        <h2 style="color: #2c3e50; font-size: 1.2em; font-weight: 600; margin: 0 0 15px 0;">
+                            Idiomas
+                        </h2>
+                        <div style="font-size: 0.95em;">
+                            {{#if LANGUAGES}}
+                            <p style="margin: 0; color: #555; line-height: 1.6;">{{LANGUAGES}}</p>
+                            {{else}}
+                            <p style="margin: 0; color: #888; font-style: italic;">No se han añadido idiomas aún</p>
+                            {{/if}}
+                        </div>
+                    </section>
+                </div>
+
+                <!-- Columna Derecha Superior -->
+                <div>
+                    <!-- Habilidades -->
+                    <section style="background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%); padding: 25px; border-radius: 12px; border-left: 4px solid #3498db; box-shadow: 0 3px 10px rgba(52, 152, 219, 0.1);">
+                        <h2 style="color: #2c3e50; font-size: 1.2em; font-weight: 600; margin: 0 0 15px 0;">
+                            Habilidades
+                        </h2>
+                        <div style="font-size: 0.95em;">
+                            {{#if TECHNICAL_SKILLS}}
+                            <div style="margin-bottom: 20px;">
+                                <p style="margin: 0 0 8px 0; font-weight: 600; color: #2c3e50;">
+                                    Técnicas
+                                </p>
+                                <p style="margin: 0; color: #555; line-height: 1.6;">{{TECHNICAL_SKILLS}}</p>
+                            </div>
+                            {{/if}}
+                            {{#if SOFT_SKILLS}}
+                            <div>
+                                <p style="margin: 0 0 8px 0; font-weight: 600; color: #2c3e50;">
+                                    Blandas
+                                </p>
+                                <p style="margin: 0; color: #555; line-height: 1.6;">{{SOFT_SKILLS}}</p>
+                            </div>
+                            {{/if}}
+                        </div>
+                    </section>
+                </div>
+            </div>
+
+            <!-- Espacio entre secciones -->
+            <div style="margin-bottom: 40px;"></div>
+
+            <!-- Sección Inferior: 1 Columna para Experiencia y Proyectos -->
+            <div>
+                <!-- Experiencia -->
+                <section class="experience-section" style="margin-bottom: 25px;">
+                    <h2 style="color: #2c3e50; font-size: 1.3em; font-weight: 600; margin: 0 0 20px 0;">
+                        Experiencia Laboral
+                    </h2>
+                    {{#if HAS_EXPERIENCES}}
+                        {{#each EXPERIENCES}}
+                        <div class="experience-item" style="margin-bottom: 20px; padding: 20px; background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%); border-radius: 10px; border-left: 4px solid #3498db; box-shadow: 0 3px 10px rgba(52, 152, 219, 0.1); page-break-inside: avoid; break-inside: avoid;">
+                            <h4 style="margin: 0 0 8px 0; color: #2c3e50; font-size: 1.1em; font-weight: 600;">{{this.role}}</h4>
+                            <div class="role" style="margin: 0 0 12px 0; color: #3498db; font-weight: 500; font-size: 0.95em;">{{this.company}}</div>
+                            <div class="description" style="margin: 0; color: #555; line-height: 1.5;">{{this.description}}</div>
+                        </div>
+                        {{/each}}
+                    {{else}}
+                        <div class="no-experience" style="color: #888; font-style: italic; text-align: center; padding: 20px; background: #f8f9fa; border-radius: 10px;">
+                            Sin experiencia laboral
+                        </div>
+                    {{/if}}
+                </section>
+
+                <!-- Proyectos -->
+                <section>
+                    <h2 style="color: #2c3e50; font-size: 1.3em; font-weight: 600; margin: 0 0 20px 0;">
+                        Proyectos
+                    </h2>
+                    {{#if HAS_PROJECTS}}
+                        {{#each PROJECTS_DATA}}
+                        <div class="project-item" style="margin-bottom: 20px; padding: 20px; background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%); border-radius: 10px; border-left: 4px solid #3498db; box-shadow: 0 3px 10px rgba(52, 152, 219, 0.1);">
+                            <h4 style="margin: 0 0 8px 0; color: #2c3e50; font-size: 1.1em; font-weight: 600;">{{this.title}}</h4>
+                            <div class="description" style="margin: 0; color: #555; line-height: 1.5;">{{this.description}}</div>
+                        </div>
+                        {{/each}}
+                    {{else}}
+                        <div class="no-projects" style="color: #888; font-style: italic; text-align: center; padding: 20px; background: #f8f9fa; border-radius: 10px;">
+                            Sin proyectos realizados
+                        </div>
+                    {{/if}}
+                </section>
+            </div>
+        </div>
+    </div>
+
+    <style>
+        .experience-item, .project-item {
+            page-break-inside: avoid;
+            break-inside: avoid;
+        }
+        
+        .experience-item:hover, .project-item:hover {
+            transform: translateY(-2px);
+        }
+        
+        .experience-item:last-child, .project-item:last-child {
+            margin-bottom: 0;
+        }
+
+        .experience-section {
+            page-break-inside: auto;
+            break-inside: auto;
+        }
+
+        .experience-section h2 {
+            page-break-after: avoid;
+            break-after: avoid;
+            page-break-inside: avoid;
+            break-inside: avoid;
+        }
+
+        section:not(.experience-section) {
+            page-break-inside: avoid;
+            break-inside: avoid;
+        }
+
+        h2 {
+            page-break-after: avoid;
+            break-after: avoid;
+        }
+
+        .experience-item .description {
+            page-break-inside: avoid;
+            break-inside: avoid;
+        }
+    </style>
+</body>
+</html>

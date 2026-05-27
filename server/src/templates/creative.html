@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CV - {{FULL_NAME}}</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+</head>
+<body style="font-family: 'Poppins', sans-serif; margin: 0; padding: 0; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh;">
+    <div style="max-width: 900px; margin: 40px auto; background: white; border-radius: 20px; overflow: hidden; box-shadow: 0 20px 40px rgba(0,0,0,0.1);">
+        
+        <!-- Sidebar -->
+        <aside style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); color: white; padding: 30px; text-align: center;">
+            <div style="width: 80px; height: 80px; background: white; border-radius: 50%; margin: 0 auto 20px; display: flex; align-items: center; justify-content: center; font-size: 2em; font-weight: 700; color: #f5576c;">
+                {{FULL_NAME_INITIAL}}
+            </div>
+            <h1 style="margin: 0; font-size: 1.5em; font-weight: 700;">{{FULL_NAME}}</h1>
+            <div style="margin-top: 15px; font-size: 0.9em; line-height: 1.5;">
+                <p style="margin: 6px 0;">📧 {{EMAIL}}</p>
+                <p style="margin: 6px 0;">📱 {{PHONE}}</p>
+                {{#if LINKEDIN}}
+                <p style="margin: 6px 0;">💼 {{LINKEDIN}}</p>
+                {{/if}}
+            </div>
+        </aside>
+
+        <div style="padding: 40px;">
+            <!-- Sección Superior: 2 Columnas para Educación y Habilidades -->
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 30px; margin-bottom: 5px;">
+                <!-- Columna Izquierda Superior -->
+                <div>
+                    <!-- Educación -->
+                    <section style="background: #f8f9ff; padding: 25px; border-radius: 15px; border-left: 4px solid #667eea;">
+                        <h2 style="color: #667eea; font-size: 1.2em; font-weight: 600; margin: 0 0 15px 0; display: flex; align-items: center;">
+                            <span style="margin-right: 8px;">🎓</span> Educación
+                        </h2>
+                        <div style="font-size: 0.95em;">
+                            <p style="margin: 0; font-weight: 600; color: #2c3e50;">{{DEGREE}}</p>
+                            <p style="margin: 8px 0; color: #666;">{{INSTITUTION}}</p>
+                            <p style="margin: 8px 0 0 0; color: #888; font-size: 0.9em;">📅 {{START_DATE}} - {{END_DATE}}</p>
+                        </div>
+                    </section>
+                </div>
+
+                <!-- Columna Derecha Superior -->
+                <div>
+                    <!-- Habilidades -->
+                    <section style="background: #f8f9ff; padding: 25px; border-radius: 15px; border-left: 4px solid #f5576c;">
+                        <h2 style="color: #f5576c; font-size: 1.2em; font-weight: 600; margin: 0 0 15px 0; display: flex; align-items: center;">
+                            <span style="margin-right: 8px;">⚡</span> Habilidades
+                        </h2>
+                        <div style="font-size: 0.95em;">
+                            {{#if TECHNICAL_SKILLS}}
+                            <div style="margin-bottom: 15px;">
+                                <p style="margin: 0 0 5px 0; font-weight: 600; color: #2c3e50;">🔧 Técnicas</p>
+                                <p style="margin: 0; color: #555;">{{TECHNICAL_SKILLS}}</p>
+                            </div>
+                            {{/if}}
+                            {{#if SOFT_SKILLS}}
+                            <div>
+                                <p style="margin: 0 0 5px 0; font-weight: 600; color: #2c3e50;">🤝 Blandas</p>
+                                <p style="margin: 0; color: #555;">{{SOFT_SKILLS}}</p>
+                            </div>
+                            {{/if}}
+                        </div>
+                    </section>
+                </div>
+            </div>
+
+            <!-- Sección Intermedia: Idiomas (1 columna) -->
+            <div style="margin-bottom: 30px;">
+                <!-- Idiomas -->
+                <section style="background: #f8f9ff; padding: 25px; border-radius: 15px; border-left: 4px solid #28a745;">
+                    <h2 style="color: #28a745; font-size: 1.2em; font-weight: 600; margin: 0 0 15px 0; display: flex; align-items: center;">
+                        <span style="margin-right: 8px;">🌍</span> Idiomas
+                    </h2>
+                    <div style="font-size: 0.95em;">
+                        {{#if LANGUAGES}}
+                        <p style="margin: 0; color: #555;">{{LANGUAGES}}</p>
+                        {{else}}
+                        <p style="margin: 0; color: #888; font-style: italic;">No se han añadido idiomas aún</p>
+                        {{/if}}
+                    </div>
+                </section>
+            </div>
+
+            <!-- Sección Inferior: 1 Columna para Experiencia y Proyectos -->
+            <div>
+                <!-- Experiencia -->
+                <section class="experience-section" style="margin-bottom: 30px;">
+                    <h2 style="color: #667eea; font-size: 1.3em; font-weight: 600; margin: 0 0 20px 0; display: flex; align-items: center;">
+                        <span style="margin-right: 8px;">💼</span> Experiencia Laboral
+                    </h2>
+                    {{#if HAS_EXPERIENCES}}
+                        {{#each EXPERIENCES}}
+                        <div class="experience-item">
+                            <h4>{{this.role}}</h4>
+                            <div class="role">{{this.company}}</div>
+                            <div class="description">{{this.description}}</div>
+                        </div>
+                        {{/each}}
+                    {{else}}
+                        <div class="no-experience">Sin experiencia laboral</div>
+                    {{/if}}
+                </section>
+
+                <!-- Proyectos -->
+                <section>
+                    <h2 style="color: #f5576c; font-size: 1.3em; font-weight: 600; margin: 0 0 20px 0; display: flex; align-items: center;">
+                        <span style="margin-right: 8px;">🚀</span> Proyectos
+                    </h2>
+                    {{#if HAS_PROJECTS}}
+                        {{#each PROJECTS_DATA}}
+                        <div class="project-item">
+                            <h4>{{this.title}}</h4>
+                            <div class="description">{{this.description}}</div>
+                        </div>
+                        {{/each}}
+                    {{else}}
+                        <div class="no-projects">Sin proyectos realizados</div>
+                    {{/if}}
+                </section>
+            </div>
+        </div>
+    </div>
+
+    <style>
+        .experience-item, .project-item {
+            margin-bottom: 25px;
+            padding: 20px;
+            background: #f8f9ff;
+            border-radius: 15px;
+            border-left: 4px solid #667eea;
+            transition: transform 0.2s ease;
+            /* Permitir corte individual pero evitar cortes dentro del contenido */
+            page-break-inside: auto;
+            break-inside: auto;
+        }
+        
+        .project-item {
+            border-left-color: #f5576c;
+        }
+        
+        .experience-item:hover, .project-item:hover {
+            transform: translateY(-2px);
+        }
+        
+        .experience-item:last-child, .project-item:last-child {
+            margin-bottom: 0;
+        }
+        
+        .experience-item h4, .project-item h4 {
+            margin: 0 0 8px 0;
+            color: #2c3e50;
+            font-size: 1.1em;
+            font-weight: 600;
+            page-break-after: avoid; /* Evitar corte después del título */
+            break-after: avoid;
+        }
+        
+        .experience-item .role {
+            margin: 0 0 12px 0;
+            color: #667eea;
+            font-weight: 500;
+            font-size: 0.95em;
+        }
+        
+        .experience-item .description, .project-item .description {
+            margin: 0;
+            color: #555;
+            line-height: 1.6;
+        }
+        
+        .no-experience, .no-projects {
+            color: #888;
+            font-style: italic;
+            text-align: center;
+            padding: 20px;
+            background: #f8f9ff;
+            border-radius: 15px;
+        }
+
+        /* Permitir corte de sección de experiencia pero mantener título con primer elemento */
+        .experience-section {
+            page-break-inside: auto;
+            break-inside: auto;
+        }
+
+        /* Evitar corte de otras secciones importantes */
+        section:not(.experience-section) {
+            page-break-inside: avoid;
+            break-inside: avoid;
+        }
+
+        /* Evitar corte de títulos */
+        h2 {
+            page-break-after: avoid;
+            break-after: avoid;
+        }
+
+        /* Evitar corte dentro de la descripción de experiencia */
+        .experience-item .description {
+            page-break-inside: avoid;
+            break-inside: avoid;
+        }
+    </style>
+</body>
+</html>

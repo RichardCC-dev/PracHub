@@ -8,9 +8,11 @@ const CertificationsSection = ({ section, title, data }) => {
   const saveTimeoutRef = useRef(null);
 
   // Sincronizar cuando cambian los datos externos (ej: restaurar versión)
+  const dataItemsKey = JSON.stringify(data?.items);
   useEffect(() => {
     setCertifications(data?.items || []);
-  }, [data]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [dataItemsKey]);
 
   const debouncedSave = useCallback((items) => {
     if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);

@@ -11,13 +11,15 @@ const EducationSection = ({ section, title, data }) => {
   const saveTimeoutRef = useRef(null);
 
   // Sincronizar cuando cambian los datos externos (ej: restaurar versión)
+  const dataItemsKey = JSON.stringify(data?.items);
   useEffect(() => {
     setEntries(
       data?.items?.length > 0
         ? data.items
         : [{ degree: '', institution: '', startDate: '', endDate: '', courses: '' }]
     );
-  }, [data]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [dataItemsKey]);
 
   const debouncedSave = useCallback((items) => {
     if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);

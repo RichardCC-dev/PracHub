@@ -16,9 +16,11 @@ const SkillsSection = ({ section, title, data }) => {
   const saveTimeoutRef = useRef(null);
 
   // Sincronizar cuando cambian los datos externos (ej: restaurar versión)
+  const dataKey = JSON.stringify(data);
   useEffect(() => {
     setSkills(normalizeSkills(data));
-  }, [data]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [dataKey]);
 
   const debouncedSave = useCallback((state) => {
     if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);

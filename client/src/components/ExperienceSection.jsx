@@ -8,9 +8,11 @@ const ExperienceSection = ({ section, title, data }) => {
   const saveTimeoutRef = useRef(null);
 
   // Sincronizar cuando cambian los datos externos (ej: restaurar versión)
+  const dataItemsKey = JSON.stringify(data?.items);
   useEffect(() => {
     setExperiences(data?.items || []);
-  }, [data]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [dataItemsKey]);
 
   const showSuggestion = activeSection === section && suggestion;
 

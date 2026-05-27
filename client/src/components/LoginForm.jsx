@@ -5,6 +5,7 @@ import { sanitizePayload } from '../utils/security';
 
 const LoginForm = ({ onForgotPassword, onGoToRegister, onLoginSuccess }) => {
   const [successMessage, setSuccessMessage] = useState('');
+  const [rememberMe, setRememberMe] = useState(false);
   const { login, isLoading, error } = useAuthStore();
   const {
     register,
@@ -14,9 +15,9 @@ const LoginForm = ({ onForgotPassword, onGoToRegister, onLoginSuccess }) => {
 
   const onSubmit = async (values) => {
     setSuccessMessage('');
-    const result = await login(sanitizePayload(values));
+    const result = await login(sanitizePayload(values), rememberMe);
     setSuccessMessage(`${result.message} Redirigiendo a tu panel...`);
-    setTimeout(onLoginSuccess, 800);
+    setTimeout(() => onLoginSuccess(result.user), 800);
   };
 
   return (
@@ -66,6 +67,16 @@ const LoginForm = ({ onForgotPassword, onGoToRegister, onLoginSuccess }) => {
           {...register('password', { required: 'Ingresa tu contraseña.' })}
         />
         {errors.password && <span className="text-xs text-red-600">{errors.password.message}</span>}
+      </label>
+
+      <label className="flex items-center gap-3 cursor-pointer select-none">
+        <input
+          type="checkbox"
+          checked={rememberMe}
+          onChange={(e) => setRememberMe(e.target.checked)}
+          className="h-4 w-4 rounded border-gray-300 text-emerald-700 accent-emerald-700 cursor-pointer"
+        />
+        <span className="text-sm text-gray-600">Mantener sesión iniciada</span>
       </label>
 
       <button

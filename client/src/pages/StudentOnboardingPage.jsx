@@ -39,19 +39,24 @@ const StudentOnboardingPage = ({ onLoginSuccess }) => {
   const view = ROUTE_TO_VIEW[location.pathname] || 'login';
   const copy = ASIDE_COPY[view] || ASIDE_COPY.login;
 
+  const handleLoginSuccess = (user) => {
+    const target = user?.role === 'admin' ? '/admin' : '/dashboard';
+    navigate(target, { replace: true });
+  };
+
   const formByView = {
     login: (
       <LoginForm
         onForgotPassword={() => navigate('/forgot-password')}
         onGoToRegister={() => navigate('/register/student')}
-        onLoginSuccess={onLoginSuccess}
+        onLoginSuccess={handleLoginSuccess}
       />
     ),
     register: (
       <StudentRegistrationForm
         onForgotPassword={() => navigate('/forgot-password')}
         onGoToLogin={() => navigate('/login')}
-        onLoginSuccess={onLoginSuccess}
+        onLoginSuccess={handleLoginSuccess}
       />
     ),
     forgot: <ForgotPasswordForm onBackToRegister={() => navigate(-1)} />,

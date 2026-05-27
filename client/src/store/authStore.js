@@ -7,26 +7,51 @@ import {
   resetPassword,
 } from '../services/api';
 
+const KEY_TOKEN = 'prachub_token';
+const KEY_USER = 'prachub_user';
+const KEY_REMEMBER = 'prachub_remember';
+
+const readStorage = (key) => {
+  try {
+    return localStorage.getItem(key) ?? sessionStorage.getItem(key);
+  } catch { return null; }
+};
+
+const saveSession = (token, user, remember) => {
+  const store = remember ? localStorage : sessionStorage;
+  const clear = remember ? sessionStorage : localStorage;
+  store.setItem(KEY_TOKEN, token);
+  store.setItem(KEY_USER, JSON.stringify(user));
+  if (remember) localStorage.setItem(KEY_REMEMBER, '1');
+  clear.removeItem(KEY_TOKEN);
+  clear.removeItem(KEY_USER);
+};
+
+const clearSession = () => {
+  [localStorage, sessionStorage].forEach(s => {
+    s.removeItem(KEY_TOKEN);
+    s.removeItem(KEY_USER);
+  });
+  localStorage.removeItem(KEY_REMEMBER);
+};
+
 const getStoredUser = () => {
   try {
-    const user = localStorage.getItem('prachub_user');
-    return user ? JSON.parse(user) : null;
-  } catch {
-    return null;
-  }
+    const raw = readStorage(KEY_USER);
+    return raw ? JSON.parse(raw) : null;
+  } catch { return null; }
 };
 
 const useAuthStore = create((set) => ({
   user: getStoredUser(),
-  token: localStorage.getItem('prachub_token'),
+  token: readStorage(KEY_TOKEN),
   isLoading: false,
   error: null,
-  login: async (payload) => {
+  login: async (payload, remember = false) => {
     set({ isLoading: true, error: null });
     try {
       const data = await loginUser(payload);
-      localStorage.setItem('prachub_token', data.token);
-      localStorage.setItem('prachub_user', JSON.stringify(data.user));
+      saveSession(data.token, data.user, remember);
       set({ user: data.user, token: data.token, isLoading: false });
       return data;
     } catch (error) {
@@ -36,11 +61,9 @@ const useAuthStore = create((set) => ({
   },
   registerStudent: async (payload) => {
     set({ isLoading: true, error: null });
-
     try {
       const data = await registerStudent(payload);
-      localStorage.setItem('prachub_token', data.token);
-      localStorage.setItem('prachub_user', JSON.stringify(data.user));
+      saveSession(data.token, data.user, false);
       set({ user: data.user, token: data.token, isLoading: false });
       return data;
     } catch (error) {
@@ -50,11 +73,9 @@ const useAuthStore = create((set) => ({
   },
   registerCompany: async (payload) => {
     set({ isLoading: true, error: null });
-
     try {
       const data = await registerCompany(payload);
-      localStorage.setItem('prachub_token', data.token);
-      localStorage.setItem('prachub_user', JSON.stringify(data.user));
+      saveSession(data.token, data.user, false);
       set({ user: data.user, token: data.token, isLoading: false });
       return data;
     } catch (error) {
@@ -76,11 +97,9 @@ const useAuthStore = create((set) => ({
   },
   resetPassword: async (payload) => {
     set({ isLoading: true, error: null });
-
     try {
       const data = await resetPassword(payload);
-      localStorage.setItem('prachub_token', data.token);
-      localStorage.setItem('prachub_user', JSON.stringify(data.user));
+      saveSession(data.token, data.user, false);
       set({ user: data.user, token: data.token, isLoading: false });
       return data;
     } catch (error) {
@@ -89,12 +108,12 @@ const useAuthStore = create((set) => ({
     }
   },
   logout: () => {
-    localStorage.removeItem('prachub_token');
-    localStorage.removeItem('prachub_user');
+    clearSession();
     set({ user: null, token: null });
   },
   setUser: (user) => {
-    localStorage.setItem('prachub_user', JSON.stringify(user));
+    const remember = !!localStorage.getItem(KEY_REMEMBER);
+    saveSession(readStorage(KEY_TOKEN) || '', user, remember);
     set({ user });
   },
 }));

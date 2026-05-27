@@ -39,18 +39,23 @@ const CompanyOnboardingPage = ({ onLoginSuccess }) => {
   const view = ROUTE_TO_VIEW[location.pathname] || 'register';
   const copy = ASIDE_COPY[view] || ASIDE_COPY.register;
 
+  const handleLoginSuccess = (user) => {
+    const target = user?.role === 'admin' ? '/admin' : '/dashboard';
+    navigate(target, { replace: true });
+  };
+
   const formByView = {
     login: (
       <LoginForm
         onForgotPassword={() => navigate('/forgot-password')}
         onGoToRegister={() => navigate('/register/company')}
-        onLoginSuccess={onLoginSuccess}
+        onLoginSuccess={handleLoginSuccess}
       />
     ),
     register: (
       <CompanyRegistrationForm
         onGoToLogin={() => navigate('/login')}
-        onLoginSuccess={onLoginSuccess}
+        onLoginSuccess={handleLoginSuccess}
       />
     ),
     forgot: <ForgotPasswordForm onBackToRegister={() => navigate(-1)} />,

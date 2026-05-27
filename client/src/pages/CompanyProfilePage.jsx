@@ -5,7 +5,17 @@ import { getCompanyProfile } from '../services/api';
 
 const CompanyProfilePage = ({ onBack }) => {
   const { user, token, setUser } = useAuthStore();
-  const [loading, setLoading] = useState(true);
+  const normalizeCompany = (c) => !c ? null : ({
+    ...c,
+    cultureTags: Array.isArray(c?.cultureTags)
+      ? c.cultureTags
+      : typeof c?.cultureTags === 'string'
+        ? (() => { try { return JSON.parse(c.cultureTags || '[]'); } catch { return []; } })()
+        : [],
+  });
+
+  const [company, setCompany] = useState(normalizeCompany(user?.companyProfile || null));
+  const [loading, setLoading] = useState(!user?.companyProfile);
   const [error, setError] = useState(null);
 
   useEffect(() => {
@@ -13,9 +23,11 @@ const CompanyProfilePage = ({ onBack }) => {
       if (!token) return;
       
       try {
+        setLoading(true);
         const data = await getCompanyProfile(token);
         if (data.user) {
           setUser(data.user);
+          setCompany(normalizeCompany(data.user.companyProfile));
         }
       } catch (err) {
         setError(err.message);
@@ -30,6 +42,7 @@ const CompanyProfilePage = ({ onBack }) => {
   const handleUpdate = (updatedData) => {
     if (updatedData.user) {
       setUser(updatedData.user);
+      setCompany(normalizeCompany(updatedData.user.companyProfile));
     }
   };
 
@@ -59,8 +72,6 @@ const CompanyProfilePage = ({ onBack }) => {
       </div>
     );
   }
-
-  const company = user?.companyProfile;
 
   if (!company) {
     return (

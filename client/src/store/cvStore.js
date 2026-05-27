@@ -4,6 +4,8 @@ import { getResume, updateResumeSection, improveField, improveSection } from '..
 const useCVStore = create((set) => ({
   resume: null,
   isLoading: false,
+  isSaving: false,
+  lastSaved: null,
   error: null,
   suggestion: null,
   activeSection: null,
@@ -20,12 +22,12 @@ const useCVStore = create((set) => ({
   },
 
   updateSection: async (section, payload) => {
-    set({ isLoading: true, error: null });
+    set({ isSaving: true, error: null });
     try {
       const data = await updateResumeSection(section, payload);
-      set({ resume: data, isLoading: false });
+      set({ resume: data, isSaving: false, lastSaved: new Date() });
     } catch (error) {
-      set({ error: error.message, isLoading: false });
+      set({ error: error.message, isSaving: false });
       throw error;
     }
   },

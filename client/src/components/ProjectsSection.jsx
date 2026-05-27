@@ -1,35 +1,36 @@
-import { useState } from 'react';
-import { useForm } from 'react-hook-form';
+import { useState, useRef, useCallback } from 'react';
 import CVSuggestion from './CVSuggestion';
 import useCVStore from '../store/cvStore';
 
 const ProjectsSection = ({ section, title, data }) => {
   const { updateSection, requestSectionSuggestion, acceptSectionSuggestion, clearSuggestion, suggestion, isLoading, activeSection } = useCVStore();
   const [projects, setProjects] = useState(data?.items || []);
-  const { handleSubmit } = useForm();
+  const saveTimeoutRef = useRef(null);
 
   const showSuggestion = activeSection === section && suggestion;
 
-  const onSubmit = async (values) => {
-    const updatedData = { items: projects };
-    await updateSection(section, updatedData);
-  };
+  const debouncedSave = useCallback((items) => {
+    if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
+    saveTimeoutRef.current = setTimeout(() => {
+      updateSection(section, { items });
+    }, 800);
+  }, [section, updateSection]);
 
   const addProject = () => {
     setProjects([...projects, { title: '', description: '' }]);
   };
 
-  const removeProject = (index) => {
+  const removeProject = async (index) => {
     const updated = projects.filter((_, i) => i !== index);
     setProjects(updated);
-    handleSubmit(onSubmit)();
+    await updateSection(section, { items: updated });
   };
 
   const updateProject = (index, field, value) => {
     const updated = [...projects];
-    updated[index][field] = value;
+    updated[index] = { ...updated[index], [field]: value };
     setProjects(updated);
-    handleSubmit(onSubmit)();
+    debouncedSave(updated);
   };
 
   const handleRequestSectionSuggestion = async () => {
@@ -38,10 +39,10 @@ const ProjectsSection = ({ section, title, data }) => {
 
   const handleAcceptSuggestion = async () => {
     if (suggestion && suggestion.improved?.items) {
-      setProjects(suggestion.improved.items);
-      await acceptSectionSuggestion(section);
-      handleSubmit(onSubmit)();
+      const improved = suggestion.improved.items;
+      setProjects(improved);
       clearSuggestion();
+      await updateSection(section, { items: improved });
     }
   };
 
@@ -95,15 +96,13 @@ const ProjectsSection = ({ section, title, data }) => {
             <div key={index} className="border border-gray-200 rounded-2xl p-6">
               <div className="flex justify-between items-center mb-4">
                 <h3 className="text-lg font-semibold text-gray-950">Proyecto {index + 1}</h3>
-                {projects.length > 1 && (
-                  <button
-                    type="button"
-                    onClick={() => removeProject(index)}
-                    className="text-red-600 hover:text-red-700 text-sm font-medium"
-                  >
-                    Eliminar
-                  </button>
-                )}
+                <button
+                  type="button"
+                  onClick={() => removeProject(index)}
+                  className="text-red-600 hover:text-red-700 text-sm font-medium"
+                >
+                  Eliminar
+                </button>
               </div>
               <div className="space-y-4">
                 <div>

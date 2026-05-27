@@ -1,4 +1,5 @@
-import { useMemo, useState } from 'react';
+import { useMemo } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import ForgotPasswordForm from '../components/ForgotPasswordForm';
 import LoginForm from '../components/LoginForm';
 import ResetPasswordForm from '../components/ResetPasswordForm';
@@ -23,32 +24,37 @@ const ASIDE_COPY = {
   },
 };
 
-const CompanyOnboardingPage = ({ initialView = 'register', onGoHome, onLoginSuccess }) => {
-  const resetToken = useMemo(() => new URLSearchParams(window.location.search).get('resetToken'), []);
-  const [view, setView] = useState(resetToken ? 'reset' : initialView);
+const ROUTE_TO_VIEW = {
+  '/login': 'login',
+  '/register/company': 'register',
+  '/forgot-password': 'forgot',
+  '/reset-password': 'reset',
+};
 
-  const clearToken = () => window.history.replaceState({}, '', window.location.pathname);
+const CompanyOnboardingPage = ({ onLoginSuccess }) => {
+  const navigate = useNavigate();
+  const location = useLocation();
+  const resetToken = useMemo(() => new URLSearchParams(window.location.search).get('token'), []);
 
-  const goTo = (v) => { clearToken(); setView(v); };
-
+  const view = ROUTE_TO_VIEW[location.pathname] || 'register';
   const copy = ASIDE_COPY[view] || ASIDE_COPY.register;
 
   const formByView = {
     login: (
       <LoginForm
-        onForgotPassword={() => goTo('forgot')}
-        onGoToRegister={() => goTo('register')}
+        onForgotPassword={() => navigate('/forgot-password')}
+        onGoToRegister={() => navigate('/register/company')}
         onLoginSuccess={onLoginSuccess}
       />
     ),
     register: (
       <CompanyRegistrationForm
-        onGoToLogin={() => goTo('login')}
+        onGoToLogin={() => navigate('/login')}
         onLoginSuccess={onLoginSuccess}
       />
     ),
-    forgot: <ForgotPasswordForm onBackToRegister={() => goTo(initialView)} />,
-    reset: <ResetPasswordForm token={resetToken} onBackToRegister={() => goTo('login')} />,
+    forgot: <ForgotPasswordForm onBackToRegister={() => navigate(-1)} />,
+    reset: <ResetPasswordForm token={resetToken} onBackToRegister={() => navigate('/login')} />,
   };
 
   return (
@@ -57,17 +63,13 @@ const CompanyOnboardingPage = ({ initialView = 'register', onGoHome, onLoginSucc
 
         <aside className="hidden bg-emerald-950 p-12 text-white lg:flex lg:flex-col lg:justify-between">
           <div>
-            {onGoHome ? (
-              <button
-                onClick={onGoHome}
-                className="inline-flex h-14 w-14 items-center justify-center rounded-2xl bg-white text-2xl font-black text-emerald-950 transition hover:bg-emerald-50"
-                title="Volver al inicio"
-              >
-                P
-              </button>
-            ) : (
-              <div className="inline-flex h-14 w-14 items-center justify-center rounded-2xl bg-white text-2xl font-black text-emerald-950">P</div>
-            )}
+            <button
+              onClick={() => navigate('/')}
+              className="inline-flex h-14 w-14 items-center justify-center rounded-2xl bg-white text-2xl font-black text-emerald-950 transition hover:bg-emerald-50"
+              title="Volver al inicio"
+            >
+              P
+            </button>
             <h2 className="mt-10 text-4xl font-bold leading-tight lg:text-5xl">{copy.headline}</h2>
             <p className="mt-6 max-w-md text-lg text-emerald-50/80">{copy.sub}</p>
           </div>

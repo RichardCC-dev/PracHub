@@ -1,4 +1,5 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
+import { BrowserRouter, Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-dom';
 import HomePage from './pages/HomePage';
 import StudentOnboardingPage from './pages/StudentOnboardingPage';
 import CompanyOnboardingPage from './pages/CompanyOnboardingPage';
@@ -7,200 +8,175 @@ import CompanyProfilePage from './pages/CompanyProfilePage';
 import useAuthStore from './store/authStore';
 import CVBuilderPage from './pages/CVBuilderPage';
 
-const App = () => {
-  const { user, token, logout, setUser } = useAuthStore();
+const PrivateRoute = ({ children }) => {
+  const { token, user } = useAuthStore();
+  const location = useLocation();
+  if (!token || !user) return <Navigate to="/" replace state={{ from: location }} />;
+  return children;
+};
+
+const CompanyRoute = ({ children }) => {
+  const { token, user } = useAuthStore();
+  if (!token || !user) return <Navigate to="/" replace />;
+  if (user.role !== 'company') return <Navigate to="/dashboard" replace />;
+  return children;
+};
+
+const VerifyEmailPage = () => {
+  const { setUser } = useAuthStore();
+  const navigate = useNavigate();
   const searchParams = useMemo(() => new URLSearchParams(window.location.search), []);
-  const hasVerified = useRef(false);
-
-  const resetToken = searchParams.get('resetToken');
   const verifyToken = searchParams.get('token');
-
-  const [page, setPage] = useState(() => {
-    const path = window.location.pathname;
-    if (path === '/cv-builder') {
-      if (token && user) return 'cv-builder';
-      return 'home';
-    }
-    if (resetToken) return 'auth';
-    if (token && user) return 'welcome';
-    return 'home';
-  });
-
-  const [authInitialView, setAuthInitialView] = useState(resetToken ? 'reset' : 'login');
-  const [userType, setUserType] = useState('student');
-  const [isVerifying, setIsVerifying] = useState(!!verifyToken);
-  const [verifyError, setVerifyError] = useState(null);
-  const [verifySuccess, setVerifySuccess] = useState(false);
-  const [hasProcessedToken, setHasProcessedToken] = useState(false);
+  const hasVerified = useRef(false);
+  const [status, setStatus] = useMemo(() => {
+    const s = { state: 'verifying', error: null };
+    return [s, (v) => Object.assign(s, v)];
+  }, []);
+  const [, forceUpdate] = useEffect(() => {}, []);
 
   useEffect(() => {
-    if (verifyToken && !hasVerified.current) {
-      hasVerified.current = true;
-
-      const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:4000/api';
-      const verifyEndpoints = [
-        `${apiUrl}/auth/verify-email/${verifyToken}`,
-        `${apiUrl}/companies/verify-email/${verifyToken}`,
-      ];
-
-      const tryVerify = async () => {
-        for (const endpoint of verifyEndpoints) {
-          console.log('[App] Intentando verificar en:', endpoint);
-          try {
-            const res = await fetch(endpoint);
-            console.log('[App] Respuesta status:', res.status);
-            if (res.ok) {
-              const data = await res.json();
-              console.log('[App] Datos recibidos:', data);
-              if (data.token && data.user) {
-                localStorage.setItem('prachub_token', data.token);
-                setUser(data.user);
-                useAuthStore.setState({ token: data.token });
-                console.log('[App] Verificación exitosa');
-                return { success: true };
-              }
-            } else {
-              const errorText = await res.text();
-              console.log('[App] Error en respuesta:', errorText);
+    if (!verifyToken || hasVerified.current) return;
+    hasVerified.current = true;
+    const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:4000/api';
+    const endpoints = [
+      `${apiUrl}/auth/verify-email/${verifyToken}`,
+      `${apiUrl}/companies/verify-email/${verifyToken}`,
+    ];
+    (async () => {
+      for (const endpoint of endpoints) {
+        try {
+          const res = await fetch(endpoint);
+          if (res.ok) {
+            const data = await res.json();
+            if (data.token && data.user) {
+              localStorage.setItem('prachub_token', data.token);
+              setUser(data.user);
+              useAuthStore.setState({ token: data.token });
+              window.history.replaceState({}, '', '/verify-email');
+              navigate('/dashboard', { replace: true });
+              return;
             }
-          } catch (err) {
-            console.log('[App] Error en fetch:', err.message);
           }
-        }
-        return { success: false, error: 'No se pudo verificar el correo. El enlace puede haber expirado.' };
-      };
+        } catch {}
+      }
+      navigate('/verify-email?error=1', { replace: true });
+    })();
+  }, [verifyToken, setUser, navigate]);
 
-      tryVerify()
-        .then((result) => {
-          if (result.success) {
-            setVerifyError(null);
-            setVerifySuccess(true);
-          } else {
-            setVerifyError(result.error);
-          }
-        })
-        .catch((err) => setVerifyError(err.message))
-        .finally(() => {
-          setIsVerifying(false);
-          window.history.replaceState({}, '', window.location.pathname);
-        });
-    }
-  }, [verifyToken, setUser]);
+  const hasError = searchParams.get('error');
 
-  const goToAuth = (view, type = 'student') => {
-    setAuthInitialView(view);
-    setUserType(type);
-    setPage('auth');
-  };
-
-  const handleLoginSuccess = () => setPage('welcome');
-  const handleLogout = () => {
-    setPage('home');
-  };
-  
-  const goToCVBuilder = () => setPage('cv-builder');
-
-  // Pantalla de verificación de email - solo mostrar si hay token y no hemos procesado la navegación
-  if ((verifyToken || isVerifying || verifySuccess || verifyError) && !hasProcessedToken) {
-    return (
-      <main className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="w-full max-w-md p-8">
-          {/* Éxito - mostrar primero si existe */}
-          {verifySuccess ? (
-            <div className="text-center space-y-4">
-              <div className="inline-flex h-16 w-16 items-center justify-center rounded-full bg-emerald-100">
-                <svg className="h-8 w-8 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
-                </svg>
-              </div>
-              <h1 className="text-2xl font-bold text-gray-950">¡Correo verificado!</h1>
-              <p className="text-gray-600">Tu correo ha sido verificado correctamente.</p>
-              <button
-                onClick={() => {
-                  setVerifySuccess(false);
-                  setHasProcessedToken(true);
-                  setPage('welcome');
-                }}
-                className="mt-4 rounded-2xl bg-emerald-800 px-5 py-3 font-semibold text-white transition hover:bg-emerald-700"
-              >
-                Ir al panel
-              </button>
-            </div>
-          ) : /* Error - mostrar si existe */ verifyError ? (
-            <div className="text-center space-y-4">
-              <div className="inline-flex h-16 w-16 items-center justify-center rounded-full bg-red-100">
-                <svg className="h-8 w-8 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path>
-                </svg>
-              </div>
-              <h1 className="text-2xl font-bold text-gray-950">Error de verificación</h1>
-              <p className="text-gray-600">{verifyError}</p>
-              <button
-                onClick={() => {
-                  setVerifyError(null);
-                  setHasProcessedToken(true);
-                  setPage('home');
-                }}
-                className="mt-4 rounded-2xl bg-emerald-800 px-5 py-3 font-semibold text-white transition hover:bg-emerald-700"
-              >
-                Volver al inicio
-              </button>
-            </div>
-          ) : /* Verificando - default */ (
-            <div className="text-center space-y-4">
-              <div className="inline-flex h-16 w-16 items-center justify-center rounded-full bg-emerald-100">
-                <svg className="h-8 w-8 animate-spin text-emerald-700" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                </svg>
-              </div>
-              <h1 className="text-2xl font-bold text-gray-950">Verificando tu correo...</h1>
-              <p className="text-gray-600">Por favor espera un momento.</p>
-            </div>
-          )}
+  if (hasError) return (
+    <main className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="text-center space-y-4 max-w-md p-8">
+        <div className="inline-flex h-16 w-16 items-center justify-center rounded-full bg-red-100">
+          <svg className="h-8 w-8 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" /></svg>
         </div>
-      </main>
-    );
-  }
-
-  // Lógica de ruteo unificada
-  if (page === 'welcome' && token && user) {
-    return (
-      <WelcomePage
-        onLogout={handleLogout}
-        onEditProfile={() => setPage('company-profile')}
-        onGoToCVBuilder={goToCVBuilder}
-      />
-    );
-  }
-
-  if (page === 'company-profile' && token && user?.role === 'company') {
-    return <CompanyProfilePage onBack={() => setPage('welcome')} />;
-  }
-
-  if (page === 'cv-builder' && token && user) {
-    return <CVBuilderPage />;
-  }
-
-  if (page === 'home') {
-    return (
-      <HomePage
-        onLogin={() => goToAuth('login')}
-        onRegisterStudent={() => goToAuth('register', 'student')}
-        onRegisterCompany={() => goToAuth('register', 'company')}
-      />
-    );
-  }
-
-  const OnboardingPage = userType === 'company' ? CompanyOnboardingPage : StudentOnboardingPage;
+        <h1 className="text-2xl font-bold text-gray-950">Error de verificación</h1>
+        <p className="text-gray-600">El enlace puede haber expirado o ya fue usado.</p>
+        <button onClick={() => navigate('/')} className="mt-4 rounded-2xl bg-emerald-800 px-5 py-3 font-semibold text-white transition hover:bg-emerald-700">Volver al inicio</button>
+      </div>
+    </main>
+  );
 
   return (
-    <OnboardingPage
-      initialView={authInitialView}
-      onGoHome={() => setPage('home')}
-      onLoginSuccess={handleLoginSuccess}
-    />
+    <main className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="text-center space-y-4 max-w-md p-8">
+        <div className="inline-flex h-16 w-16 items-center justify-center rounded-full bg-emerald-100">
+          <svg className="h-8 w-8 animate-spin text-emerald-700" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+          </svg>
+        </div>
+        <h1 className="text-2xl font-bold text-gray-950">Verificando tu correo...</h1>
+        <p className="text-gray-600">Por favor espera un momento.</p>
+      </div>
+    </main>
   );
 };
+
+const AppRoutes = () => {
+  const { token, user } = useAuthStore();
+  const navigate = useNavigate();
+
+  return (
+    <Routes>
+      {/* Pública: home */}
+      <Route path="/" element={
+        token && user ? <Navigate to="/dashboard" replace /> :
+        <HomePage
+          onLogin={() => navigate('/login')}
+          onRegisterStudent={() => navigate('/register/student')}
+          onRegisterCompany={() => navigate('/register/company')}
+        />
+      } />
+
+      {/* Auth: login */}
+      <Route path="/login" element={
+        token && user ? <Navigate to="/dashboard" replace /> :
+        <StudentOnboardingPage onLoginSuccess={() => navigate('/dashboard', { replace: true })} />
+      } />
+
+      {/* Auth: olvidé contraseña */}
+      <Route path="/forgot-password" element={
+        token && user ? <Navigate to="/dashboard" replace /> :
+        <StudentOnboardingPage onLoginSuccess={() => navigate('/dashboard', { replace: true })} />
+      } />
+
+      {/* Auth: reset password */}
+      <Route path="/reset-password" element={
+        <StudentOnboardingPage onLoginSuccess={() => navigate('/dashboard', { replace: true })} />
+      } />
+
+      {/* Auth: registro estudiante */}
+      <Route path="/register/student" element={
+        token && user ? <Navigate to="/dashboard" replace /> :
+        <StudentOnboardingPage onLoginSuccess={() => navigate('/dashboard', { replace: true })} />
+      } />
+
+      {/* Auth: registro empresa */}
+      <Route path="/register/company" element={
+        token && user ? <Navigate to="/dashboard" replace /> :
+        <CompanyOnboardingPage onLoginSuccess={() => navigate('/dashboard', { replace: true })} />
+      } />
+
+      {/* Verificación de email */}
+      <Route path="/verify-email" element={<VerifyEmailPage />} />
+
+      {/* Dashboard (protegido) */}
+      <Route path="/dashboard" element={
+        <PrivateRoute>
+          <WelcomePage
+            onLogout={() => navigate('/', { replace: true })}
+            onEditProfile={() => navigate('/company/profile')}
+            onGoToCVBuilder={() => navigate('/cv-builder')}
+          />
+        </PrivateRoute>
+      } />
+
+      {/* Constructor de CV (protegido) */}
+      <Route path="/cv-builder" element={
+        <PrivateRoute>
+          <CVBuilderPage onBack={() => navigate('/dashboard')} />
+        </PrivateRoute>
+      } />
+
+      {/* Perfil empresa (protegido, solo company) */}
+      <Route path="/company/profile" element={
+        <CompanyRoute>
+          <CompanyProfilePage onBack={() => navigate('/dashboard')} />
+        </CompanyRoute>
+      } />
+
+      {/* Fallback */}
+      <Route path="*" element={<Navigate to="/" replace />} />
+    </Routes>
+  );
+};
+
+const App = () => (
+  <BrowserRouter>
+    <AppRoutes />
+  </BrowserRouter>
+);
 
 export default App;

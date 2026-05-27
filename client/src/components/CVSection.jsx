@@ -2,9 +2,11 @@ import { useForm } from 'react-hook-form';
 import CVSuggestion from './CVSuggestion';
 import ExperienceSection from './ExperienceSection';
 import ProjectsSection from './ProjectsSection';
+import CertificationsSection from './CertificationsSection';
 import useCVStore from '../store/cvStore';
 
 const fieldLabels = {
+  summary: 'Resumen profesional',
   fullName: 'Nombre completo',
   email: 'Correo electrónico',
   phone: 'Teléfono',
@@ -13,6 +15,7 @@ const fieldLabels = {
   institution: 'Institución',
   startDate: 'Fecha de inicio',
   endDate: 'Fecha de fin',
+  courses: 'Cursos relevantes',
   company: 'Empresa',
   role: 'Rol',
   description: 'Descripción',
@@ -22,19 +25,16 @@ const fieldLabels = {
   title: 'Título del proyecto',
 };
 
-const CVSection = ({ section, title, fields, data, isExperience, isProjects }) => {
+const TEXTAREA_FIELDS = ['summary', 'description', 'courses', 'technical', 'soft', 'list'];
+const AI_SECTIONS = ['profile', 'experience', 'projects', 'skills'];
+
+const CVSection = ({ section, title, fields, data, isExperience, isProjects, isProfile, isCertifications }) => {
   const { updateSection, requestSectionSuggestion, acceptSectionSuggestion, clearSuggestion, suggestion, isLoading, activeSection } = useCVStore();
   const { register, handleSubmit, setValue } = useForm({ defaultValues: data });
 
-  // Si es la sección de experiencia, usar el componente especializado
-  if (isExperience) {
-    return <ExperienceSection section={section} title={title} data={data} />;
-  }
-
-  // Si es la sección de proyectos, usar el componente especializado
-  if (isProjects) {
-    return <ProjectsSection section={section} title={title} data={data} />;
-  }
+  if (isExperience) return <ExperienceSection section={section} title={title} data={data} />;
+  if (isProjects) return <ProjectsSection section={section} title={title} data={data} />;
+  if (isCertifications) return <CertificationsSection section={section} title={title} data={data} />;
 
   const onSubmit = async (values) => {
     await updateSection(section, values);
@@ -61,7 +61,7 @@ const CVSection = ({ section, title, fields, data, isExperience, isProjects }) =
 
   const hasContent = fields.some(field => data[field] && data[field].trim() !== '');
   const showSuggestion = activeSection === section && suggestion;
-  const shouldShowAIButton = section !== 'personal';
+  const shouldShowAIButton = AI_SECTIONS.includes(section);
 
   return (
     <div className="rounded-3xl bg-white p-8 shadow-xl shadow-emerald-950/10">
@@ -84,12 +84,22 @@ const CVSection = ({ section, title, fields, data, isExperience, isProjects }) =
             <label className="text-sm font-medium text-gray-700">
               {fieldLabels[field]}
             </label>
-            <input
-              type={field.includes('email') ? 'email' : field.includes('Date') ? 'date' : 'text'}
-              className="w-full rounded-2xl border border-gray-200 px-4 py-3 outline-none focus:border-emerald-700"
-              {...register(field)}
-              onBlur={handleSubmit(onSubmit)}
-            />
+            {TEXTAREA_FIELDS.includes(field) ? (
+              <textarea
+                rows={field === 'summary' ? 4 : 3}
+                className="w-full rounded-2xl border border-gray-200 px-4 py-3 outline-none focus:border-emerald-700 resize-none"
+                {...register(field)}
+                onBlur={handleSubmit(onSubmit)}
+                placeholder={field === 'summary' ? 'Escribe un breve resumen de tu perfil profesional...' : field === 'courses' ? 'ej. Python para ciencia de datos, Gestión de proyectos...' : ''}
+              />
+            ) : (
+              <input
+                type={field.includes('email') ? 'email' : field.includes('Date') ? 'date' : 'text'}
+                className="w-full rounded-2xl border border-gray-200 px-4 py-3 outline-none focus:border-emerald-700"
+                {...register(field)}
+                onBlur={handleSubmit(onSubmit)}
+              />
+            )}
           </div>
         ))}
       </form>

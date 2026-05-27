@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback } from 'react';
+import { useState, useRef, useCallback, useEffect } from 'react';
 import useCVStore from '../store/cvStore';
 
 const normalizeSkills = (data) => {
@@ -14,6 +14,11 @@ const SkillsSection = ({ section, title, data }) => {
   const { updateSection, isLoading } = useCVStore();
   const [skills, setSkills] = useState(() => normalizeSkills(data));
   const saveTimeoutRef = useRef(null);
+
+  // Sincronizar cuando cambian los datos externos (ej: restaurar versión)
+  useEffect(() => {
+    setSkills(normalizeSkills(data));
+  }, [data]);
 
   const debouncedSave = useCallback((state) => {
     if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);

@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import CVSuggestion from './CVSuggestion';
 import ExperienceSection from './ExperienceSection';
@@ -32,7 +33,12 @@ const AI_SECTIONS = ['profile', 'experience', 'projects', 'skills'];
 
 const CVSection = ({ section, title, fields, data, isExperience, isProjects, isProfile, isCertifications, isEducation }) => {
   const { updateSection, requestSectionSuggestion, acceptSectionSuggestion, clearSuggestion, suggestion, isLoading, activeSection } = useCVStore();
-  const { register, handleSubmit, setValue } = useForm({ defaultValues: data });
+  const { register, handleSubmit, setValue, reset } = useForm({ defaultValues: data });
+
+  // Resetear valores del formulario cuando cambian los datos externos (ej: restaurar versión)
+  useEffect(() => {
+    reset(data);
+  }, [data, reset]);
 
   if (isEducation) return <EducationSection section={section} title={title} data={data} />;
   if (isExperience) return <ExperienceSection section={section} title={title} data={data} />;

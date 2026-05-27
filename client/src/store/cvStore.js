@@ -1,5 +1,14 @@
 import { create } from 'zustand';
-import { getResume, updateResumeSection, improveField, improveSection, exportResumePdf } from '../services/api';
+import {
+  getResume,
+  updateResumeSection,
+  improveField,
+  improveSection,
+  exportResumePdf,
+  getResumeVersions,
+  restoreResumeVersion,
+  deleteResumeVersion,
+} from '../services/api';
 
 const useCVStore = create((set, get) => ({
   resume: null,
@@ -12,6 +21,12 @@ const useCVStore = create((set, get) => ({
   suggestion: null,
   activeSection: null,
   selectedTemplate: 'harvard',
+  versions: [],
+  isLoadingVersions: false,
+  versionsError: null,
+  isRestoring: false,
+  showRestoreConfirm: false,
+  versionToRestore: null,
 
   setSelectedTemplate: (template) => set({ selectedTemplate: template }),
 
@@ -109,6 +124,56 @@ const useCVStore = create((set, get) => ({
   },
 
   clearSuggestion: () => set({ suggestion: null, activeSection: null }),
+
+  fetchVersions: async (limit = 20) => {
+    set({ isLoadingVersions: true, versionsError: null });
+    try {
+      const data = await getResumeVersions(limit);
+      set({ versions: data, isLoadingVersions: false });
+    } catch (error) {
+      set({ versionsError: error.message, isLoadingVersions: false });
+    }
+  },
+
+  openRestoreConfirm: (version) => set({
+    showRestoreConfirm: true,
+    versionToRestore: version,
+  }),
+
+  closeRestoreConfirm: () => set({
+    showRestoreConfirm: false,
+    versionToRestore: null,
+  }),
+
+  restoreVersion: async (versionId) => {
+    set({ isRestoring: true, error: null });
+    try {
+      const data = await restoreResumeVersion(versionId);
+      set({
+        resume: data.resume,
+        isRestoring: false,
+        showRestoreConfirm: false,
+        versionToRestore: null,
+      });
+      await get().fetchVersions();
+      return true;
+    } catch (error) {
+      set({ error: error.message, isRestoring: false });
+      return false;
+    }
+  },
+
+  deleteVersion: async (versionId) => {
+    set({ isLoadingVersions: true, versionsError: null });
+    try {
+      await deleteResumeVersion(versionId);
+      await get().fetchVersions();
+      return true;
+    } catch (error) {
+      set({ versionsError: error.message, isLoadingVersions: false });
+      return false;
+    }
+  },
 }));
 
 export default useCVStore;

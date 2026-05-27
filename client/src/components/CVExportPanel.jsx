@@ -16,7 +16,7 @@ const templates = [
 ];
 
 const CVExportPanel = () => {
-  const { exportPdf, isExporting, exportError, setSelectedTemplate } = useCVStore();
+  const { exportPdf, isExporting, exportError, setSelectedTemplate, fetchVersions } = useCVStore();
   const { register, handleSubmit, watch, formState: { errors } } = useForm({
     defaultValues: { template: 'harvard' },
   });
@@ -28,6 +28,7 @@ const CVExportPanel = () => {
 
   const onSubmit = async ({ template }) => {
     await exportPdf(template);
+    await fetchVersions();
   };
 
   return (

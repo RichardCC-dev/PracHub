@@ -1,5 +1,6 @@
 import CVWizard from '../components/CVWizard';
 import CVExportPanel from '../components/CVExportPanel';
+import CVVersionHistory from '../components/CVVersionHistory';
 import useCVStore from '../store/cvStore';
 
 const SaveIndicator = () => {
@@ -63,6 +64,7 @@ const CVBuilderPage = ({ onBack }) => (
         <p className="mt-1 text-gray-500">Completa cada sección y obtén sugerencias inteligentes en tiempo real.</p>
       </div>
       <CVExportPanel />
+      <CVVersionHistory />
       <CVWizard />
     </div>
   </main>

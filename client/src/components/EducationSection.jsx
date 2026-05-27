@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback } from 'react';
+import { useState, useRef, useCallback, useEffect } from 'react';
 import useCVStore from '../store/cvStore';
 
 const EducationSection = ({ section, title, data }) => {
@@ -9,6 +9,15 @@ const EducationSection = ({ section, title, data }) => {
       : [{ degree: '', institution: '', startDate: '', endDate: '', courses: '' }]
   );
   const saveTimeoutRef = useRef(null);
+
+  // Sincronizar cuando cambian los datos externos (ej: restaurar versión)
+  useEffect(() => {
+    setEntries(
+      data?.items?.length > 0
+        ? data.items
+        : [{ degree: '', institution: '', startDate: '', endDate: '', courses: '' }]
+    );
+  }, [data]);
 
   const debouncedSave = useCallback((items) => {
     if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);

@@ -16,7 +16,7 @@ const sections = [
 ];
 
 const CVWizard = () => {
-  const { resume, fetchResume, isLoading, error } = useCVStore();
+  const { resume, fetchResume, isLoading, error, selectedTemplate } = useCVStore();
 
   useEffect(() => {
     fetchResume();
@@ -46,7 +46,7 @@ const CVWizard = () => {
           ))}
         </div>
         <div className="xl:sticky xl:top-6 xl:max-h-[calc(100vh-6rem)] xl:overflow-y-auto">
-          <CVPreview resume={resume} />
+          <CVPreview resume={resume} template={selectedTemplate} />
         </div>
       </div>
     </div>

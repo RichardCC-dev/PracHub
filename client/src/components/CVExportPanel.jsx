@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import useCVStore from '../store/cvStore';
 
@@ -15,11 +16,15 @@ const templates = [
 ];
 
 const CVExportPanel = () => {
-  const { exportPdf, isExporting, exportError } = useCVStore();
+  const { exportPdf, isExporting, exportError, setSelectedTemplate } = useCVStore();
   const { register, handleSubmit, watch, formState: { errors } } = useForm({
     defaultValues: { template: 'harvard' },
   });
   const selectedTemplate = watch('template');
+
+  useEffect(() => {
+    setSelectedTemplate(selectedTemplate);
+  }, [selectedTemplate, setSelectedTemplate]);
 
   const onSubmit = async ({ template }) => {
     await exportPdf(template);

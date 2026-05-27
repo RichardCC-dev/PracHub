@@ -11,6 +11,9 @@ const useCVStore = create((set, get) => ({
   exportError: null,
   suggestion: null,
   activeSection: null,
+  selectedTemplate: 'harvard',
+
+  setSelectedTemplate: (template) => set({ selectedTemplate: template }),
 
   fetchResume: async () => {
     set({ isLoading: true, error: null });

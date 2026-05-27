@@ -7,6 +7,7 @@ import WelcomePage from './pages/WelcomePage';
 import CompanyProfilePage from './pages/CompanyProfilePage';
 import useAuthStore from './store/authStore';
 import CVBuilderPage from './pages/CVBuilderPage';
+import AdminDashboardPage from './pages/AdminDashboardPage';
 
 const PrivateRoute = ({ children }) => {
   const { token, user } = useAuthStore();
@@ -19,6 +20,13 @@ const CompanyRoute = ({ children }) => {
   const { token, user } = useAuthStore();
   if (!token || !user) return <Navigate to="/" replace />;
   if (user.role !== 'company') return <Navigate to="/dashboard" replace />;
+  return children;
+};
+
+const AdminRoute = ({ children }) => {
+  const { token, user } = useAuthStore();
+  if (!token || !user) return <Navigate to="/" replace />;
+  if (user.role !== 'admin') return <Navigate to="/dashboard" replace />;
   return children;
 };
 
@@ -102,7 +110,7 @@ const AppRoutes = () => {
     <Routes>
       {/* Pública: home */}
       <Route path="/" element={
-        token && user ? <Navigate to="/dashboard" replace /> :
+        token && user ? <Navigate to={user.role === 'admin' ? '/admin' : '/dashboard'} replace /> :
         <HomePage
           onLogin={() => navigate('/login')}
           onRegisterStudent={() => navigate('/register/student')}
@@ -112,13 +120,13 @@ const AppRoutes = () => {
 
       {/* Auth: login */}
       <Route path="/login" element={
-        token && user ? <Navigate to="/dashboard" replace /> :
+        token && user ? <Navigate to={user.role === 'admin' ? '/admin' : '/dashboard'} replace /> :
         <StudentOnboardingPage onLoginSuccess={() => navigate('/dashboard', { replace: true })} />
       } />
 
       {/* Auth: olvidé contraseña */}
       <Route path="/forgot-password" element={
-        token && user ? <Navigate to="/dashboard" replace /> :
+        token && user ? <Navigate to={user.role === 'admin' ? '/admin' : '/dashboard'} replace /> :
         <StudentOnboardingPage onLoginSuccess={() => navigate('/dashboard', { replace: true })} />
       } />
 
@@ -129,13 +137,13 @@ const AppRoutes = () => {
 
       {/* Auth: registro estudiante */}
       <Route path="/register/student" element={
-        token && user ? <Navigate to="/dashboard" replace /> :
+        token && user ? <Navigate to={user.role === 'admin' ? '/admin' : '/dashboard'} replace /> :
         <StudentOnboardingPage onLoginSuccess={() => navigate('/dashboard', { replace: true })} />
       } />
 
       {/* Auth: registro empresa */}
       <Route path="/register/company" element={
-        token && user ? <Navigate to="/dashboard" replace /> :
+        token && user ? <Navigate to={user.role === 'admin' ? '/admin' : '/dashboard'} replace /> :
         <CompanyOnboardingPage onLoginSuccess={() => navigate('/dashboard', { replace: true })} />
       } />
 
@@ -165,6 +173,13 @@ const AppRoutes = () => {
         <CompanyRoute>
           <CompanyProfilePage onBack={() => navigate('/dashboard')} />
         </CompanyRoute>
+      } />
+
+      {/* Panel de administración (protegido, solo admin) */}
+      <Route path="/admin" element={
+        <AdminRoute>
+          <AdminDashboardPage />
+        </AdminRoute>
       } />
 
       {/* Fallback */}

@@ -1,9 +1,16 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import useAuthStore from '../store/authStore';
 import { getPendingOffers, getOfferStats, approveOffer, rejectOffer } from '../services/adminApi';
 
 const AdminDashboardPage = () => {
-  const { token, user } = useAuthStore();
+  const { token, user, logout } = useAuthStore();
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+    logout();
+    navigate('/login', { replace: true });
+  };
   const [pendingOffers, setPendingOffers] = useState([]);
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -139,11 +146,19 @@ const AdminDashboardPage = () => {
               <h1 className="text-2xl font-bold text-gray-900">Panel de Administración</h1>
               <p className="text-sm text-gray-500">Moderación de ofertas de prácticas</p>
             </div>
-            <div className="text-right">
-              <p className="text-sm text-gray-600">{user?.email}</p>
-              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
-                Administrador
-              </span>
+            <div className="flex items-center gap-4">
+              <div className="text-right">
+                <p className="text-sm text-gray-600">{user?.email}</p>
+                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
+                  Administrador
+                </span>
+              </div>
+              <button
+                onClick={handleLogout}
+                className="px-4 py-2 text-sm font-semibold text-red-600 border border-red-200 rounded-xl hover:bg-red-50 transition"
+              >
+                Cerrar sesión
+              </button>
             </div>
           </div>
         </div>

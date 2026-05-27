@@ -7,11 +7,11 @@ import useCVStore from '../store/cvStore';
 const sections = [
   { key: 'personal', title: 'Datos personales', fields: ['fullName', 'email', 'phone', 'linkedin'] },
   { key: 'profile', title: 'Perfil profesional', fields: ['summary'], isProfile: true },
-  { key: 'education', title: 'Formación académica', fields: ['degree', 'institution', 'startDate', 'endDate', 'courses'] },
+  { key: 'education', title: 'Formación académica', fields: [], isEducation: true },
   { key: 'experience', title: 'Experiencia profesional (opcional)', fields: [], isExperience: true },
   { key: 'projects', title: 'Proyectos', fields: [], isProjects: true },
   { key: 'certifications', title: 'Certificaciones', fields: [], isCertifications: true },
-  { key: 'skills', title: 'Habilidades', fields: ['technical', 'soft'] },
+  { key: 'skills', title: 'Habilidades', fields: [] },
   { key: 'languages', title: 'Idiomas', fields: ['list'] },
 ];
 
@@ -37,6 +37,7 @@ const CVWizard = () => {
               title={section.title}
               fields={section.fields}
               data={resume?.[section.key] || {}}
+              isEducation={section.isEducation}
               isExperience={section.isExperience}
               isProjects={section.isProjects}
               isProfile={section.isProfile}

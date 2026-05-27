@@ -3,6 +3,8 @@ import CVSuggestion from './CVSuggestion';
 import ExperienceSection from './ExperienceSection';
 import ProjectsSection from './ProjectsSection';
 import CertificationsSection from './CertificationsSection';
+import EducationSection from './EducationSection';
+import SkillsSection from './SkillsSection';
 import useCVStore from '../store/cvStore';
 
 const fieldLabels = {
@@ -28,13 +30,15 @@ const fieldLabels = {
 const TEXTAREA_FIELDS = ['summary', 'description', 'courses', 'technical', 'soft', 'list'];
 const AI_SECTIONS = ['profile', 'experience', 'projects', 'skills'];
 
-const CVSection = ({ section, title, fields, data, isExperience, isProjects, isProfile, isCertifications }) => {
+const CVSection = ({ section, title, fields, data, isExperience, isProjects, isProfile, isCertifications, isEducation }) => {
   const { updateSection, requestSectionSuggestion, acceptSectionSuggestion, clearSuggestion, suggestion, isLoading, activeSection } = useCVStore();
   const { register, handleSubmit, setValue } = useForm({ defaultValues: data });
 
+  if (isEducation) return <EducationSection section={section} title={title} data={data} />;
   if (isExperience) return <ExperienceSection section={section} title={title} data={data} />;
   if (isProjects) return <ProjectsSection section={section} title={title} data={data} />;
   if (isCertifications) return <CertificationsSection section={section} title={title} data={data} />;
+  if (section === 'skills') return <SkillsSection section={section} title={title} data={data} />;
 
   const onSubmit = async (values) => {
     await updateSection(section, values);

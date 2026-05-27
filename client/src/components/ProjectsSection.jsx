@@ -2,9 +2,14 @@ import { useState, useRef, useCallback } from 'react';
 import CVSuggestion from './CVSuggestion';
 import useCVStore from '../store/cvStore';
 
+const normalizeProject = (p) => ({
+  title: p.title || '',
+  bullets: Array.isArray(p.bullets) ? p.bullets : (p.description ? [p.description] : ['']),
+});
+
 const ProjectsSection = ({ section, title, data }) => {
   const { updateSection, requestSectionSuggestion, acceptSectionSuggestion, clearSuggestion, suggestion, isLoading, activeSection } = useCVStore();
-  const [projects, setProjects] = useState(data?.items || []);
+  const [projects, setProjects] = useState((data?.items || []).map(normalizeProject));
   const saveTimeoutRef = useRef(null);
 
   const showSuggestion = activeSection === section && suggestion;
@@ -17,7 +22,8 @@ const ProjectsSection = ({ section, title, data }) => {
   }, [section, updateSection]);
 
   const addProject = () => {
-    setProjects([...projects, { title: '', description: '' }]);
+    const updated = [...projects, { title: '', bullets: [''] }];
+    setProjects(updated);
   };
 
   const removeProject = async (index) => {
@@ -26,11 +32,34 @@ const ProjectsSection = ({ section, title, data }) => {
     await updateSection(section, { items: updated });
   };
 
-  const updateProject = (index, field, value) => {
+  const updateProjectTitle = (index, value) => {
     const updated = [...projects];
-    updated[index] = { ...updated[index], [field]: value };
+    updated[index] = { ...updated[index], title: value };
     setProjects(updated);
     debouncedSave(updated);
+  };
+
+  const updateBullet = (projIndex, bulletIndex, value) => {
+    const updated = [...projects];
+    const bullets = [...updated[projIndex].bullets];
+    bullets[bulletIndex] = value;
+    updated[projIndex] = { ...updated[projIndex], bullets };
+    setProjects(updated);
+    debouncedSave(updated);
+  };
+
+  const addBullet = (projIndex) => {
+    const updated = [...projects];
+    updated[projIndex] = { ...updated[projIndex], bullets: [...updated[projIndex].bullets, ''] };
+    setProjects(updated);
+  };
+
+  const removeBullet = async (projIndex, bulletIndex) => {
+    const updated = [...projects];
+    const bullets = updated[projIndex].bullets.filter((_, i) => i !== bulletIndex);
+    updated[projIndex] = { ...updated[projIndex], bullets: bullets.length > 0 ? bullets : [''] };
+    setProjects(updated);
+    await updateSection(section, { items: updated });
   };
 
   const handleRequestSectionSuggestion = async () => {
@@ -39,7 +68,7 @@ const ProjectsSection = ({ section, title, data }) => {
 
   const handleAcceptSuggestion = async () => {
     if (suggestion && suggestion.improved?.items) {
-      const improved = suggestion.improved.items;
+      const improved = suggestion.improved.items.map(normalizeProject);
       setProjects(improved);
       clearSuggestion();
       await updateSection(section, { items: improved });
@@ -50,8 +79,8 @@ const ProjectsSection = ({ section, title, data }) => {
     clearSuggestion();
   };
 
-  const hasContent = projects.some(proj => 
-    proj.title.trim() || proj.description.trim()
+  const hasContent = projects.some(proj =>
+    proj.title.trim() || proj.bullets.some(b => b.trim())
   );
 
   return (
@@ -92,13 +121,13 @@ const ProjectsSection = ({ section, title, data }) => {
         </div>
       ) : (
         <div className="space-y-6">
-          {projects.map((proj, index) => (
-            <div key={index} className="border border-gray-200 rounded-2xl p-6">
+          {projects.map((proj, projIndex) => (
+            <div key={projIndex} className="border border-gray-200 rounded-2xl p-6">
               <div className="flex justify-between items-center mb-4">
-                <h3 className="text-lg font-semibold text-gray-950">Proyecto {index + 1}</h3>
+                <h3 className="text-base font-semibold text-gray-800">Proyecto {projIndex + 1}</h3>
                 <button
                   type="button"
-                  onClick={() => removeProject(index)}
+                  onClick={() => removeProject(projIndex)}
                   className="text-red-600 hover:text-red-700 text-sm font-medium"
                 >
                   Eliminar
@@ -111,17 +140,45 @@ const ProjectsSection = ({ section, title, data }) => {
                     type="text"
                     className="w-full rounded-2xl border border-gray-200 px-4 py-3 outline-none focus:border-emerald-700"
                     value={proj.title}
-                    onChange={(e) => updateProject(index, 'title', e.target.value)}
+                    placeholder="ej. Sistema de gestión de inventario"
+                    onChange={(e) => updateProjectTitle(projIndex, e.target.value)}
                   />
                 </div>
                 <div>
-                  <label className="text-sm font-medium text-gray-700">Descripción</label>
-                  <textarea
-                    className="w-full rounded-2xl border border-gray-200 px-4 py-3 outline-none focus:border-emerald-700 resize-none"
-                    rows={3}
-                    value={proj.description}
-                    onChange={(e) => updateProject(index, 'description', e.target.value)}
-                  />
+                  <div className="flex items-center justify-between mb-2">
+                    <label className="text-sm font-medium text-gray-700">Detalles del proyecto</label>
+                    <button
+                      type="button"
+                      onClick={() => addBullet(projIndex)}
+                      className="text-xs font-semibold text-emerald-700 hover:text-emerald-600"
+                    >
+                      + Añadir viñeta
+                    </button>
+                  </div>
+                  <div className="space-y-2">
+                    {proj.bullets.map((bullet, bulletIndex) => (
+                      <div key={bulletIndex} className="flex items-start gap-2">
+                        <span className="mt-3.5 text-gray-400 text-xs">•</span>
+                        <input
+                          type="text"
+                          className="flex-1 rounded-xl border border-gray-200 px-3 py-2.5 text-sm outline-none focus:border-emerald-700"
+                          value={bullet}
+                          placeholder="ej. Desarrollado con React y Node.js"
+                          onChange={(e) => updateBullet(projIndex, bulletIndex, e.target.value)}
+                        />
+                        {proj.bullets.length > 1 && (
+                          <button
+                            type="button"
+                            onClick={() => removeBullet(projIndex, bulletIndex)}
+                            className="mt-2 text-gray-400 hover:text-red-500 text-lg leading-none"
+                            title="Eliminar viñeta"
+                          >
+                            ×
+                          </button>
+                        )}
+                      </div>
+                    ))}
+                  </div>
                 </div>
               </div>
             </div>

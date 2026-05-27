@@ -1,12 +1,14 @@
 import { create } from 'zustand';
-import { getResume, updateResumeSection, improveField, improveSection } from '../services/api';
+import { getResume, updateResumeSection, improveField, improveSection, exportResumePdf } from '../services/api';
 
-const useCVStore = create((set) => ({
+const useCVStore = create((set, get) => ({
   resume: null,
   isLoading: false,
   isSaving: false,
+  isExporting: false,
   lastSaved: null,
   error: null,
+  exportError: null,
   suggestion: null,
   activeSection: null,
 
@@ -82,6 +84,25 @@ const useCVStore = create((set) => ({
     });
     // Refrescar datos para actualizar vista previa
     await get().fetchResume();
+  },
+
+  exportPdf: async (template) => {
+    set({ isExporting: true, exportError: null });
+    try {
+      const { blob, filename } = await exportResumePdf(template);
+      const url = globalThis.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      globalThis.URL.revokeObjectURL(url);
+      set({ isExporting: false });
+    } catch (error) {
+      set({ exportError: error.message, isExporting: false });
+      throw error;
+    }
   },
 
   clearSuggestion: () => set({ suggestion: null, activeSection: null }),

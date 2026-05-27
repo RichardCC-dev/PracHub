@@ -132,6 +132,32 @@ export const improveSection = async (section) => {
   return parseResponse(response);
 };
 
+export const exportResumePdf = async (template) => {
+  const response = await fetch(`${API_URL}/resume/export-pdf`, {
+    method: 'POST',
+    headers: getAuthHeaders(),
+    body: JSON.stringify({ template }),
+  });
+
+  if (!response.ok) {
+    const error = await parseResponse(response).catch(() => ({ message: 'No se pudo generar el PDF.' }));
+    throw new Error(error.message || 'No se pudo generar el PDF.');
+  }
+
+  const contentType = response.headers.get('Content-Type') || '';
+  if (!contentType.includes('application/pdf')) {
+    throw new Error('El servidor no devolvió un PDF válido.');
+  }
+
+  const blob = await response.blob();
+  const disposition = response.headers.get('Content-Disposition') || '';
+  const filenameMatch = /filename="(.+)"/.exec(disposition);
+  return {
+    blob,
+    filename: filenameMatch?.[1] || `cv-${template}.pdf`,
+  };
+};
+
 export const uploadLogo = async (token, file) => {
   const formData = new FormData();
   formData.append('logo', file);

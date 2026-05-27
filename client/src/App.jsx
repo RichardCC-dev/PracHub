@@ -5,6 +5,7 @@ import StudentOnboardingPage from './pages/StudentOnboardingPage';
 import CompanyOnboardingPage from './pages/CompanyOnboardingPage';
 import WelcomePage from './pages/WelcomePage';
 import CompanyProfilePage from './pages/CompanyProfilePage';
+import InterviewSimulatorPage from './pages/InterviewSimulatorPage';
 import useAuthStore from './store/authStore';
 import CVBuilderPage from './pages/CVBuilderPage';
 import AdminDashboardPage from './pages/AdminDashboardPage';
@@ -161,7 +162,7 @@ const AppRoutes = () => {
       {/* Verificación de email */}
       <Route path="/verify-email" element={<VerifyEmailPage />} />
 
-      {/* Dashboard (protegido) */}
+      {/* Dashboard (protegido - Equivale al 'welcome' de tu código anterior) */}
       <Route path="/dashboard" element={
         <PrivateRoute>
           <WelcomePage
@@ -171,7 +172,26 @@ const AppRoutes = () => {
             onGoToAdmin={() => navigate('/admin')}
             onGoToOffers={() => navigate('/company/offers')}
             onGoToStudentOffers={() => navigate('/offers')}
+            onNavigateToSimulator={() => navigate('/simulator')} 
           />
+        </PrivateRoute>
+      } />
+
+      {/* Simulador de Entrevistas (protegido - Nueva ruta adaptada) */}
+      <Route path="/simulator" element={
+        <PrivateRoute>
+          <div>
+            <nav className="bg-white border-b border-gray-200 px-4 py-3 flex justify-between items-center shadow-sm">
+              <button 
+                onClick={() => navigate('/dashboard')}
+                className="text-gray-600 hover:text-gray-900 font-medium flex items-center space-x-2"
+              >
+                <span>← Volver al Panel</span>
+              </button>
+              <div className="font-bold text-emerald-800">PracHub</div>
+            </nav>
+            <InterviewSimulatorPage />
+          </div>
         </PrivateRoute>
       } />
 

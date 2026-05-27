@@ -39,7 +39,7 @@ const FeatureCard = ({ icon, title, description, badge, onClick, disabled }) => 
   </button>
 );
 
-const WelcomePage = ({ onLogout, onEditProfile, onGoToCVBuilder, onGoToAdmin, onGoToOffers, onGoToStudentOffers }) => {
+const WelcomePage = ({ onLogout, onEditProfile, onGoToCVBuilder, onGoToAdmin, onGoToOffers, onGoToStudentOffers,onNavigateToSimulator }) => {
   const { user, logout } = useAuthStore();
 
   const handleLogout = async () => {
@@ -82,8 +82,9 @@ const WelcomePage = ({ onLogout, onEditProfile, onGoToCVBuilder, onGoToAdmin, on
       icon: '🤖',
       title: 'Simulación de entrevista con IA',
       description: 'Practica entrevistas técnicas y de recursos humanos con retroalimentación inteligente.',
-      badge: 'Próximamente',
-      disabled: true,
+      badge: 'Activo',
+      onClick: onNavigateToSimulator,
+      disabled: false,
     },
     {
       icon: '👤',

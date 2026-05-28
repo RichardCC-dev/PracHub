@@ -10,6 +10,8 @@ import CVBuilderPage from './pages/CVBuilderPage';
 import AdminDashboardPage from './pages/AdminDashboardPage';
 import CompanyOffersPage from './pages/CompanyOffersPage';
 import CreateOfferPage from './pages/CreateOfferPage';
+import StudentOffersPage from './pages/StudentOffersPage';
+import MyApplicationsPage from './pages/MyApplicationsPage';
 
 const PrivateRoute = ({ children }) => {
   const { token, user } = useAuthStore();
@@ -29,6 +31,13 @@ const AdminRoute = ({ children }) => {
   const { token, user } = useAuthStore();
   if (!token || !user) return <Navigate to="/" replace />;
   if (user.role !== 'admin') return <Navigate to="/dashboard" replace />;
+  return children;
+};
+
+const StudentRoute = ({ children }) => {
+  const { token, user } = useAuthStore();
+  if (!token || !user) return <Navigate to="/" replace />;
+  if (user.role !== 'student') return <Navigate to="/dashboard" replace />;
   return children;
 };
 
@@ -161,6 +170,7 @@ const AppRoutes = () => {
             onGoToCVBuilder={() => navigate('/cv-builder')}
             onGoToAdmin={() => navigate('/admin')}
             onGoToOffers={() => navigate('/company/offers')}
+            onGoToStudentOffers={() => navigate('/offers')}
           />
         </PrivateRoute>
       } />
@@ -170,6 +180,20 @@ const AppRoutes = () => {
         <PrivateRoute>
           <CVBuilderPage onBack={() => navigate('/dashboard')} />
         </PrivateRoute>
+      } />
+
+      {/* Bolsa de prácticas (protegido, solo student) */}
+      <Route path="/offers" element={
+        <StudentRoute>
+          <StudentOffersPage />
+        </StudentRoute>
+      } />
+
+      {/* Mis postulaciones (protegido, solo student) */}
+      <Route path="/my-applications" element={
+        <StudentRoute>
+          <MyApplicationsPage />
+        </StudentRoute>
       } />
 
       {/* Perfil empresa (protegido, solo company) */}

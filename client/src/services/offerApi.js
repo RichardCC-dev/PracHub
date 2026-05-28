@@ -53,3 +53,26 @@ export const closeOffer = async (token, offerId) => {
   });
   return parseResponse(response);
 };
+
+/**
+ * Obtener todas las ofertas públicas (para estudiantes)
+ * @param {object} filters - Filtros opcionales (modality, search, etc.)
+ */
+export const getAllOffers = async (filters = {}) => {
+  const params = new URLSearchParams();
+  
+  if (filters.modality) params.append('modality', filters.modality);
+  if (filters.search) params.append('search', filters.search);
+  if (filters.status) params.append('status', filters.status);
+  
+  const queryString = params.toString();
+  const url = queryString ? `${API_URL}/offers?${queryString}` : `${API_URL}/offers`;
+  
+  const response = await fetch(url, {
+    method: 'GET',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+  });
+  return parseResponse(response);
+};

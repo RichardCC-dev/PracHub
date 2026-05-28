@@ -39,7 +39,7 @@ const FeatureCard = ({ icon, title, description, badge, onClick, disabled }) => 
   </button>
 );
 
-const WelcomePage = ({ onLogout, onEditProfile, onGoToCVBuilder, onGoToAdmin, onGoToOffers }) => {
+const WelcomePage = ({ onLogout, onEditProfile, onGoToCVBuilder, onGoToAdmin, onGoToOffers, onGoToStudentOffers }) => {
   const { user, logout } = useAuthStore();
 
   const handleLogout = async () => {
@@ -48,6 +48,7 @@ const WelcomePage = ({ onLogout, onEditProfile, onGoToCVBuilder, onGoToAdmin, on
   };
 
   const isCompany = user?.role === 'company';
+  const isStudent = user?.role === 'student';
   const companyProfile = user?.companyProfile;
   const studentProfile = user?.studentProfile;
 
@@ -73,8 +74,9 @@ const WelcomePage = ({ onLogout, onEditProfile, onGoToCVBuilder, onGoToAdmin, on
       icon: '🎯',
       title: 'Ver prácticas disponibles',
       description: 'Explora ofertas de prácticas profesionales según tu carrera y disponibilidad.',
-      badge: 'Próximamente',
-      disabled: true,
+      badge: 'Activo',
+      onClick: onGoToStudentOffers,
+      disabled: false,
     },
     {
       icon: '🤖',

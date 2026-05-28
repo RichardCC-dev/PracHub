@@ -4,7 +4,7 @@ const parseResponse = async (response) => {
   const data = await response.json().catch(() => ({}));
 
   if (!response.ok) {
-    throw new Error(data.message || 'No se pudo completar la solicitud.');
+    throw new Error(data.error || data.message || 'No se pudo completar la solicitud.');
   }
 
   return data;
@@ -191,6 +191,72 @@ export const deleteResumeVersion = async (versionId) => {
   const response = await fetch(`${API_URL}/resume/versions/${versionId}`, {
     method: 'DELETE',
     headers: getAuthHeaders(),
+  });
+  return parseResponse(response);
+};
+
+// Simulation endpoints
+export const startSimulation = async (simulatedRole, token, career, sector) => {
+  const response = await fetch(`${API_URL}/simulations/start`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`
+    },
+    body: JSON.stringify({ simulatedRole, career, sector }),
+  });
+  return parseResponse(response);
+};
+
+export const sendMessageToSimulation = async (id, message, token) => {
+  const response = await fetch(`${API_URL}/simulations/${id}/message`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`
+    },
+    body: JSON.stringify({ message }),
+  });
+  return parseResponse(response);
+};
+
+export const endSimulation = async (id, token) => {
+  const response = await fetch(`${API_URL}/simulations/${id}/end`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`
+    },
+  });
+  return parseResponse(response);
+};
+
+export const getSimulationHistory = async (token) => {
+  const response = await fetch(`${API_URL}/simulations/history`, {
+    method: 'GET',
+    headers: {
+      'Authorization': `Bearer ${token}`
+    },
+  });
+  return parseResponse(response);
+};
+
+export const getSimulationDetails = async (id, token) => {
+  const response = await fetch(`${API_URL}/simulations/${id}`, {
+    method: 'GET',
+    headers: {
+      'Authorization': `Bearer ${token}`
+    },
+  });
+  return parseResponse(response);
+};
+
+export const getSimulationStats = async (token) => {
+  const response = await fetch(`${API_URL}/simulations/stats`, {
+    method: 'GET',
+    headers: {
+      'Authorization': `Bearer ${token}`
+    },
   });
   return parseResponse(response);
 };

@@ -250,3 +250,13 @@ export const getSimulationDetails = async (id, token) => {
   });
   return parseResponse(response);
 };
+
+export const getSimulationStats = async (token) => {
+  const response = await fetch(`${API_URL}/simulations/stats`, {
+    method: 'GET',
+    headers: {
+      'Authorization': `Bearer ${token}`
+    },
+  });
+  return parseResponse(response);
+};

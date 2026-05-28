@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
+import { useNavigate } from 'react-router-dom';
 import useAuthStore from '../store/authStore';
 import useSimulationStore from '../store/simulationStore';
 import SimulationChat from '../components/SimulationChat';
@@ -22,12 +23,10 @@ const COMPANY_SECTORS = [
 ];
 
 const InterviewSimulatorPage = () => {
+  const navigate = useNavigate();
   const { token } = useAuthStore();
   const { 
-    startNewSimulation, 
-    fetchHistory,
-    fetchSimulationDetails,
-    simulationsHistory, 
+    startNewSimulation,
     currentSimulation,
     clearCurrentSimulation,
     isLoading,
@@ -38,13 +37,6 @@ const InterviewSimulatorPage = () => {
   const [localError, setLocalError] = useState(null);
   
   const { register, handleSubmit, formState: { errors } } = useForm();
-
-  useEffect(() => {
-    if (token && view === 'history') {
-      setLocalError(null);
-      fetchHistory(token).catch(err => setLocalError(err.message));
-    }
-  }, [token, view]);
 
   const onStartSubmit = async (data) => {
     setLocalError(null);
@@ -57,7 +49,9 @@ const InterviewSimulatorPage = () => {
     }
   };
 
-  const handleEndSimulation = () => {};
+  const handleEndSimulation = () => {
+    navigate('/simulator/history');
+  };
 
   const handleBackToSetup = () => {
     clearCurrentSimulation();
@@ -78,10 +72,10 @@ const InterviewSimulatorPage = () => {
             Nueva Simulación
           </button>
           <button 
-            onClick={() => setView('history')}
-            className={`px-4 py-2 text-sm font-medium rounded-md transition-colors ${view === 'history' ? 'bg-green-100 text-green-800' : 'text-gray-600 hover:bg-gray-100'}`}
+            onClick={() => navigate('/simulator/history')}
+            className="px-4 py-2 text-sm font-medium rounded-md transition-colors text-gray-600 hover:bg-gray-100"
           >
-            Mi Historial
+            Mi Historial y Progreso
           </button>
         </div>
       </div>
@@ -190,72 +184,6 @@ const InterviewSimulatorPage = () => {
         />
       )}
 
-      {/* View: History */}
-      {view === 'history' && (
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
-          <div className="p-6 border-b border-gray-200">
-            <h2 className="text-xl font-bold text-gray-800">Historial de Prácticas</h2>
-            <p className="text-sm text-gray-500 mt-1">Revisa tu progreso y la retroalimentación de sesiones anteriores.</p>
-          </div>
-          
-          {isLoading && !simulationsHistory?.length ? (
-            <div className="p-8 text-center text-gray-500">Cargando historial...</div>
-          ) : !simulationsHistory || simulationsHistory.length === 0 ? (
-            <div className="p-12 text-center">
-              <div className="text-4xl mb-4">📊</div>
-              <h3 className="text-lg font-medium text-gray-900 mb-1">Aún no tienes simulaciones</h3>
-              <p className="text-gray-500 mb-4">Empieza tu primera práctica para ver tu progreso aquí.</p>
-              <button 
-                onClick={handleBackToSetup}
-                className="text-green-700 font-semibold hover:underline"
-              >
-                Iniciar una ahora →
-              </button>
-            </div>
-          ) : (
-            <div className="divide-y divide-gray-200">
-              {simulationsHistory.map((sim) => (
-                <div key={sim.id} className="p-6 hover:bg-gray-50 transition-colors flex justify-between items-center">
-                  <div>
-                    <h3 className="text-lg font-semibold text-gray-900">{sim.simulatedRole}</h3>
-                    <p className="text-sm text-gray-500">
-                      {new Date(sim.createdAt).toLocaleDateString('es-ES', { 
-                        year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' 
-                      })}
-                    </p>
-                    <div className="mt-2 flex items-center space-x-3">
-                      <span className={`px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                        sim.status === 'completed' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'
-                      }`}>
-                        {sim.status === 'completed' ? 'Completado' : 'En progreso'}
-                      </span>
-                      {sim.status === 'completed' && sim.overallScore != null && (
-                        <span className="text-sm font-medium text-gray-700">
-                          Puntuación: <span className={sim.overallScore >= 70 ? 'text-green-600' : 'text-orange-500'}>{sim.overallScore}%</span>
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                  <div>
-                    <button 
-                      onClick={() => {
-                        setLocalError(null);
-                        fetchSimulationDetails(sim.id, token)
-                          .then(() => setView('chat'))
-                          .catch((err) => setLocalError(err.message || 'Error al cargar detalles.'));
-                      }}
-                      disabled={isLoading}
-                      className="px-4 py-2 bg-white border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50"
-                    >
-                      {sim.status === 'completed' ? 'Ver Resultados' : 'Continuar'}
-                    </button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-      )}
     </div>
   );
 };

@@ -4,12 +4,14 @@ import {
   sendMessageToSimulation,
   endSimulation,
   getSimulationHistory,
-  getSimulationDetails
+  getSimulationDetails,
+  getSimulationStats
 } from '../services/api';
 
 const useSimulationStore = create((set, get) => ({
   simulationsHistory: [],
   currentSimulation: null,
+  simulationStats: null,
   isLoading: false,
   error: null,
   
@@ -67,6 +69,18 @@ const useSimulationStore = create((set, get) => ({
       const data = await getSimulationDetails(id, token);
       set({ currentSimulation: data.simulation, isLoading: false });
       return data.simulation;
+    } catch (error) {
+      set({ error: error.message, isLoading: false });
+      throw error;
+    }
+  },
+
+  fetchStats: async (token) => {
+    set({ isLoading: true, error: null });
+    try {
+      const data = await getSimulationStats(token);
+      set({ simulationStats: data.stats, isLoading: false });
+      return data.stats;
     } catch (error) {
       set({ error: error.message, isLoading: false });
       throw error;

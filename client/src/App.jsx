@@ -6,6 +6,7 @@ import CompanyOnboardingPage from './pages/CompanyOnboardingPage';
 import WelcomePage from './pages/WelcomePage';
 import CompanyProfilePage from './pages/CompanyProfilePage';
 import InterviewSimulatorPage from './pages/InterviewSimulatorPage';
+import SimulationHistoryPage from './pages/SimulationHistoryPage';
 import useAuthStore from './store/authStore';
 import CVBuilderPage from './pages/CVBuilderPage';
 import AdminDashboardPage from './pages/AdminDashboardPage';
@@ -172,7 +173,8 @@ const AppRoutes = () => {
             onGoToAdmin={() => navigate('/admin')}
             onGoToOffers={() => navigate('/company/offers')}
             onGoToStudentOffers={() => navigate('/offers')}
-            onNavigateToSimulator={() => navigate('/simulator')} 
+            onNavigateToSimulator={() => navigate('/simulator')}
+            onGoToSimulatorHistory={() => navigate('/simulator/history')}
           />
         </PrivateRoute>
       } />
@@ -191,6 +193,24 @@ const AppRoutes = () => {
               <div className="font-bold text-emerald-800">PracHub</div>
             </nav>
             <InterviewSimulatorPage />
+          </div>
+        </PrivateRoute>
+      } />
+
+      {/* Historial y progreso de simulaciones (protegido - HU-09) */}
+      <Route path="/simulator/history" element={
+        <PrivateRoute>
+          <div>
+            <nav className="bg-white border-b border-gray-200 px-4 py-3 flex justify-between items-center shadow-sm">
+              <button
+                onClick={() => navigate('/simulator')}
+                className="text-gray-600 hover:text-gray-900 font-medium flex items-center space-x-2"
+              >
+                <span>← Volver al Simulador</span>
+              </button>
+              <div className="font-bold text-emerald-800">PracHub</div>
+            </nav>
+            <SimulationHistoryPage />
           </div>
         </PrivateRoute>
       } />

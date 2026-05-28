@@ -39,7 +39,7 @@ const FeatureCard = ({ icon, title, description, badge, onClick, disabled }) => 
   </button>
 );
 
-const WelcomePage = ({ onLogout, onEditProfile, onGoToCVBuilder, onGoToAdmin, onGoToOffers, onGoToStudentOffers,onNavigateToSimulator }) => {
+const WelcomePage = ({ onLogout, onEditProfile, onGoToCVBuilder, onGoToAdmin, onGoToOffers, onGoToStudentOffers, onNavigateToSimulator, onGoToSimulatorHistory }) => {
   const { user, logout } = useAuthStore();
 
   const handleLogout = async () => {
@@ -87,7 +87,15 @@ const WelcomePage = ({ onLogout, onEditProfile, onGoToCVBuilder, onGoToAdmin, on
       disabled: false,
     },
     {
-      icon: '👤',
+      icon: '�',
+      title: 'Mi Progreso en Simulaciones',
+      description: 'Revisa tu historial de sesiones, puntuaciones por rol y tu evolución entre prácticas.',
+      badge: 'Activo',
+      onClick: onGoToSimulatorHistory,
+      disabled: false,
+    },
+    {
+      icon: '�👤',
       title: 'Mi perfil',
       description: 'Actualiza tus datos personales, carrera y disponibilidad.',
       badge: 'Próximamente',

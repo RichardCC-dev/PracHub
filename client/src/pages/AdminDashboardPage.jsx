@@ -191,6 +191,8 @@ const AdminDashboardPage = () => {
   });
 
   // Efecto para recargar cuando cambian los filtros de tags o búsqueda
+  // NOTA: No incluir offerFilter aquí para evitar doble carga
+  // cuando se hace click en los botones de filtro
   useEffect(() => {
     if (activeTab === 'offers') {
       const timer = setTimeout(() => {
@@ -198,7 +200,7 @@ const AdminDashboardPage = () => {
       }, 500); // Debounce para no hacer muchas requests
       return () => clearTimeout(timer);
     }
-  }, [selectedTags, searchQuery, activeTab, offerFilter]);
+  }, [selectedTags, searchQuery, activeTab]);
 
   const loadPendingOffers = async (page = 1) => {
     try {

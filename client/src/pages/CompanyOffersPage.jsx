@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import useAuthStore from '../store/authStore';
 import { getMyOffers, closeOffer } from '../services/offerApi';
+import { Users } from 'lucide-react';
 
 const STATUS_CONFIG = {
   pending:  { label: 'Pendiente de revisión', bg: 'bg-yellow-100', text: 'text-yellow-800' },
@@ -10,6 +12,7 @@ const STATUS_CONFIG = {
 };
 
 const CompanyOffersPage = ({ onBack, onCreateOffer, onEditOffer }) => {
+  const navigate = useNavigate();
   const { token } = useAuthStore();
   const [offers, setOffers] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -154,6 +157,16 @@ const CompanyOffersPage = ({ onBack, onCreateOffer, onEditOffer }) => {
                     </div>
 
                     <div className="flex flex-col gap-2 ml-4">
+                      {/* Solo mostrar para ofertas aprobadas o cerradas que puedan tener postulantes */}
+                      {(offer.status === 'approved' || offer.status === 'closed') && (
+                        <button
+                          onClick={() => navigate(`/company/offers/${offer.id}/candidates?from=offers`)}
+                          className="flex items-center justify-center gap-2 px-3 py-1.5 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
+                        >
+                          <Users className="w-4 h-4" />
+                          Ver postulantes
+                        </button>
+                      )}
                       {canEdit && (
                         <button
                           onClick={() => onEditOffer(offer)}

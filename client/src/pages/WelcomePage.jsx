@@ -1,4 +1,6 @@
+import { useNavigate } from 'react-router-dom';
 import useAuthStore from '../store/authStore';
+import NotificationBell from '../components/NotificationBell';
 
 const FeatureCard = ({ icon, title, description, badge, onClick, disabled }) => (
   <button
@@ -41,6 +43,7 @@ const FeatureCard = ({ icon, title, description, badge, onClick, disabled }) => 
 
 const WelcomePage = ({ onLogout, onEditProfile, onGoToCVBuilder, onGoToAdmin, onGoToOffers, onGoToStudentOffers }) => {
   const { user, logout } = useAuthStore();
+  const navigate = useNavigate();
 
   const handleLogout = async () => {
     await logout();
@@ -117,8 +120,9 @@ const WelcomePage = ({ onLogout, onEditProfile, onGoToCVBuilder, onGoToAdmin, on
       icon: '👥',
       title: 'Ver candidatos',
       description: 'Gestiona y revisa los postulantes a tus ofertas publicadas.',
-      badge: 'Próximamente',
-      disabled: true,
+      badge: 'Activo',
+      onClick: () => navigate('/company/candidates'),
+      disabled: !companyProfile?.canPublishOffers,
     },
   ];
 
@@ -133,7 +137,8 @@ const WelcomePage = ({ onLogout, onEditProfile, onGoToCVBuilder, onGoToAdmin, on
             <div className="inline-flex h-9 w-9 items-center justify-center rounded-xl bg-emerald-950 text-base font-black text-white">P</div>
             <span className="text-sm font-bold text-emerald-900 uppercase tracking-widest">PracHub</span>
           </div>
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-3">
+            <NotificationBell />
             <span className="text-sm text-gray-500 hidden sm:block">{user?.email}</span>
             <button
               onClick={handleLogout}

@@ -12,6 +12,8 @@ import CompanyOffersPage from './pages/CompanyOffersPage';
 import CreateOfferPage from './pages/CreateOfferPage';
 import StudentOffersPage from './pages/StudentOffersPage';
 import MyApplicationsPage from './pages/MyApplicationsPage';
+import OfferCandidatesPage from './pages/OfferCandidatesPage';
+import CompanyCandidatesPage from './pages/CompanyCandidatesPage';
 
 const PrivateRoute = ({ children }) => {
   const { token, user, isInitialized, isLoading, authVerified } = useAuthStore();
@@ -321,7 +323,7 @@ const AppRoutes = () => {
         </CompanyRoute>
       } />
 
-      {/* Crear/editar oferta (protegido, solo company) */}
+      {/* Crear oferta — estático antes que dinámico */}
       <Route path="/company/offers/new" element={
         <CompanyRoute>
           <CreateOfferPage
@@ -331,12 +333,27 @@ const AppRoutes = () => {
         </CompanyRoute>
       } />
 
+      {/* Editar oferta — estático antes que dinámico */}
       <Route path="/company/offers/edit" element={
         <CompanyRoute>
           <CreateOfferPage
             onBack={() => navigate('/company/offers')}
             onSuccess={() => navigate('/company/offers')}
           />
+        </CompanyRoute>
+      } />
+
+      {/* Gestión de candidatos — página exclusiva */}
+      <Route path="/company/candidates" element={
+        <CompanyRoute>
+          <CompanyCandidatesPage />
+        </CompanyRoute>
+      } />
+
+      {/* Ver candidatos — dinámico con :offerId, va después de los estáticos */}
+      <Route path="/company/offers/:offerId/candidates" element={
+        <CompanyRoute>
+          <OfferCandidatesPage />
         </CompanyRoute>
       } />
 

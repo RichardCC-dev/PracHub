@@ -302,18 +302,20 @@ const AppRoutes = () => {
       {/* Historial y progreso de simulaciones (protegido - HU-09) */}
       <Route path="/simulator/history" element={
         <PrivateRoute>
-          <div>
-            <nav className="bg-white border-b border-gray-200 px-4 py-3 flex justify-between items-center shadow-sm">
-              <button
-                onClick={() => navigate('/simulator')}
-                className="text-gray-600 hover:text-gray-900 font-medium flex items-center space-x-2"
-              >
-                <span>← Volver al Simulador</span>
-              </button>
-              <div className="font-bold text-emerald-800">PracHub</div>
-            </nav>
-            <SimulationHistoryPage />
-          </div>
+          <StudentRoute>
+            <div>
+              <nav className="bg-white border-b border-gray-200 px-4 py-3 flex justify-between items-center shadow-sm">
+                <button
+                  onClick={() => navigate('/simulator')}
+                  className="text-gray-600 hover:text-gray-900 font-medium flex items-center space-x-2"
+                >
+                  <span>← Volver al Simulador</span>
+                </button>
+                <div className="font-bold text-emerald-800">PracHub</div>
+              </nav>
+              <SimulationHistoryPage />
+            </div>
+          </StudentRoute>
         </PrivateRoute>
       } />
 

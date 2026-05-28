@@ -90,7 +90,7 @@ const WelcomePage = ({ onLogout, onEditProfile, onGoToCVBuilder, onGoToAdmin, on
       disabled: false,
     },
     {
-      icon: '�',
+      icon: '📊',
       title: 'Mi Progreso en Simulaciones',
       description: 'Revisa tu historial de sesiones, puntuaciones por rol y tu evolución entre prácticas.',
       badge: 'Activo',

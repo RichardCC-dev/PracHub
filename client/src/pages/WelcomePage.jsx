@@ -39,7 +39,7 @@ const FeatureCard = ({ icon, title, description, badge, onClick, disabled }) => 
   </button>
 );
 
-const WelcomePage = ({ onLogout, onEditProfile, onGoToCVBuilder }) => {
+const WelcomePage = ({ onLogout, onEditProfile, onGoToCVBuilder, onGoToAdmin, onGoToOffers }) => {
   const { user, logout } = useAuthStore();
 
   const handleLogout = async () => {
@@ -103,11 +103,12 @@ const WelcomePage = ({ onLogout, onEditProfile, onGoToCVBuilder }) => {
     },
     {
       icon: '📢',
-      title: 'Publicar oferta',
+      title: 'Gestionar mis ofertas',
       description: companyProfile?.canPublishOffers
         ? 'Crea y publica nuevas ofertas de prácticas profesionales.'
         : 'Disponible tras completar la verificación legal de tu empresa.',
       badge: companyProfile?.canPublishOffers ? 'Activo' : 'Pendiente verificación',
+      onClick: onGoToOffers,
       disabled: !companyProfile?.canPublishOffers,
     },
     {

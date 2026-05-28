@@ -8,6 +8,8 @@ import CompanyProfilePage from './pages/CompanyProfilePage';
 import useAuthStore from './store/authStore';
 import CVBuilderPage from './pages/CVBuilderPage';
 import AdminDashboardPage from './pages/AdminDashboardPage';
+import CompanyOffersPage from './pages/CompanyOffersPage';
+import CreateOfferPage from './pages/CreateOfferPage';
 
 const PrivateRoute = ({ children }) => {
   const { token, user } = useAuthStore();
@@ -157,6 +159,8 @@ const AppRoutes = () => {
             onLogout={() => navigate('/', { replace: true })}
             onEditProfile={() => navigate('/company/profile')}
             onGoToCVBuilder={() => navigate('/cv-builder')}
+            onGoToAdmin={() => navigate('/admin')}
+            onGoToOffers={() => navigate('/company/offers')}
           />
         </PrivateRoute>
       } />
@@ -180,6 +184,36 @@ const AppRoutes = () => {
         <AdminRoute>
           <AdminDashboardPage />
         </AdminRoute>
+      } />
+
+      {/* Gestión de ofertas (protegido, solo company) */}
+      <Route path="/company/offers" element={
+        <CompanyRoute>
+          <CompanyOffersPage
+            onBack={() => navigate('/dashboard')}
+            onCreateOffer={() => navigate('/company/offers/new')}
+            onEditOffer={(offer) => navigate('/company/offers/edit', { state: { offer } })}
+          />
+        </CompanyRoute>
+      } />
+
+      {/* Crear/editar oferta (protegido, solo company) */}
+      <Route path="/company/offers/new" element={
+        <CompanyRoute>
+          <CreateOfferPage
+            onBack={() => navigate('/company/offers')}
+            onSuccess={() => navigate('/company/offers')}
+          />
+        </CompanyRoute>
+      } />
+
+      <Route path="/company/offers/edit" element={
+        <CompanyRoute>
+          <CreateOfferPage
+            onBack={() => navigate('/company/offers')}
+            onSuccess={() => navigate('/company/offers')}
+          />
+        </CompanyRoute>
       } />
 
       {/* Fallback */}

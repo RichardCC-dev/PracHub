@@ -17,8 +17,10 @@ const CompanyOffersPage = ({ onBack, onCreateOffer, onEditOffer }) => {
   const [closingId, setClosingId] = useState(null);
 
   useEffect(() => {
-    loadOffers();
-  }, []);
+    if (token) {
+      loadOffers();
+    }
+  }, [token]);
 
   const loadOffers = async () => {
     try {

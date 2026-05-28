@@ -45,7 +45,15 @@ const SimulationHistoryPage = () => {
   const handleViewSimulation = (sim) => {
     setLocalError(null);
     fetchSimulationDetails(sim.id, token)
-      .then(() => navigate('/simulator'))
+      .then(() =>
+        navigate('/simulator', {
+          state: {
+            fromHistory: true,
+            simulationId: sim.id,
+            initialView: 'chat',
+          },
+        })
+      )
       .catch(err => setLocalError(err.message || 'Error al cargar la simulación.'));
   };
 

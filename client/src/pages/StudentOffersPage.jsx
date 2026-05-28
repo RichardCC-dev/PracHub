@@ -8,6 +8,7 @@ import {
   Building2, 
   Briefcase,
   Loader2,
+  ArrowLeft,
   Bookmark,
   CheckCircle,
   AlertCircle
@@ -27,6 +28,7 @@ const StudentOffersPage = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedModality, setSelectedModality] = useState('');
   const [selectedOffer, setSelectedOffer] = useState(null);
+  const [viewingOffer, setViewingOffer] = useState(null); // Para ver detalle
   const [isApplyModalOpen, setIsApplyModalOpen] = useState(false);
   const [checkingStatus, setCheckingStatus] = useState({});
 
@@ -127,27 +129,27 @@ const StudentOffersPage = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
-      <div className="bg-white shadow-sm border-b">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-          <div className="flex items-center justify-between">
+      <div className="bg-white border-b">
+        <div className="max-w-6xl mx-auto px-4 py-4">
+          <div className="flex items-center gap-4">
+            <button
+              onClick={() => navigate('/dashboard')}
+              className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+            >
+              <ArrowLeft className="w-5 h-5 text-gray-600" />
+            </button>
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">
+              <h1 className="text-xl font-semibold text-gray-900">
                 Bolsa de Prácticas
               </h1>
-              <p className="text-gray-600 mt-1">
-                Encuentra oportunidades de prácticas profesionales
+              <p className="text-sm text-gray-500">
+                {filteredOffers.length} {filteredOffers.length === 1 ? 'oferta disponible' : 'ofertas disponibles'}
               </p>
             </div>
-            <div className="flex items-center gap-4">
-              <button
-                onClick={() => navigate('/dashboard')}
-                className="text-gray-600 hover:text-gray-900"
-              >
-                Volver al Dashboard
-              </button>
+            <div className="ml-auto">
               <button
                 onClick={() => navigate('/my-applications')}
-                className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium"
+                className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium text-sm"
               >
                 Mis Postulaciones
               </button>
@@ -156,7 +158,7 @@ const StudentOffersPage = () => {
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="max-w-6xl mx-auto px-4 py-8">
         {/* Filtros */}
         <div className="bg-white rounded-lg shadow-sm p-4 mb-6">
           <div className="flex flex-col sm:flex-row gap-4">
@@ -207,7 +209,8 @@ const StudentOffersPage = () => {
               return (
                 <div
                   key={offer.id}
-                  className="bg-white rounded-lg shadow-sm border hover:shadow-md transition-shadow"
+                  onClick={() => setViewingOffer(offer)}
+                  className="bg-white rounded-lg shadow-sm border hover:shadow-md transition-shadow cursor-pointer"
                 >
                   <div className="p-6">
                     <div className="flex items-start justify-between">
@@ -294,6 +297,121 @@ const StudentOffersPage = () => {
           )}
         </div>
       </div>
+
+      {/* Offer Detail Modal */}
+      {viewingOffer && (
+        <div 
+          className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
+          onClick={() => setViewingOffer(null)}
+        >
+          <div 
+            className="bg-white rounded-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="p-6">
+              {/* Header */}
+              <div className="flex items-start justify-between mb-6">
+                <div className="flex items-start gap-4">
+                  <div className="w-16 h-16 bg-gray-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                    {viewingOffer.company?.logoUrl ? (
+                      <img
+                        src={viewingOffer.company.logoUrl}
+                        alt={viewingOffer.company.tradeName}
+                        className="w-12 h-12 object-contain"
+                      />
+                    ) : (
+                      <Building2 className="w-8 h-8 text-gray-400" />
+                    )}
+                  </div>
+                  <div>
+                    <h2 className="text-xl font-bold text-gray-900">{viewingOffer.title}</h2>
+                    <p className="text-gray-600">{viewingOffer.company?.tradeName || viewingOffer.company?.legalName}</p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setViewingOffer(null)}
+                  className="text-gray-400 hover:text-gray-600"
+                >
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+
+              {/* Tags */}
+              <div className="flex flex-wrap gap-2 mb-6">
+                <span className="inline-flex items-center gap-1 px-3 py-1 bg-blue-50 text-blue-700 rounded-full text-sm">
+                  <MapPin className="w-4 h-4" />
+                  {viewingOffer.modality}
+                </span>
+                <span className="inline-flex items-center gap-1 px-3 py-1 bg-green-50 text-green-700 rounded-full text-sm">
+                  <Clock className="w-4 h-4" />
+                  {viewingOffer.duration}
+                </span>
+                <span className="inline-flex items-center gap-1 px-3 py-1 bg-purple-50 text-purple-700 rounded-full text-sm">
+                  {viewingOffer.area}
+                </span>
+                {viewingOffer.compensation && (
+                  <span className="inline-flex items-center gap-1 px-3 py-1 bg-yellow-50 text-yellow-700 rounded-full text-sm">
+                    <span className="font-semibold">S/</span> 
+                    {viewingOffer.compensation.replace(/&#x2F;/g, '/')}
+                  </span>
+                )}
+              </div>
+
+              {/* Description */}
+              <div className="mb-6">
+                <h3 className="font-semibold text-gray-900 mb-2">Descripción</h3>
+                <p className="text-gray-600 whitespace-pre-line">{viewingOffer.description}</p>
+              </div>
+
+              {/* Requirements */}
+              {viewingOffer.requirements && (
+                <div className="mb-6">
+                  <h3 className="font-semibold text-gray-900 mb-2">Requisitos</h3>
+                  <p className="text-gray-600 whitespace-pre-line">{viewingOffer.requirements}</p>
+                </div>
+              )}
+
+              {/* Career Tags */}
+              {viewingOffer.careerTags?.length > 0 && (
+                <div className="mb-6">
+                  <h3 className="font-semibold text-gray-900 mb-2">Carreras relacionadas</h3>
+                  <div className="flex flex-wrap gap-2">
+                    {viewingOffer.careerTags.map((tag, i) => (
+                      <span key={i} className="px-3 py-1 bg-gray-100 text-gray-700 rounded-full text-sm">
+                        {tag}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Action Button */}
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setViewingOffer(null)}
+                  className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50"
+                >
+                  Cerrar
+                </button>
+                {!getApplicationStatusForOffer(viewingOffer.id) && (
+                  <button
+                    onClick={() => {
+                      setSelectedOffer(viewingOffer);
+                      setIsApplyModalOpen(true);
+                      setViewingOffer(null);
+                    }}
+                    className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                  >
+                    Postular ahora
+                  </button>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Apply Modal */}
       <ApplyModal

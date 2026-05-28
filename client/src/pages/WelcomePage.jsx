@@ -98,7 +98,7 @@ const WelcomePage = ({ onLogout, onEditProfile, onGoToCVBuilder, onGoToAdmin, on
       disabled: false,
     },
     {
-      icon: '�👤',
+      icon: '👤',
       title: 'Mi perfil',
       description: 'Actualiza tus datos personales, carrera y disponibilidad.',
       badge: 'Próximamente',

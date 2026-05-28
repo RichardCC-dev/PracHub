@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { ArrowLeft } from 'lucide-react';
 import CVWizard from '../components/CVWizard';
 import CVExportPanel from '../components/CVExportPanel';
 import CVVersionHistory from '../components/CVVersionHistory';
@@ -49,13 +50,20 @@ const CVBuilderPage = ({ onBack }) => {
 
   return (
     <main className="min-h-screen bg-gray-50">
-      <header className="bg-white border-b border-gray-100 px-6 py-3">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2.5">
-            <div className="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-950 text-sm font-black text-white">P</div>
-            <span className="text-xs font-bold text-emerald-900 uppercase tracking-widest">PracHub</span>
-          </div>
-          <div className="flex items-center gap-3">
+      <header className="bg-white border-b">
+        <div className="max-w-6xl mx-auto px-4 py-4">
+          <div className="flex items-center gap-4">
+            {onBack && (
+              <button
+                onClick={onBack}
+                className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+              >
+                <ArrowLeft className="w-5 h-5 text-gray-600" />
+              </button>
+            )}
+            <div className="flex-1">
+              <h1 className="text-xl font-semibold text-gray-900">Constructor de CV</h1>
+            </div>
             <SaveIndicator />
             <button
               onClick={() => setShowClearConfirm(true)}
@@ -67,14 +75,6 @@ const CVBuilderPage = ({ onBack }) => {
               </svg>
               Limpiar CV
             </button>
-            {onBack && (
-              <button
-                onClick={onBack}
-                className="flex items-center gap-1.5 rounded-lg border border-gray-200 px-3 py-1.5 text-xs font-semibold text-gray-600 transition hover:bg-gray-50"
-              >
-                ← Volver al panel
-              </button>
-            )}
           </div>
         </div>
       </header>

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-dom';
 import HomePage from './pages/HomePage';
 import StudentOnboardingPage from './pages/StudentOnboardingPage';
@@ -14,31 +14,122 @@ import StudentOffersPage from './pages/StudentOffersPage';
 import MyApplicationsPage from './pages/MyApplicationsPage';
 
 const PrivateRoute = ({ children }) => {
-  const { token, user } = useAuthStore();
+  const { token, user, isInitialized, isLoading, authVerified } = useAuthStore();
   const location = useLocation();
-  if (!token || !user) return <Navigate to="/" replace state={{ from: location }} />;
+
+  if (!isInitialized || isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="w-8 h-8 border-4 border-emerald-600 border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
+
+  if (authVerified && (!token || !user)) {
+    return <Navigate to="/" replace state={{ from: location }} />;
+  }
+
+  if (!authVerified && token) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="w-8 h-8 border-4 border-emerald-600 border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
+
+  if (!token) return <Navigate to="/" replace state={{ from: location }} />;
+
   return children;
 };
 
 const CompanyRoute = ({ children }) => {
-  const { token, user } = useAuthStore();
-  if (!token || !user) return <Navigate to="/" replace />;
-  if (user.role !== 'company') return <Navigate to="/dashboard" replace />;
-  return children;
+  const { token, user, isInitialized, isLoading, authVerified } = useAuthStore();
+
+  if (!isInitialized || isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="w-8 h-8 border-4 border-emerald-600 border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
+
+  if (authVerified) {
+    if (!token || !user) return <Navigate to="/" replace />;
+    if (user.role !== 'company') return <Navigate to="/dashboard" replace />;
+    return children;
+  }
+
+  if (token && !authVerified) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="w-8 h-8 border-4 border-emerald-600 border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
+
+  return <Navigate to="/" replace />;
 };
 
 const AdminRoute = ({ children }) => {
-  const { token, user } = useAuthStore();
-  if (!token || !user) return <Navigate to="/" replace />;
-  if (user.role !== 'admin') return <Navigate to="/dashboard" replace />;
-  return children;
+  const { token, user, isInitialized, isLoading, authVerified } = useAuthStore();
+
+  if (!isInitialized || isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="w-8 h-8 border-4 border-emerald-600 border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
+
+  if (authVerified) {
+    if (!token || !user) return <Navigate to="/" replace />;
+    if (user.role !== 'admin') return <Navigate to="/dashboard" replace />;
+    return children;
+  }
+
+  if (token && !authVerified) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="w-8 h-8 border-4 border-emerald-600 border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
+
+  return <Navigate to="/" replace />;
 };
 
 const StudentRoute = ({ children }) => {
-  const { token, user } = useAuthStore();
-  if (!token || !user) return <Navigate to="/" replace />;
-  if (user.role !== 'student') return <Navigate to="/dashboard" replace />;
-  return children;
+  const { token, user, isInitialized, isLoading, authVerified } = useAuthStore();
+
+  // Mientras se inicializa o carga, mostrar spinner
+  if (!isInitialized || isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="w-8 h-8 border-4 border-emerald-600 border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
+
+  // Si auth está verificada (hay token y user), verificar rol
+  if (authVerified) {
+    if (user?.role !== 'student') {
+      return <Navigate to="/dashboard" replace />;
+    }
+    return children;
+  }
+
+  // Si no está verificada pero hay token, esperar un momento (puede estar cargando)
+  if (token && !authVerified) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="w-8 h-8 border-4 border-emerald-600 border-t-transparent rounded-full animate-spin" />
+        <span className="ml-3 text-gray-600">Verificando sesión...</span>
+      </div>
+    );
+  }
+
+  // No hay token, redirigir
+  return <Navigate to="/" replace />;
 };
 
 const VerifyEmailPage = () => {
@@ -114,14 +205,23 @@ const VerifyEmailPage = () => {
 };
 
 const AppRoutes = () => {
-  const { token, user } = useAuthStore();
+  const { token, user, isInitialized, isLoading, authVerified } = useAuthStore();
   const navigate = useNavigate();
+
+  // Mostrar loading mientras se inicializa o si hay token pero auth no está verificada
+  if (!isInitialized || isLoading || (token && !authVerified)) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="w-8 h-8 border-4 border-emerald-600 border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
 
   return (
     <Routes>
       {/* Pública: home */}
       <Route path="/" element={
-        token && user ? <Navigate to={user.role === 'admin' ? '/admin' : '/dashboard'} replace /> :
+        authVerified && token && user ? <Navigate to={user.role === 'admin' ? '/admin' : '/dashboard'} replace /> :
         <HomePage
           onLogin={() => navigate('/login')}
           onRegisterStudent={() => navigate('/register/student')}
@@ -131,13 +231,13 @@ const AppRoutes = () => {
 
       {/* Auth: login */}
       <Route path="/login" element={
-        token && user ? <Navigate to={user.role === 'admin' ? '/admin' : '/dashboard'} replace /> :
+        authVerified && token && user ? <Navigate to={user.role === 'admin' ? '/admin' : '/dashboard'} replace /> :
         <StudentOnboardingPage onLoginSuccess={() => navigate('/dashboard', { replace: true })} />
       } />
 
       {/* Auth: olvidé contraseña */}
       <Route path="/forgot-password" element={
-        token && user ? <Navigate to={user.role === 'admin' ? '/admin' : '/dashboard'} replace /> :
+        authVerified && token && user ? <Navigate to={user.role === 'admin' ? '/admin' : '/dashboard'} replace /> :
         <StudentOnboardingPage onLoginSuccess={() => navigate('/dashboard', { replace: true })} />
       } />
 
@@ -148,13 +248,13 @@ const AppRoutes = () => {
 
       {/* Auth: registro estudiante */}
       <Route path="/register/student" element={
-        token && user ? <Navigate to={user.role === 'admin' ? '/admin' : '/dashboard'} replace /> :
+        authVerified && token && user ? <Navigate to={user.role === 'admin' ? '/admin' : '/dashboard'} replace /> :
         <StudentOnboardingPage onLoginSuccess={() => navigate('/dashboard', { replace: true })} />
       } />
 
       {/* Auth: registro empresa */}
       <Route path="/register/company" element={
-        token && user ? <Navigate to={user.role === 'admin' ? '/admin' : '/dashboard'} replace /> :
+        authVerified && token && user ? <Navigate to={user.role === 'admin' ? '/admin' : '/dashboard'} replace /> :
         <CompanyOnboardingPage onLoginSuccess={() => navigate('/dashboard', { replace: true })} />
       } />
 

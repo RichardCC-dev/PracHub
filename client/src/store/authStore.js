@@ -42,17 +42,19 @@ const getStoredUser = () => {
   } catch { return null; }
 };
 
-const useAuthStore = create((set) => ({
-  user: getStoredUser(),
-  token: readStorage(KEY_TOKEN),
-  isLoading: false,
+const useAuthStore = create((set, get) => ({
+  user: null,
+  token: null,
+  isLoading: true,
+  isInitialized: false,
+  authVerified: false, // Indica si la auth ha sido verificada completamente
   error: null,
   login: async (payload, remember = false) => {
     set({ isLoading: true, error: null });
     try {
       const data = await loginUser(payload);
       saveSession(data.token, data.user, remember);
-      set({ user: data.user, token: data.token, isLoading: false });
+      set({ user: data.user, token: data.token, isLoading: false, isInitialized: true, authVerified: true });
       return data;
     } catch (error) {
       set({ error: error.message, isLoading: false });
@@ -64,7 +66,7 @@ const useAuthStore = create((set) => ({
     try {
       const data = await registerStudent(payload);
       saveSession(data.token, data.user, false);
-      set({ user: data.user, token: data.token, isLoading: false });
+      set({ user: data.user, token: data.token, isLoading: false, isInitialized: true, authVerified: true });
       return data;
     } catch (error) {
       set({ error: error.message, isLoading: false });
@@ -76,7 +78,7 @@ const useAuthStore = create((set) => ({
     try {
       const data = await registerCompany(payload);
       saveSession(data.token, data.user, false);
-      set({ user: data.user, token: data.token, isLoading: false });
+      set({ user: data.user, token: data.token, isLoading: false, isInitialized: true, authVerified: true });
       return data;
     } catch (error) {
       set({ error: error.message, isLoading: false });
@@ -100,7 +102,7 @@ const useAuthStore = create((set) => ({
     try {
       const data = await resetPassword(payload);
       saveSession(data.token, data.user, false);
-      set({ user: data.user, token: data.token, isLoading: false });
+      set({ user: data.user, token: data.token, isLoading: false, isInitialized: true, authVerified: true });
       return data;
     } catch (error) {
       set({ error: error.message, isLoading: false });
@@ -109,12 +111,19 @@ const useAuthStore = create((set) => ({
   },
   logout: () => {
     clearSession();
-    set({ user: null, token: null });
+    set({ user: null, token: null, authVerified: false });
   },
   setUser: (user) => {
     const remember = !!localStorage.getItem(KEY_REMEMBER);
     saveSession(readStorage(KEY_TOKEN) || '', user, remember);
     set({ user });
+  },
+  initialize: () => {
+    const token = readStorage(KEY_TOKEN);
+    const user = getStoredUser();
+    // authVerified solo es true si hay tanto token como user
+    const authVerified = !!(token && user);
+    set({ token, user, isLoading: false, isInitialized: true, authVerified });
   },
 }));
 

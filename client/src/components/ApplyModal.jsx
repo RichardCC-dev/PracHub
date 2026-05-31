@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
-import { X, FileText, Building2, User, CheckCircle, AlertCircle, Loader2 } from 'lucide-react';
+import { X, FileText, Building2, User, CheckCircle, AlertCircle, Loader2, Sparkles, ChevronDown, ChevronUp } from 'lucide-react';
 import { getApplicationPreview, createApplication } from '../services/applicationApi';
+import CVAnalyzer from './CVAnalyzer';
 
 const ApplyModal = ({ offerId, isOpen, onClose, onSuccess }) => {
   const [preview, setPreview] = useState(null);
@@ -9,6 +10,7 @@ const ApplyModal = ({ offerId, isOpen, onClose, onSuccess }) => {
   const [error, setError] = useState(null);
   const [coverLetter, setCoverLetter] = useState('');
   const [showConfirmation, setShowConfirmation] = useState(false);
+  const [showCVAnalysis, setShowCVAnalysis] = useState(false);
 
   useEffect(() => {
     if (isOpen && offerId) {
@@ -187,6 +189,46 @@ const ApplyModal = ({ offerId, isOpen, onClose, onSuccess }) => {
                   </div>
                 )}
               </div>
+
+              {/* Análisis de CV con IA */}
+              {preview.resume && (
+                <div className="border rounded-lg p-4 bg-gradient-to-r from-emerald-50/50 to-white">
+                  <button
+                    onClick={() => setShowCVAnalysis(!showCVAnalysis)}
+                    className="flex items-center justify-between w-full text-left"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 bg-emerald-100 rounded-lg">
+                        <Sparkles className="w-5 h-5 text-emerald-700" />
+                      </div>
+                      <div>
+                        <h4 className="font-medium text-gray-900">Análisis de CV con IA</h4>
+                        <p className="text-sm text-gray-500">
+                          Recibe sugerencias para mejorar tu CV según esta oferta
+                        </p>
+                      </div>
+                    </div>
+                    {showCVAnalysis ? (
+                      <ChevronUp className="w-5 h-5 text-gray-400" />
+                    ) : (
+                      <ChevronDown className="w-5 h-5 text-gray-400" />
+                    )}
+                  </button>
+
+                  {showCVAnalysis && (
+                    <div className="mt-4">
+                      <CVAnalyzer
+                        offers={[{
+                          id: preview.offer.id,
+                          title: preview.offer.title,
+                          company: preview.offer.company,
+                        }]}
+                        currentOfferId={preview.offer.id}
+                      />
+                    </div>
+                  )}
+                </div>
+              )}
 
               {/* Carta de Presentación Opcional */}
               <div className="border rounded-lg p-4">

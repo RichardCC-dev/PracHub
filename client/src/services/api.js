@@ -194,3 +194,35 @@ export const deleteResumeVersion = async (versionId) => {
   });
   return parseResponse(response);
 };
+
+// CV Analysis API
+export const analyzeCV = async (offerId = null) => {
+  const response = await fetch(`${API_URL}/cv-analysis`, {
+    method: 'POST',
+    headers: getAuthHeaders(),
+    body: JSON.stringify({ offerId }),
+  });
+  return parseResponse(response);
+};
+
+export const getAnalysisHistory = async (limit = 20) => {
+  const response = await fetch(`${API_URL}/cv-analysis/history?limit=${limit}`, {
+    headers: getAuthHeaders(),
+  });
+  return parseResponse(response);
+};
+
+export const getAnalysisDetails = async (analysisId) => {
+  const response = await fetch(`${API_URL}/cv-analysis/${analysisId}`, {
+    headers: getAuthHeaders(),
+  });
+  return parseResponse(response);
+};
+
+export const deleteAnalysis = async (analysisId) => {
+  const response = await fetch(`${API_URL}/cv-analysis/${analysisId}`, {
+    method: 'DELETE',
+    headers: getAuthHeaders(),
+  });
+  return parseResponse(response);
+};

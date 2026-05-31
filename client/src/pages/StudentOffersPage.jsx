@@ -11,11 +11,13 @@ import {
   ArrowLeft,
   Bookmark,
   CheckCircle,
-  AlertCircle
+  AlertCircle,
+  Sparkles
 } from 'lucide-react';
 import { getAllOffers } from '../services/offerApi';
 import { getMyApplications, canApply } from '../services/applicationApi';
 import ApplyModal from '../components/ApplyModal';
+import CVAnalyzer from '../components/CVAnalyzer';
 import useAuthStore from '../store/authStore';
 
 const StudentOffersPage = () => {
@@ -30,6 +32,7 @@ const StudentOffersPage = () => {
   const [selectedOffer, setSelectedOffer] = useState(null);
   const [viewingOffer, setViewingOffer] = useState(null); // Para ver detalle
   const [isApplyModalOpen, setIsApplyModalOpen] = useState(false);
+  const [isCVAnalysisOpen, setIsCVAnalysisOpen] = useState(false);
   const [checkingStatus, setCheckingStatus] = useState({});
 
   const modalities = ['remoto', 'presencial', 'híbrido'];
@@ -80,6 +83,14 @@ const StudentOffersPage = () => {
 
   const handleApplySuccess = () => {
     loadData(); // Recargar para actualizar estados
+  };
+
+  const handleOpenCVAnalysis = () => {
+    setIsCVAnalysisOpen(true);
+  };
+
+  const handleCloseCVAnalysis = () => {
+    setIsCVAnalysisOpen(false);
   };
 
   const getApplicationStatusForOffer = (offerId) => {
@@ -387,14 +398,8 @@ const StudentOffersPage = () => {
                 </div>
               )}
 
-              {/* Action Button */}
-              <div className="flex gap-3">
-                <button
-                  onClick={() => setViewingOffer(null)}
-                  className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50"
-                >
-                  Cerrar
-                </button>
+              {/* Action Buttons */}
+              <div className="flex flex-col gap-3">
                 {!getApplicationStatusForOffer(viewingOffer.id) && (
                   <button
                     onClick={() => {
@@ -402,11 +407,32 @@ const StudentOffersPage = () => {
                       setIsApplyModalOpen(true);
                       setViewingOffer(null);
                     }}
-                    className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                    className="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium"
                   >
                     Postular ahora
                   </button>
                 )}
+                <div className="flex gap-3">
+                  <button
+                    onClick={() => setViewingOffer(null)}
+                    className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50"
+                  >
+                    Cerrar
+                  </button>
+                  {!getApplicationStatusForOffer(viewingOffer.id) && (
+                    <button
+                      onClick={() => {
+                        setSelectedOffer(viewingOffer);
+                        setIsCVAnalysisOpen(true);
+                        setViewingOffer(null);
+                      }}
+                      className="flex-1 px-4 py-2 bg-emerald-100 text-emerald-700 rounded-lg hover:bg-emerald-200 font-medium flex items-center justify-center gap-2"
+                    >
+                      <Sparkles className="w-4 h-4" />
+                      Analizar mi CV
+                    </button>
+                  )}
+                </div>
               </div>
             </div>
           </div>
@@ -423,6 +449,44 @@ const StudentOffersPage = () => {
         }}
         onSuccess={handleApplySuccess}
       />
+
+      {/* CV Analysis Modal */}
+      {isCVAnalysisOpen && (
+        <div 
+          className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
+          onClick={handleCloseCVAnalysis}
+        >
+          <div 
+            className="bg-white rounded-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="p-6">
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2">
+                  <Sparkles className="w-6 h-6 text-emerald-600" />
+                  Análisis de CV
+                </h2>
+                <button
+                  onClick={handleCloseCVAnalysis}
+                  className="text-gray-400 hover:text-gray-600"
+                >
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+              <CVAnalyzer
+                offers={selectedOffer ? [{
+                  id: selectedOffer.id,
+                  title: selectedOffer.title,
+                  company: selectedOffer.company,
+                }] : []}
+                currentOfferId={selectedOffer?.id || null}
+              />
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

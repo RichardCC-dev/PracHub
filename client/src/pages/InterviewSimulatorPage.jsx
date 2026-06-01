@@ -38,6 +38,12 @@ const InterviewSimulatorPage = () => {
   
   const { register, handleSubmit, formState: { errors } } = useForm();
 
+  useEffect(() => {
+    if (currentSimulation && view === 'setup') {
+      setView('chat');
+    }
+  }, [currentSimulation]);
+
   const onStartSubmit = async (data) => {
     setLocalError(null);
     try {

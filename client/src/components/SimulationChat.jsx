@@ -2,6 +2,38 @@ import React, { useState, useEffect, useRef } from 'react';
 import useAuthStore from '../store/authStore';
 import useSimulationStore from '../store/simulationStore';
 
+const renderMessageWithLinks = (text) => {
+  if (!text) return null;
+  const parts = [];
+  const regex = /\[([^\]]+)\]\(([^)]+)\)/g;
+  let lastIndex = 0;
+  let match;
+
+  while ((match = regex.exec(text)) !== null) {
+    if (match.index > lastIndex) {
+      parts.push(text.substring(lastIndex, match.index));
+    }
+    parts.push(
+      <a 
+        key={match.index} 
+        href={match[2]} 
+        target="_blank" 
+        rel="noopener noreferrer" 
+        className="text-emerald-200 underline font-semibold hover:text-emerald-100 transition-colors"
+      >
+        {match[1]}
+      </a>
+    );
+    lastIndex = regex.lastIndex;
+  }
+
+  if (lastIndex < text.length) {
+    parts.push(text.substring(lastIndex));
+  }
+
+  return parts.length > 0 ? parts : text;
+};
+
 const SimulationChat = ({ simulationId, onEndSimulation }) => {
   const { token } = useAuthStore();
   const { 
@@ -143,7 +175,7 @@ const SimulationChat = ({ simulationId, onEndSimulation }) => {
                   <span className="text-xs font-semibold text-gray-500">Entrevistador</span>
                 </div>
               )}
-              <div className="text-sm whitespace-pre-wrap leading-relaxed">{msg.content}</div>
+              <div className="text-sm whitespace-pre-wrap leading-relaxed">{msg.role === 'ai' ? renderMessageWithLinks(msg.content) : msg.content}</div>
             </div>
           </div>
         ))}
@@ -162,8 +194,8 @@ const SimulationChat = ({ simulationId, onEndSimulation }) => {
       {/* Results View (if completed) */}
       {isCompleted && (
         <div className="p-6 bg-green-50 border-t border-green-200 rounded-b-lg">
-          <h3 className="text-lg font-bold text-green-900 mb-2">Resultados de la Simulación</h3>
-          <div className="flex items-center space-x-4 mb-4">
+          <h3 className="text-lg font-bold text-green-900 mb-4">Resultados de la Simulación</h3>
+          <div className="flex items-center space-x-4 mb-6">
             <div className="flex-shrink-0 w-16 h-16 bg-white rounded-full flex items-center justify-center border-4 border-green-500 shadow-md">
               <span className="text-xl font-bold text-green-700">{currentSimulation.overallScore}%</span>
             </div>
@@ -171,12 +203,66 @@ const SimulationChat = ({ simulationId, onEndSimulation }) => {
               <p className="text-sm font-medium text-green-800 uppercase tracking-wide">Puntuación General</p>
             </div>
           </div>
-          <div className="bg-white p-4 rounded-md shadow-sm border border-green-100">
-            <h4 className="text-sm font-bold text-gray-700 mb-2">Retroalimentación de la IA:</h4>
-            <p className="text-sm text-gray-600 whitespace-pre-wrap leading-relaxed">
-              {currentSimulation.aiFeedbackSummary}
-            </p>
-          </div>
+          
+          {(() => {
+            let feedback = currentSimulation.aiFeedbackSummary;
+            let parsed = null;
+            try {
+              if (feedback.startsWith('{')) {
+                parsed = JSON.parse(feedback);
+              }
+            } catch (e) {
+              parsed = null;
+            }
+
+            if (parsed && typeof parsed === 'object') {
+              return (
+                <div className="bg-white p-5 rounded-md shadow-sm border border-green-100">
+                  <h4 className="text-sm font-bold text-gray-800 mb-2">Retroalimentación General:</h4>
+                  <p className="text-sm text-gray-600 leading-relaxed mb-6">
+                    {parsed.general}
+                  </p>
+                  
+                  {parsed.detailed && parsed.detailed.length > 0 && (
+                    <div>
+                      <h4 className="text-sm font-bold text-gray-800 mb-3 border-b pb-2">Desglose por Pregunta:</h4>
+                      <div className="space-y-4">
+                        {parsed.detailed.map((item, idx) => (
+                          <div key={idx} className="bg-gray-50 p-4 rounded-md border border-gray-200">
+                            <p className="text-sm font-semibold text-gray-900 mb-1">
+                              <span className="text-green-700 mr-2">Q:</span>{item.question}
+                            </p>
+                            <p className="text-sm text-gray-700 mb-3 border-l-2 border-green-300 pl-3 italic">
+                              {item.answer}
+                            </p>
+                            <div className="flex items-center justify-between mb-2">
+                              <span className="text-xs font-bold text-gray-500 uppercase tracking-wide">Puntuación:</span>
+                              <span className={`text-sm font-bold ${item.score >= 70 ? 'text-green-600' : 'text-orange-500'}`}>
+                                {item.score}/100
+                              </span>
+                            </div>
+                            <p className="text-sm text-gray-600">
+                              <span className="font-semibold mr-1">Feedback:</span>
+                              {item.feedback}
+                            </p>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              );
+            }
+
+            return (
+              <div className="bg-white p-4 rounded-md shadow-sm border border-green-100">
+                <h4 className="text-sm font-bold text-gray-700 mb-2">Retroalimentación de la IA:</h4>
+                <p className="text-sm text-gray-600 whitespace-pre-wrap leading-relaxed">
+                  {feedback}
+                </p>
+              </div>
+            );
+          })()}
         </div>
       )}
 

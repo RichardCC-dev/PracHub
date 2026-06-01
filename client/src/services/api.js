@@ -195,6 +195,24 @@ export const deleteResumeVersion = async (versionId) => {
   return parseResponse(response);
 };
 
+export const exportVersionPdf = async (versionId, template = 'harvard') => {
+  const response = await fetch(`${API_URL}/resume/versions/${versionId}/pdf?template=${template}`, {
+    headers: getAuthHeaders(),
+  });
+
+  if (!response.ok) {
+    const data = await response.json().catch(() => ({}));
+    throw new Error(data.message || 'No se pudo descargar el PDF.');
+  }
+
+  const blob = await response.blob();
+  const contentDisposition = response.headers.get('Content-Disposition');
+  const filenameMatch = contentDisposition?.match(/filename="(.+)"/);
+  const filename = filenameMatch ? filenameMatch[1] : `cv-version-${versionId}.pdf`;
+
+  return { blob, filename };
+};
+
 // Simulation endpoints
 export const startSimulation = async (simulatedRole, token, career, sector) => {
   const response = await fetch(`${API_URL}/simulations/start`, {

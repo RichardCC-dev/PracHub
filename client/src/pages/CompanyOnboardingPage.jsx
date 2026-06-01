@@ -25,9 +25,9 @@ const ASIDE_COPY = {
 };
 
 const ROUTE_TO_VIEW = {
-  '/login': 'login',
+  '/login/company': 'login',
   '/register/company': 'register',
-  '/forgot-password': 'forgot',
+  '/forgot-password/company': 'forgot',
   '/reset-password': 'reset',
 };
 
@@ -36,8 +36,8 @@ const CompanyOnboardingPage = ({ onLoginSuccess }) => {
   const location = useLocation();
   const resetToken = useMemo(() => new URLSearchParams(window.location.search).get('token'), []);
 
-  const view = ROUTE_TO_VIEW[location.pathname] || 'register';
-  const copy = ASIDE_COPY[view] || ASIDE_COPY.register;
+  const view = ROUTE_TO_VIEW[location.pathname] || 'login';
+  const copy = ASIDE_COPY[view] || ASIDE_COPY.login;
 
   const handleLoginSuccess = (user) => {
     const target = user?.role === 'admin' ? '/admin' : '/dashboard';
@@ -47,19 +47,20 @@ const CompanyOnboardingPage = ({ onLoginSuccess }) => {
   const formByView = {
     login: (
       <LoginForm
-        onForgotPassword={() => navigate('/forgot-password')}
+        role="company"
+        onForgotPassword={() => navigate('/forgot-password/company')}
         onGoToRegister={() => navigate('/register/company')}
         onLoginSuccess={handleLoginSuccess}
       />
     ),
     register: (
       <CompanyRegistrationForm
-        onGoToLogin={() => navigate('/login')}
+        onGoToLogin={() => navigate('/login/company')}
         onLoginSuccess={handleLoginSuccess}
       />
     ),
-    forgot: <ForgotPasswordForm onBackToRegister={() => navigate(-1)} />,
-    reset: <ResetPasswordForm token={resetToken} onBackToRegister={() => navigate('/login')} />,
+    forgot: <ForgotPasswordForm onBackToRegister={() => navigate('/login/company')} />,
+    reset: <ResetPasswordForm token={resetToken} onBackToRegister={() => navigate('/login/company')} />,
   };
 
   return (

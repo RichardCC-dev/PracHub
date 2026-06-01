@@ -33,42 +33,57 @@ const CompanyCandidatesPage = () => {
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    if (token) loadData();
-  }, [token]);
+    let cancelled = false;
+    
+    const loadData = async () => {
+      try {
+        setLoading(true);
+        setError(null);
 
-  const loadData = async () => {
-    try {
-      setLoading(true);
-      setError(null);
+        const offersData = await getMyOffers(token);
+        if (cancelled) return;
+        
+        const eligible = (offersData.offers || []).filter(
+          (o) => o.status === 'approved' || o.status === 'closed'
+        );
+        setOffers(eligible);
 
-      const offersData = await getMyOffers(token);
-      const eligible = (offersData.offers || []).filter(
-        (o) => o.status === 'approved' || o.status === 'closed'
-      );
-      setOffers(eligible);
-
-      // Cargar stats de postulantes en paralelo
-      const statsMap = {};
-      await Promise.all(
-        eligible.map(async (offer) => {
-          try {
-            const data = await getOfferApplications(offer.id);
-            const apps = data.data || [];
-            const counts = { total: apps.length, enviada: 0, revision: 0, aceptada: 0, descartada: 0 };
-            apps.forEach((a) => { if (counts[a.status] !== undefined) counts[a.status]++; });
-            statsMap[offer.id] = counts;
-          } catch {
-            statsMap[offer.id] = { total: 0, enviada: 0, revision: 0, aceptada: 0, descartada: 0 };
-          }
-        })
-      );
-      setStats(statsMap);
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      setLoading(false);
+        // Cargar stats de postulantes en paralelo
+        const statsMap = {};
+        await Promise.all(
+          eligible.map(async (offer) => {
+            try {
+              const data = await getOfferApplications(offer.id);
+              if (cancelled) return;
+              const apps = data.data || [];
+              const counts = { total: apps.length, enviada: 0, revision: 0, aceptada: 0, descartada: 0 };
+              apps.forEach((a) => { if (counts[a.status] !== undefined) counts[a.status]++; });
+              statsMap[offer.id] = counts;
+            } catch (err) {
+              statsMap[offer.id] = { total: 0, enviada: 0, revision: 0, aceptada: 0, descartada: 0 };
+            }
+          })
+        );
+        if (!cancelled) {
+          setStats(statsMap);
+        }
+      } catch (err) {
+        if (!cancelled) {
+          setError(err.message || 'Error al cargar los datos');
+        }
+      } finally {
+        if (!cancelled) {
+          setLoading(false);
+        }
+      }
+    };
+    
+    if (token) {
+      loadData();
     }
-  };
+    
+    return () => { cancelled = true; };
+  }, [token]);
 
   if (loading) {
     return (

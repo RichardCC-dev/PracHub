@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
   Search, 
@@ -16,6 +16,7 @@ import {
 } from 'lucide-react';
 import { getAllOffers } from '../services/offerApi';
 import { getMyApplications, canApply } from '../services/applicationApi';
+import { getRecommendedOffers } from '../services/recommendationApi';
 import ApplyModal from '../components/ApplyModal';
 import CVAnalyzer from '../components/CVAnalyzer';
 import useAuthStore from '../store/authStore';
@@ -26,6 +27,7 @@ const StudentOffersPage = () => {
   
   const [offers, setOffers] = useState([]);
   const [applications, setApplications] = useState([]);
+  const [recommendations, setRecommendations] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedModality, setSelectedModality] = useState('');
@@ -39,7 +41,17 @@ const StudentOffersPage = () => {
 
   useEffect(() => {
     loadData();
+    fetchRecommendations();
   }, []);
+
+  const fetchRecommendations = async () => {
+    try {
+      const res = await getRecommendedOffers();
+      setRecommendations(res.data || []);
+    } catch (error) {
+      console.warn('Error loading recommendations:', error);
+    }
+  };
 
   const loadData = async () => {
     try {
@@ -115,16 +127,18 @@ const StudentOffersPage = () => {
     );
   };
 
-  const filteredOffers = offers.filter(offer => {
-    const matchesSearch = 
-      offer.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      offer.company?.tradeName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      offer.company?.legalName?.toLowerCase().includes(searchQuery.toLowerCase());
-    
-    const matchesModality = !selectedModality || offer.modality === selectedModality;
-    
-    return matchesSearch && matchesModality && offer.status === 'approved';
-  });
+  const filteredOffers = useMemo(() => {
+    return offers.filter(offer => {
+      const matchesSearch = 
+        offer.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        offer.company?.tradeName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        offer.company?.legalName?.toLowerCase().includes(searchQuery.toLowerCase());
+      
+      const matchesModality = !selectedModality || offer.modality === selectedModality;
+      
+      return matchesSearch && matchesModality && offer.status === 'approved';
+    });
+  }, [offers, searchQuery, selectedModality]);
 
   if (loading) {
     return (
@@ -201,8 +215,80 @@ const StudentOffersPage = () => {
           </div>
         </div>
 
-        {/* Resultados */}
-        <div className="space-y-4">
+        {/* Recomendaciones IA */}
+        {recommendations?.length > 0 && !searchQuery && !selectedModality && (
+          <div className="mb-10">
+            <div className="flex items-center gap-2 mb-4">
+              <div className="bg-purple-100 p-2 rounded-lg">
+                <svg className="w-5 h-5 text-purple-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                </svg>
+              </div>
+              <h2 className="text-xl font-bold text-gray-900">Recomendadas para ti</h2>
+              <span className="bg-purple-100 text-purple-700 text-xs font-semibold px-2 py-0.5 rounded-full ml-2">
+                IA Matching
+              </span>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {recommendations.slice(0, 4).map((rec) => {
+                const offer = rec.offer;
+                const applicationStatus = getApplicationStatusForOffer(offer.id);
+                
+                return (
+                  <div
+                    key={`rec-${offer.id}`}
+                    onClick={() => setViewingOffer(offer)}
+                    className="bg-white rounded-xl shadow-sm border border-purple-100 hover:shadow-md hover:border-purple-300 transition-all cursor-pointer relative overflow-hidden"
+                  >
+                    <div className="absolute top-0 right-0 bg-purple-600 text-white text-xs font-bold px-3 py-1 rounded-bl-lg">
+                      {rec.matchScore}% Match
+                    </div>
+                    <div className="p-5">
+                      <div className="flex items-start gap-4">
+                        <div className="w-12 h-12 bg-gray-50 rounded-lg flex items-center justify-center flex-shrink-0 border border-gray-100">
+                          {offer.company?.logoUrl ? (
+                            <img
+                              src={offer.company.logoUrl}
+                              alt={offer.company.tradeName}
+                              className="w-10 h-10 object-contain"
+                            />
+                          ) : (
+                            <Building2 className="w-6 h-6 text-gray-400" />
+                          )}
+                        </div>
+                        <div className="flex-1 min-w-0 pr-12">
+                          <h3 className="text-lg font-semibold text-gray-900 truncate">
+                            {offer.title}
+                          </h3>
+                          <p className="text-gray-600 truncate text-sm">
+                            {offer.company?.tradeName || offer.company?.legalName}
+                          </p>
+                          <div className="flex flex-wrap gap-2 mt-3">
+                            <span className="inline-flex items-center gap-1 px-2 py-1 bg-gray-100 text-gray-700 rounded text-xs">
+                              <MapPin className="w-3 h-3" />
+                              {offer.modality}
+                            </span>
+                            <span className="inline-flex items-center gap-1 px-2 py-1 bg-gray-100 text-gray-700 rounded text-xs">
+                              <Clock className="w-3 h-3" />
+                              {offer.duration}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* Resultados Generales */}
+        <div>
+          <h2 className="text-xl font-bold text-gray-900 mb-4">
+            {searchQuery || selectedModality ? 'Resultados de búsqueda' : 'Todas las ofertas'}
+          </h2>
+          <div className="space-y-4">
           {filteredOffers.length === 0 ? (
             <div className="bg-white rounded-lg shadow-sm p-12 text-center">
               <Briefcase className="w-12 h-12 text-gray-400 mx-auto mb-4" />
@@ -284,7 +370,7 @@ const StudentOffersPage = () => {
                     </div>
 
                     {/* Tags de carrera */}
-                    {offer.careerTags && offer.careerTags.length > 0 && (
+                    {Array.isArray(offer.careerTags) && offer.careerTags.length > 0 && (
                       <div className="mt-4 flex flex-wrap gap-2">
                         {offer.careerTags.map((tag, index) => (
                           <span
@@ -306,6 +392,7 @@ const StudentOffersPage = () => {
               );
             })
           )}
+          </div>
         </div>
       </div>
 
@@ -385,7 +472,7 @@ const StudentOffersPage = () => {
               )}
 
               {/* Career Tags */}
-              {viewingOffer.careerTags?.length > 0 && (
+              {Array.isArray(viewingOffer.careerTags) && viewingOffer.careerTags.length > 0 && (
                 <div className="mb-6">
                   <h3 className="font-semibold text-gray-900 mb-2">Carreras relacionadas</h3>
                   <div className="flex flex-wrap gap-2">

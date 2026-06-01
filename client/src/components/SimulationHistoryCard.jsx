@@ -22,6 +22,18 @@ const SimulationHistoryCard = ({ sim, onView }) => {
     year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit'
   });
 
+  let summaryText = sim.aiFeedbackSummary;
+  if (summaryText && summaryText.startsWith('{')) {
+    try {
+      const parsed = JSON.parse(summaryText);
+      if (parsed.general) {
+        summaryText = parsed.general;
+      }
+    } catch (e) {
+      // Ignorar, dejamos text original
+    }
+  }
+
   return (
     <div className="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden transition-shadow hover:shadow-md">
       <div className="p-5 flex items-start space-x-4">
@@ -43,12 +55,12 @@ const SimulationHistoryCard = ({ sim, onView }) => {
           </div>
           <p className="text-xs text-gray-400">{formattedDate}</p>
 
-          {isCompleted && sim.aiFeedbackSummary && (
+          {isCompleted && summaryText && (
             <div className="mt-2">
               <p className={`text-sm text-gray-600 leading-relaxed ${!expanded ? 'line-clamp-2' : ''}`}>
-                {sim.aiFeedbackSummary}
+                {summaryText}
               </p>
-              {sim.aiFeedbackSummary.length > 120 && (
+              {summaryText.length > 120 && (
                 <button
                   onClick={() => setExpanded(!expanded)}
                   className="text-xs text-green-700 font-medium mt-1 hover:underline"

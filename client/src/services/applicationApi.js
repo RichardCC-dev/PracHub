@@ -87,3 +87,26 @@ export const updateApplicationStatus = async (applicationId, data) => {
   });
   return parseResponse(response);
 };
+
+/**
+ * Descargar CV de una postulación (para empresas)
+ * @param {number} applicationId - ID de la postulación
+ * @param {string} template - Plantilla del CV (harvard o investment-banking)
+ */
+export const downloadApplicationCV = async (applicationId, template = 'harvard') => {
+  const response = await fetch(`${API_URL}/applications/${applicationId}/download-cv?template=${template}`, {
+    headers: { 'Authorization': `Bearer ${getToken()}` },
+  });
+
+  if (!response.ok) {
+    const data = await response.json().catch(() => ({}));
+    throw new Error(data.message || 'No se pudo descargar el CV.');
+  }
+
+  const blob = await response.blob();
+  const contentDisposition = response.headers.get('Content-Disposition');
+  const filenameMatch = contentDisposition?.match(/filename="(.+)"/);
+  const filename = filenameMatch ? filenameMatch[1] : `cv-postulacion-${applicationId}.pdf`;
+
+  return { blob, filename };
+};

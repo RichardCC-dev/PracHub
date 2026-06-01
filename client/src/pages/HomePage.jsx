@@ -1,4 +1,4 @@
-const HomePage = ({ onLogin, onRegisterStudent, onRegisterCompany }) => (
+const HomePage = ({ onLoginStudent, onLoginCompany, onRegisterStudent, onRegisterCompany }) => (
   <main className="min-h-screen bg-gray-50">
     <section className="grid min-h-screen lg:grid-cols-[1fr_1fr]">
 
@@ -46,40 +46,59 @@ const HomePage = ({ onLogin, onRegisterStudent, onRegisterCompany }) => (
               P
             </div>
             <h2 className="text-3xl font-bold text-gray-950">Bienvenido a PracHub</h2>
-            <p className="mt-2 text-gray-500">¿Eres estudiante o empresa?</p>
+            <p className="mt-2 text-gray-500">Selecciona tu perfil para continuar</p>
           </div>
 
-          <div className="rounded-3xl bg-white p-8 shadow-xl shadow-emerald-950/10 space-y-4">
+          <div className="rounded-3xl bg-white p-8 shadow-xl shadow-emerald-950/10 space-y-5">
+            
+            {/* Estudiantes */}
+            <div className="space-y-3">
+              <div className="flex items-center gap-2 mb-2">
+                <span className="text-2xl">🎓</span>
+                <span className="font-semibold text-gray-900">Soy Estudiante</span>
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                <button
+                  onClick={onLoginStudent}
+                  className="w-full rounded-xl bg-emerald-800 px-4 py-3 text-sm font-semibold text-white transition hover:bg-emerald-700 active:scale-[0.98]"
+                >
+                  Iniciar sesión
+                </button>
+                <button
+                  onClick={onRegisterStudent}
+                  className="w-full rounded-xl border-2 border-emerald-800 px-4 py-3 text-sm font-semibold text-emerald-900 transition hover:bg-emerald-50 active:scale-[0.98]"
+                >
+                  Crear cuenta
+                </button>
+              </div>
+            </div>
 
-            <button
-              onClick={onLogin}
-              className="w-full rounded-2xl bg-emerald-800 px-5 py-4 text-base font-semibold text-white transition hover:bg-emerald-700 active:scale-[0.98]"
-            >
-              Iniciar sesión
-            </button>
-
-            <div className="relative flex items-center py-2">
+            <div className="relative flex items-center">
               <div className="flex-1 border-t border-gray-200" />
-              <span className="mx-4 text-xs text-gray-400">Registrarse como</span>
+              <span className="mx-4 text-xs text-gray-400">o</span>
               <div className="flex-1 border-t border-gray-200" />
             </div>
 
-            <div className="grid grid-cols-2 gap-3">
-              <button
-                onClick={onRegisterStudent}
-                className="w-full rounded-2xl border-2 border-emerald-800 px-4 py-4 text-sm font-semibold text-emerald-900 transition hover:bg-emerald-50 active:scale-[0.98]"
-              >
-                <span className="block text-lg mb-1">🎓</span>
-                Estudiante
-              </button>
-
-              <button
-                onClick={onRegisterCompany}
-                className="w-full rounded-2xl border-2 border-emerald-800 px-4 py-4 text-sm font-semibold text-emerald-900 transition hover:bg-emerald-50 active:scale-[0.98]"
-              >
-                <span className="block text-lg mb-1">🏢</span>
-                Empresa
-              </button>
+            {/* Empresas */}
+            <div className="space-y-3">
+              <div className="flex items-center gap-2 mb-2">
+                <span className="text-2xl">🏢</span>
+                <span className="font-semibold text-gray-900">Soy Empresa</span>
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                <button
+                  onClick={onLoginCompany}
+                  className="w-full rounded-xl bg-blue-700 px-4 py-3 text-sm font-semibold text-white transition hover:bg-blue-600 active:scale-[0.98]"
+                >
+                  Iniciar sesión
+                </button>
+                <button
+                  onClick={onRegisterCompany}
+                  className="w-full rounded-xl border-2 border-blue-700 px-4 py-3 text-sm font-semibold text-blue-900 transition hover:bg-blue-50 active:scale-[0.98]"
+                >
+                  Crear cuenta
+                </button>
+              </div>
             </div>
 
             <div className="relative flex items-center py-1">
@@ -90,7 +109,7 @@ const HomePage = ({ onLogin, onRegisterStudent, onRegisterCompany }) => (
 
             <button
               disabled
-              className="w-full cursor-not-allowed rounded-2xl border border-gray-200 bg-gray-50 px-5 py-3.5 text-sm font-medium text-gray-400"
+              className="w-full cursor-not-allowed rounded-xl border border-gray-200 bg-gray-50 px-5 py-3 text-sm font-medium text-gray-400"
             >
               Continuar con Google
             </button>

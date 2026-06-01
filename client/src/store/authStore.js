@@ -49,6 +49,8 @@ const useAuthStore = create((set, get) => ({
   isInitialized: false,
   authVerified: false, // Indica si la auth ha sido verificada completamente
   error: null,
+  // Exponer saveSession para uso externo (ej: LoginForm con validación de rol)
+  saveSession: (token, user, remember) => saveSession(token, user, remember),
   login: async (payload, remember = false) => {
     set({ isLoading: true, error: null });
     try {

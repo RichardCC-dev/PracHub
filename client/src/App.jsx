@@ -227,22 +227,38 @@ const AppRoutes = () => {
       <Route path="/" element={
         authVerified && token && user ? <Navigate to={user.role === 'admin' ? '/admin' : '/dashboard'} replace /> :
         <HomePage
-          onLogin={() => navigate('/login')}
+          onLoginStudent={() => navigate('/login/student')}
+          onLoginCompany={() => navigate('/login/company')}
           onRegisterStudent={() => navigate('/register/student')}
           onRegisterCompany={() => navigate('/register/company')}
         />
       } />
 
-      {/* Auth: login */}
-      <Route path="/login" element={
+      {/* Redirección legacy /login a /login/student */}
+      <Route path="/login" element={<Navigate to="/login/student" replace />} />
+
+      {/* Auth: login estudiante */}
+      <Route path="/login/student" element={
         authVerified && token && user ? <Navigate to={user.role === 'admin' ? '/admin' : '/dashboard'} replace /> :
         <StudentOnboardingPage onLoginSuccess={() => navigate('/dashboard', { replace: true })} />
       } />
 
-      {/* Auth: olvidé contraseña */}
+      {/* Auth: login empresa */}
+      <Route path="/login/company" element={
+        authVerified && token && user ? <Navigate to={user.role === 'admin' ? '/admin' : '/dashboard'} replace /> :
+        <CompanyOnboardingPage onLoginSuccess={() => navigate('/dashboard', { replace: true })} />
+      } />
+
+      {/* Auth: olvidé contraseña - estudiante */}
       <Route path="/forgot-password" element={
         authVerified && token && user ? <Navigate to={user.role === 'admin' ? '/admin' : '/dashboard'} replace /> :
         <StudentOnboardingPage onLoginSuccess={() => navigate('/dashboard', { replace: true })} />
+      } />
+
+      {/* Auth: olvidé contraseña - empresa */}
+      <Route path="/forgot-password/company" element={
+        authVerified && token && user ? <Navigate to={user.role === 'admin' ? '/admin' : '/dashboard'} replace /> :
+        <CompanyOnboardingPage onLoginSuccess={() => navigate('/dashboard', { replace: true })} />
       } />
 
       {/* Auth: reset password */}

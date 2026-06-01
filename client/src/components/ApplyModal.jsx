@@ -1,6 +1,20 @@
 import { useState, useEffect } from 'react';
-import { X, FileText, Building2, User, CheckCircle, AlertCircle, Loader2, Sparkles, ChevronDown, ChevronUp } from 'lucide-react';
+import { 
+  X, 
+  FileText, 
+  Building2, 
+  User, 
+  CheckCircle, 
+  AlertCircle, 
+  Loader2, 
+  Sparkles, 
+  ChevronDown, 
+  ChevronUp, 
+  Download, 
+  Eye 
+} from 'lucide-react';
 import { getApplicationPreview, createApplication } from '../services/applicationApi';
+import { getResumeVersions, exportVersionPdf } from '../services/api';
 import CVAnalyzer from './CVAnalyzer';
 
 const ApplyModal = ({ offerId, isOpen, onClose, onSuccess }) => {
@@ -12,40 +26,79 @@ const ApplyModal = ({ offerId, isOpen, onClose, onSuccess }) => {
   const [showConfirmation, setShowConfirmation] = useState(false);
   const [showCVAnalysis, setShowCVAnalysis] = useState(false);
 
+  // Estados para versiones del CV
+  const [versions, setVersions] = useState([]);
+  const [loadingVersions, setLoadingVersions] = useState(false);
+  const [selectedVersionId, setSelectedVersionId] = useState(null);
+  const [downloadingPreview, setDownloadingPreview] = useState(false);
+  const [selectedTemplate, setSelectedTemplate] = useState('harvard');
+
   useEffect(() => {
+    let cancelled = false;
+    
+    const loadVersions = async () => {
+      try {
+        setLoadingVersions(true);
+        const data = await getResumeVersions();
+        if (cancelled) return;
+        setVersions(data || []);
+        // Si hay versiones, seleccionar la más reciente por defecto
+        if (data && data.length > 0) {
+          setSelectedVersionId(data[0].id);
+        }
+      } catch (err) {
+        if (!cancelled) {
+          console.error('Error cargando versiones:', err);
+        }
+      } finally {
+        if (!cancelled) {
+          setLoadingVersions(false);
+        }
+      }
+    };
+
+    const loadPreview = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        const response = await getApplicationPreview(offerId);
+        if (cancelled) return;
+        setPreview(response.data);
+      } catch (err) {
+        if (!cancelled) {
+          if (err.response?.data?.code === 'ALREADY_APPLIED') {
+            setError('Ya has postulado a esta oferta anteriormente');
+          } else {
+            setError(err.response?.data?.message || 'Error al cargar la previsualización');
+          }
+        }
+      } finally {
+        if (!cancelled) {
+          setLoading(false);
+        }
+      }
+    };
+    
     if (isOpen && offerId) {
       loadPreview();
+      loadVersions();
     }
+    
+    return () => { cancelled = true; };
   }, [isOpen, offerId]);
-
-  const loadPreview = async () => {
-    try {
-      setLoading(true);
-      setError(null);
-      const response = await getApplicationPreview(offerId);
-      setPreview(response.data);
-    } catch (err) {
-      if (err.response?.data?.code === 'ALREADY_APPLIED') {
-        setError('Ya has postulado a esta oferta anteriormente');
-      } else {
-        setError(err.response?.data?.message || 'Error al cargar la previsualización');
-      }
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const handleApply = async () => {
     try {
       setSubmitting(true);
       setError(null);
-      
+
       await createApplication({
         offerId,
         resumeId: preview.resume.id,
         coverLetter: coverLetter.trim() || null,
+        resumeVersionId: selectedVersionId,
       });
-      
+
       setShowConfirmation(true);
       setTimeout(() => {
         onSuccess?.();
@@ -60,6 +113,51 @@ const ApplyModal = ({ offerId, isOpen, onClose, onSuccess }) => {
     } finally {
       setSubmitting(false);
     }
+  };
+
+  const handlePreviewCV = async () => {
+    if (!selectedVersionId) return;
+    try {
+      setDownloadingPreview(true);
+      const { blob, filename } = await exportVersionPdf(selectedVersionId, selectedTemplate);
+      const url = globalThis.URL.createObjectURL(blob);
+      window.open(url, '_blank');
+      // Liberar el objeto URL después de un tiempo
+      setTimeout(() => globalThis.URL.revokeObjectURL(url), 60000);
+    } catch (err) {
+      setError('Error al previsualizar el CV: ' + err.message);
+    } finally {
+      setDownloadingPreview(false);
+    }
+  };
+
+  const handleDownloadCV = async () => {
+    if (!selectedVersionId) return;
+    try {
+      setDownloadingPreview(true);
+      const { blob, filename } = await exportVersionPdf(selectedVersionId, selectedTemplate);
+      const url = globalThis.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      globalThis.URL.revokeObjectURL(url);
+    } catch (err) {
+      setError('Error al descargar el CV: ' + err.message);
+    } finally {
+      setDownloadingPreview(false);
+    }
+  };
+
+  const formatDate = (dateString) => {
+    if (!dateString) return '';
+    return new Date(dateString).toLocaleDateString('es-PE', {
+      day: 'numeric',
+      month: 'short',
+      year: 'numeric',
+    });
   };
 
   if (!isOpen) return null;
@@ -161,24 +259,125 @@ const ApplyModal = ({ offerId, isOpen, onClose, onSuccess }) => {
                 </div>
               </div>
 
-              {/* CV a Enviar */}
+              {/* CV a Enviar - Selector de Versiones */}
               <div className="border rounded-lg p-4">
                 <div className="flex items-center gap-3 mb-3">
                   <FileText className="w-5 h-5 text-green-600" />
                   <h4 className="font-medium text-gray-900">CV a Enviar</h4>
                 </div>
                 {preview.resume ? (
-                  <div className="bg-green-50 p-3 rounded-lg">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="font-medium text-green-800">CV Activo</p>
-                        <p className="text-sm text-green-600">
-                          Completitud: {preview.resume.completionPercentage || 0}%
-                        </p>
+                  <div className="space-y-4">
+                    {/* Selector de versión */}
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Selecciona la versión de tu CV:
+                      </label>
+                      {loadingVersions ? (
+                        <div className="flex items-center gap-2 text-gray-500">
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                          <span className="text-sm">Cargando versiones...</span>
+                        </div>
+                      ) : versions.length > 0 ? (
+                        <div className="relative">
+                          <select
+                            value={selectedVersionId || ''}
+                            onChange={(e) => setSelectedVersionId(Number(e.target.value))}
+                            className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 appearance-none bg-white"
+                          >
+                            {versions.map((version, index) => (
+                              <option key={version.id} value={version.id}>
+                                {index === 0 ? '📄 ' : ''}Versión del {formatDate(version.created_at)}
+                                {version.template ? ` (${version.template})` : ''}
+                                {' - '}{version.completionPercentage || 0}% completado
+                                {index === 0 ? ' - Más reciente' : ''}
+                              </option>
+                            ))}
+                          </select>
+                          <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400 pointer-events-none" />
+                        </div>
+                      ) : (
+                        <div className="bg-yellow-50 p-3 rounded-lg">
+                          <p className="text-yellow-700 text-sm">
+                            No tienes versiones guardadas. Usarás tu CV actual.
+                          </p>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Selector de plantilla */}
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Plantilla para previsualizar:
+                      </label>
+                      <div className="grid grid-cols-2 gap-2">
+                        <button
+                          type="button"
+                          onClick={() => setSelectedTemplate('harvard')}
+                          className={`p-2 text-sm rounded-lg border transition ${
+                            selectedTemplate === 'harvard'
+                              ? 'border-blue-500 bg-blue-50 text-blue-700'
+                              : 'border-gray-200 hover:border-blue-300'
+                          }`}
+                        >
+                          Harvard
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setSelectedTemplate('investment-banking')}
+                          className={`p-2 text-sm rounded-lg border transition ${
+                            selectedTemplate === 'investment-banking'
+                              ? 'border-blue-500 bg-blue-50 text-blue-700'
+                              : 'border-gray-200 hover:border-blue-300'
+                          }`}
+                        >
+                          Investment Banking
+                        </button>
                       </div>
-                      <span className="text-sm text-green-700 font-medium">
-                        ✓ Listo para enviar
-                      </span>
+                    </div>
+
+                    {/* Botones de acción */}
+                    {selectedVersionId && (
+                      <div className="flex gap-2">
+                        <button
+                          onClick={handlePreviewCV}
+                          disabled={downloadingPreview}
+                          className="flex-1 flex items-center justify-center gap-2 px-4 py-2 border border-blue-300 text-blue-700 rounded-lg hover:bg-blue-50 transition disabled:opacity-50"
+                        >
+                          {downloadingPreview ? (
+                            <Loader2 className="w-4 h-4 animate-spin" />
+                          ) : (
+                            <Eye className="w-4 h-4" />
+                          )}
+                          Ver PDF
+                        </button>
+                        <button
+                          onClick={handleDownloadCV}
+                          disabled={downloadingPreview}
+                          className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition disabled:opacity-50"
+                        >
+                          {downloadingPreview ? (
+                            <Loader2 className="w-4 h-4 animate-spin" />
+                          ) : (
+                            <Download className="w-4 h-4" />
+                          )}
+                          Descargar PDF
+                        </button>
+                      </div>
+                    )}
+
+                    {/* Info del CV activo */}
+                    <div className="bg-green-50 p-3 rounded-lg">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="font-medium text-green-800">CV Activo</p>
+                          <p className="text-sm text-green-600">
+                            Completitud: {preview.resume.completionPercentage || 0}%
+                          </p>
+                        </div>
+                        <span className="text-sm text-green-700 font-medium">
+                          ✓ Listo para enviar
+                        </span>
+                      </div>
                     </div>
                   </div>
                 ) : (

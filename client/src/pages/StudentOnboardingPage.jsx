@@ -26,6 +26,7 @@ const ASIDE_COPY = {
 
 const ROUTE_TO_VIEW = {
   '/login': 'login',
+  '/login/student': 'login',
   '/register/student': 'register',
   '/forgot-password': 'forgot',
   '/reset-password': 'reset',
@@ -47,6 +48,7 @@ const StudentOnboardingPage = ({ onLoginSuccess }) => {
   const formByView = {
     login: (
       <LoginForm
+        role="student"
         onForgotPassword={() => navigate('/forgot-password')}
         onGoToRegister={() => navigate('/register/student')}
         onLoginSuccess={handleLoginSuccess}
@@ -55,12 +57,12 @@ const StudentOnboardingPage = ({ onLoginSuccess }) => {
     register: (
       <StudentRegistrationForm
         onForgotPassword={() => navigate('/forgot-password')}
-        onGoToLogin={() => navigate('/login')}
+        onGoToLogin={() => navigate('/login/student')}
         onLoginSuccess={handleLoginSuccess}
       />
     ),
-    forgot: <ForgotPasswordForm onBackToRegister={() => navigate(-1)} />,
-    reset: <ResetPasswordForm token={resetToken} onBackToRegister={() => navigate('/login')} />,
+    forgot: <ForgotPasswordForm onBackToRegister={() => navigate('/login/student')} />,
+    reset: <ResetPasswordForm token={resetToken} onBackToRegister={() => navigate('/login/student')} />,
   };
 
   return (

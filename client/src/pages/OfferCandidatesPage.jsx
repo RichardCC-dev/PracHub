@@ -1,21 +1,22 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
-import { 
-  ArrowLeft, 
-  Users, 
-  Eye, 
-  CheckCircle, 
-  XCircle, 
-  Clock, 
+import {
+  ArrowLeft,
+  Users,
+  Eye,
+  CheckCircle,
+  XCircle,
+  Clock,
   Mail,
   Building2,
   FileText,
   AlertCircle,
   Loader2,
   Search,
-  Filter
+  Filter,
+  Download,
 } from 'lucide-react';
-import { getOfferApplications, updateApplicationStatus } from '../services/applicationApi';
+import { getOfferApplications, updateApplicationStatus, downloadApplicationCV } from '../services/applicationApi';
 import { getMyOffers } from '../services/offerApi';
 import useAuthStore from '../store/authStore';
 
@@ -70,31 +71,46 @@ const OfferCandidatesPage = () => {
   // Modal de CV
   const [viewingCV, setViewingCV] = useState(null);
 
+  // Descarga de CV
+  const [downloadingCV, setDownloadingCV] = useState(null);
+
   useEffect(() => {
+    let cancelled = false;
+    
+    const loadData = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        
+        // Cargar ofertas para obtener info de la oferta actual
+        const offersData = await getMyOffers(token);
+        if (cancelled) return;
+        
+        const currentOffer = offersData.offers?.find(o => o.id === parseInt(offerId));
+        setOffer(currentOffer);
+        
+        // Cargar postulaciones
+        const appsData = await getOfferApplications(offerId);
+        if (cancelled) return;
+        
+        setApplications(appsData.data || []);
+      } catch (err) {
+        if (!cancelled) {
+          setError(err.message || 'Error al cargar los datos');
+        }
+      } finally {
+        if (!cancelled) {
+          setLoading(false);
+        }
+      }
+    };
+    
     if (token && offerId) {
       loadData();
     }
+    
+    return () => { cancelled = true; };
   }, [token, offerId]);
-
-  const loadData = async () => {
-    try {
-      setLoading(true);
-      setError(null);
-      
-      // Cargar ofertas para obtener info de la oferta actual
-      const offersData = await getMyOffers(token);
-      const currentOffer = offersData.offers?.find(o => o.id === parseInt(offerId));
-      setOffer(currentOffer);
-      
-      // Cargar postulaciones
-      const appsData = await getOfferApplications(offerId);
-      setApplications(appsData.data || []);
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const handleStatusChange = async () => {
     if (!newStatus || !managingApplication) return;
@@ -308,6 +324,35 @@ const OfferCandidatesPage = () => {
                       >
                         <Eye className="w-4 h-4" />
                         Ver CV
+                      </button>
+                      <button
+                        onClick={async () => {
+                          try {
+                            setDownloadingCV(app.id);
+                            const { blob, filename } = await downloadApplicationCV(app.id, 'harvard');
+                            const url = globalThis.URL.createObjectURL(blob);
+                            const link = document.createElement('a');
+                            link.href = url;
+                            link.download = filename;
+                            document.body.appendChild(link);
+                            link.click();
+                            link.remove();
+                            globalThis.URL.revokeObjectURL(url);
+                          } catch (err) {
+                            alert('Error al descargar el CV: ' + err.message);
+                          } finally {
+                            setDownloadingCV(null);
+                          }
+                        }}
+                        disabled={downloadingCV === app.id}
+                        className="flex items-center gap-2 px-4 py-2 border border-green-300 text-green-700 rounded-lg hover:bg-green-50 transition text-sm disabled:opacity-50"
+                      >
+                        {downloadingCV === app.id ? (
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                        ) : (
+                          <Download className="w-4 h-4" />
+                        )}
+                        Descargar CV
                       </button>
                       <button
                         onClick={() => {

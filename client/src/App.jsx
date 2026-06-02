@@ -16,6 +16,7 @@ import StudentOffersPage from './pages/StudentOffersPage';
 import MyApplicationsPage from './pages/MyApplicationsPage';
 import OfferCandidatesPage from './pages/OfferCandidatesPage';
 import CompanyCandidatesPage from './pages/CompanyCandidatesPage';
+import AdminLoginPage from './pages/AdminLoginPage';
 
 const PrivateRoute = ({ children }) => {
   const { token, user, isInitialized, isLoading, authVerified } = useAuthStore();
@@ -236,6 +237,12 @@ const AppRoutes = () => {
 
       {/* Redirección legacy /login a /login/student */}
       <Route path="/login" element={<Navigate to="/login/student" replace />} />
+
+      {/* Auth: login admin (secreto, no hay links públicos) */}
+      <Route path="/login/admin" element={
+        authVerified && token && user ? <Navigate to={user.role === 'admin' ? '/admin' : '/dashboard'} replace /> :
+        <AdminLoginPage />
+      } />
 
       {/* Auth: login estudiante */}
       <Route path="/login/student" element={

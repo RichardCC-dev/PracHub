@@ -49,7 +49,8 @@ const handlePdfResponse = async (response, defaultFilename) => {
 // --- AUTHENTICATION ---
 
 export const loginUser = async (payload) => {
-  const response = await fetch(`${API_URL}/auth/login`, {
+  const endpoint = payload.adminSecret ? '/auth/login/admin' : '/auth/login';
+  const response = await fetch(`${API_URL}${endpoint}`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(payload),

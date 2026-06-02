@@ -51,7 +51,7 @@ const useCVAnalysisStore = create((set, get) => ({
       });
       return analysisWithCategory;
     } catch (error) {
-      set({ analysisError: error.message, isAnalyzing: false });
+      set({ analysisError: error.message, error: error.message, isAnalyzing: false });
       throw error;
     }
   },

@@ -14,7 +14,10 @@ import {
   History,
   TrendingUp,
   Loader2,
+  Download,
 } from 'lucide-react';
+import { jsPDF } from 'jspdf';
+import autoTable from 'jspdf-autotable';
 import useCVAnalysisStore from '../store/cvAnalysisStore';
 
 const ScoreRing = ({ score, size = 120, strokeWidth = 10 }) => {
@@ -274,6 +277,272 @@ const CVAnalyzer = ({ offers = [], currentOfferId = null }) => {
     }
   };
 
+  const downloadReport = () => {
+    if (!currentAnalysis) return;
+
+    const doc = new jsPDF({ unit: 'pt', format: 'a4' });
+    const pageW = doc.internal.pageSize.getWidth();
+    const pageH = doc.internal.pageSize.getHeight();
+    const m = 36; // margin ~14mm
+    const contentW = pageW - m * 2;
+
+    // Helpers
+    const hexToRgb = (hex) => {
+      const v = hex.replace('#', '');
+      return [
+        parseInt(v.substring(0, 2), 16),
+        parseInt(v.substring(2, 4), 16),
+        parseInt(v.substring(4, 6), 16),
+      ];
+    };
+
+    const categoryColor =
+      currentAnalysis.scoreCategory?.color === 'green' ? '#059669' :
+      currentAnalysis.scoreCategory?.color === 'yellow' ? '#D97706' :
+      currentAnalysis.scoreCategory?.color === 'orange' ? '#EA580C' : '#DC2626';
+
+    const rgb = hexToRgb(categoryColor);
+
+    // ---- Header band ----
+    doc.setFillColor(16, 185, 129);
+    doc.rect(0, 0, pageW, 90, 'F');
+    doc.setTextColor(255, 255, 255);
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(22);
+    doc.text('Reporte de Análisis de CV', m, 45);
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(11);
+    doc.text('PracHub - Análisis con Inteligencia Artificial', m, 65);
+
+    // ---- Meta info ----
+    let y = 110;
+    doc.setTextColor(80, 80, 80);
+    doc.setFontSize(10);
+    const dateStr = new Date(currentAnalysis.createdAt || Date.now()).toLocaleString('es-PE', {
+      day: '2-digit', month: '2-digit', year: 'numeric',
+      hour: '2-digit', minute: '2-digit',
+    });
+    doc.text(`Generado: ${dateStr}`, m, y);
+    y += 16;
+    if (currentAnalysis.offer) {
+      doc.setFont('helvetica', 'bold');
+      doc.text('Oferta:', m, y);
+      doc.setFont('helvetica', 'normal');
+      const offerText = `${currentAnalysis.offer.title} - ${currentAnalysis.offer.company?.legalName || 'Empresa'}`;
+      const offerLines = doc.splitTextToSize(offerText, contentW - 50);
+      doc.text(offerLines, m + 42, y);
+      y += offerLines.length * 13 + 6;
+    }
+
+    // ---- Score badge ----
+    const badgeH = 56;
+    doc.setFillColor(rgb[0], rgb[1], rgb[2]);
+    doc.setDrawColor(rgb[0], rgb[1], rgb[2]);
+    doc.roundedRect(m, y, contentW, badgeH, 6, 6, 'FD');
+    doc.setTextColor(255, 255, 255);
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(28);
+    doc.text(`${currentAnalysis.overallScore}`, m + 18, y + 38);
+    doc.setFontSize(12);
+    doc.setFont('helvetica', 'normal');
+    doc.text('/100', m + 58, y + 38);
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(14);
+    const catLabel = currentAnalysis.scoreCategory?.label || '';
+    doc.text(catLabel, pageW - m - doc.getTextWidth(catLabel) - 18, y + 34);
+    y += badgeH + 20;
+
+    // ---- Section scores with mini bars ----
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(13);
+    doc.setTextColor(30, 30, 30);
+    doc.text('Puntuaciones por sección', m, y);
+    y += 16;
+
+    const scoreItems = [
+      { label: 'Claridad', key: 'clarity' },
+      { label: 'Impacto', key: 'impact' },
+      { label: 'Ortografía', key: 'grammar' },
+      { label: 'Extensión', key: 'length' },
+      { label: 'Palabras Clave', key: 'keywords' },
+    ];
+
+    scoreItems.forEach((item) => {
+      const val = currentAnalysis.sectionScores?.[item.key] || 0;
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(10);
+      doc.setTextColor(60, 60, 60);
+      doc.text(item.label, m, y);
+      doc.setFont('helvetica', 'normal');
+      doc.text(`${val}/100`, pageW - m - doc.getTextWidth(`${val}/100`), y);
+
+      // Bar background
+      const barY = y + 6;
+      const barH = 8;
+      doc.setFillColor(230, 230, 230);
+      doc.roundedRect(m, barY, contentW, barH, 3, 3, 'F');
+      // Bar fill
+      const fillW = (val / 100) * contentW;
+      if (fillW > 0) {
+        const r = val >= 70 ? 5 : val >= 40 ? 234 : 220;
+        const g = val >= 70 ? 150 : val >= 40 ? 88 : 38;
+        const b = val >= 70 ? 105 : val >= 40 ? 12 : 38;
+        doc.setFillColor(r, g, b);
+        doc.roundedRect(m, barY, fillW, barH, 3, 3, 'F');
+      }
+      y += 28;
+    });
+
+    y += 8;
+
+    // ---- Observations ----
+    if (Array.isArray(currentAnalysis.observations) && currentAnalysis.observations.length > 0) {
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(13);
+      doc.setTextColor(30, 30, 30);
+      doc.text('Observaciones', m, y);
+      y += 14;
+
+      const obsBody = currentAnalysis.observations.map((obs) => {
+        const text = typeof obs === 'string' ? obs : (obs.message || obs.text || '-');
+        const type = typeof obs === 'object'
+          ? (obs.type === 'error' ? 'Error' : obs.type === 'warning' ? 'Advertencia' : 'Info')
+          : 'Observación';
+        return [type, text];
+      });
+
+      autoTable(doc, {
+        startY: y,
+        head: [['Tipo', 'Descripción']],
+        body: obsBody,
+        theme: 'plain',
+        headStyles: {
+          fillColor: [245, 158, 11],
+          textColor: 255,
+          fontStyle: 'bold',
+          fontSize: 10,
+          cellPadding: { top: 6, right: 8, bottom: 6, left: 8 },
+        },
+        styles: {
+          fontSize: 9,
+          overflow: 'linebreak',
+          cellPadding: { top: 5, right: 8, bottom: 5, left: 8 },
+          lineColor: [220, 220, 220],
+          lineWidth: 0.5,
+        },
+        margin: { left: m, right: m },
+        tableWidth: 'auto',
+        pageBreak: 'auto',
+        columnStyles: {
+          0: { cellWidth: 60, fontStyle: 'bold' },
+          1: { cellWidth: 'auto' },
+        },
+        didParseCell: (data) => {
+          if (data.section === 'body' && data.column.index === 0) {
+            const t = data.cell.raw;
+            if (t === 'Error') data.cell.styles.textColor = [220, 38, 38];
+            else if (t === 'Advertencia') data.cell.styles.textColor = [234, 88, 12];
+            else data.cell.styles.textColor = [37, 99, 235];
+          }
+        },
+      });
+      y = doc.lastAutoTable.finalY + 20;
+    }
+
+    // ---- Recommendations ----
+    if (Array.isArray(currentAnalysis.recommendations) && currentAnalysis.recommendations.length > 0) {
+      if (y > pageH - 120) { doc.addPage(); y = 30; }
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(13);
+      doc.setTextColor(30, 30, 30);
+      doc.text('Recomendaciones', m, y);
+      y += 14;
+
+      const recBody = currentAnalysis.recommendations.map((rec) => {
+        const text = typeof rec === 'string' ? rec : (rec.message || rec.title || rec.description || '-');
+        const section = typeof rec === 'object' ? (rec.section || rec.type || 'General') : 'General';
+        return [section, text];
+      });
+
+      autoTable(doc, {
+        startY: y,
+        head: [['Sección', 'Recomendación']],
+        body: recBody,
+        theme: 'plain',
+        headStyles: {
+          fillColor: [16, 185, 129],
+          textColor: 255,
+          fontStyle: 'bold',
+          fontSize: 10,
+          cellPadding: { top: 6, right: 8, bottom: 6, left: 8 },
+        },
+        styles: {
+          fontSize: 9,
+          overflow: 'linebreak',
+          cellPadding: { top: 5, right: 8, bottom: 5, left: 8 },
+          lineColor: [220, 220, 220],
+          lineWidth: 0.5,
+        },
+        margin: { left: m, right: m },
+        tableWidth: 'auto',
+        pageBreak: 'auto',
+        columnStyles: {
+          0: { cellWidth: 70, fontStyle: 'bold', textColor: [16, 185, 129] },
+          1: { cellWidth: 'auto' },
+        },
+      });
+      y = doc.lastAutoTable.finalY + 20;
+    }
+
+    // ---- Keywords ----
+    if (currentAnalysis.keywordsAnalysis) {
+      if (y > pageH - 100) { doc.addPage(); y = 30; }
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(13);
+      doc.setTextColor(30, 30, 30);
+      doc.text('Palabras Clave', m, y);
+      y += 14;
+
+      const kw = currentAnalysis.keywordsAnalysis;
+      const matched = Array.isArray(kw.matched) && kw.matched.length > 0 ? kw.matched.join(', ') : 'Ninguna';
+      const missing = Array.isArray(kw.missing) && kw.missing.length > 0 ? kw.missing.join(', ') : 'Ninguna';
+
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(10);
+      doc.setTextColor(5, 150, 105);
+      doc.text('Presentes:', m, y);
+      doc.setFont('helvetica', 'normal');
+      const mLines = doc.splitTextToSize(matched, contentW - 10);
+      doc.text(mLines, m + 58, y);
+      y += mLines.length * 13 + 6;
+
+      doc.setFont('helvetica', 'bold');
+      doc.setTextColor(220, 38, 38);
+      doc.text('Faltantes:', m, y);
+      doc.setFont('helvetica', 'normal');
+      const miLines = doc.splitTextToSize(missing, contentW - 10);
+      doc.text(miLines, m + 58, y);
+      y += miLines.length * 13 + 10;
+    }
+
+    // ---- Footer ----
+    const pageCount = doc.getNumberOfPages();
+    for (let i = 1; i <= pageCount; i++) {
+      doc.setPage(i);
+      doc.setDrawColor(220, 220, 220);
+      doc.setLineWidth(0.5);
+      doc.line(m, pageH - 40, pageW - m, pageH - 40);
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(9);
+      doc.setTextColor(150, 150, 150);
+      doc.text('Generado por PracHub - Análisis de CV con IA', m, pageH - 22);
+      doc.text(`Página ${i} de ${pageCount}`, pageW - m - 60, pageH - 22);
+    }
+
+    const fileName = `Reporte_CV_${dateStr.replace(/[\/\s:]/g, '_')}.pdf`;
+    doc.save(fileName);
+  };
+
   const tabs = [
     { id: 'overview', label: 'Resumen', icon: Target },
     { id: 'observations', label: 'Observaciones', icon: FileText },
@@ -299,12 +568,12 @@ const CVAnalyzer = ({ offers = [], currentOfferId = null }) => {
 
       {/* Controles */}
       <div className="px-6 py-4 border-b border-gray-200 bg-gray-50">
-        <div className="flex flex-col sm:flex-row gap-3">
+        <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center">
           {offers.length > 0 && (
             <select
               value={selectedOfferId || ''}
               onChange={(e) => setSelectedOfferId(e.target.value ? parseInt(e.target.value, 10) : null)}
-              className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+              className="w-full sm:flex-1 sm:max-w-sm px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
             >
               <option value="">Análisis general (sin oferta específica)</option>
               {offers.map((offer) => (
@@ -315,11 +584,11 @@ const CVAnalyzer = ({ offers = [], currentOfferId = null }) => {
             </select>
           )}
 
-          <div className="flex gap-2">
+          <div className="flex flex-wrap items-center gap-2 sm:ml-auto">
             <button
               onClick={handleAnalyze}
               disabled={isAnalyzing}
-              className="flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white rounded-lg font-medium hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              className="shrink-0 flex items-center gap-2 px-5 py-2.5 bg-emerald-600 text-white rounded-lg font-semibold hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-sm"
             >
               {isAnalyzing ? (
                 <>
@@ -336,12 +605,22 @@ const CVAnalyzer = ({ offers = [], currentOfferId = null }) => {
 
             <button
               onClick={() => setShowHistory(!showHistory)}
-              className="flex items-center gap-2 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-gray-50 transition-colors"
+              className="shrink-0 flex items-center gap-2 px-4 py-2 border border-gray-300 bg-white text-gray-700 rounded-lg font-medium hover:bg-gray-50 transition-colors"
             >
               <History className="w-4 h-4" />
               Historial
               {showHistory ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
             </button>
+
+            {currentAnalysis && (
+              <button
+                onClick={downloadReport}
+                className="shrink-0 flex items-center gap-2 px-4 py-2 border border-emerald-300 bg-emerald-50 text-emerald-700 rounded-lg font-medium hover:bg-emerald-100 transition-colors"
+              >
+                <Download className="w-4 h-4" />
+                Descargar
+              </button>
+            )}
           </div>
         </div>
 
@@ -469,7 +748,7 @@ const CVAnalyzer = ({ offers = [], currentOfferId = null }) => {
               </div>
 
               {/* Recomendaciones principales */}
-              {currentAnalysis.recommendations?.length > 0 && (
+              {Array.isArray(currentAnalysis.recommendations) && currentAnalysis.recommendations.length > 0 && (
                 <div className="p-4 bg-emerald-50 rounded-xl border border-emerald-200">
                   <h4 className="text-sm font-semibold text-emerald-800 mb-3 flex items-center gap-2">
                     <Lightbulb className="w-4 h-4" />
@@ -487,7 +766,7 @@ const CVAnalyzer = ({ offers = [], currentOfferId = null }) => {
 
           {activeTab === 'observations' && (
             <div className="space-y-3">
-              {currentAnalysis.observations?.length === 0 ? (
+              {!Array.isArray(currentAnalysis.observations) || currentAnalysis.observations.length === 0 ? (
                 <div className="text-center py-8">
                   <CheckCircle className="w-12 h-12 text-green-500 mx-auto mb-3" />
                   <p className="text-gray-600">¡Excelente! No se encontraron observaciones.</p>

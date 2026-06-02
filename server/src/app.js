@@ -13,6 +13,7 @@ const offerRoutes = require('./routes/offerRoutes');
 const applicationRoutes = require('./routes/applicationRoutes');
 const simulationRoutes = require('./routes/simulationRoutes');
 const notificationRoutes = require('./routes/notificationRoutes');
+const cvAnalysisRoutes = require('./routes/cvAnalysisRoutes');
 const recommendationRoutes = require('./routes/recommendationRoutes');
 const errorHandler = require('./middlewares/errorHandler');
 
@@ -50,6 +51,7 @@ app.use('/api/applications', applicationRoutes);
 app.use('/api/simulations', simulationRoutes);
 app.use('/api/recommendations', recommendationRoutes);
 app.use('/api/notifications', notificationRoutes);
+app.use('/api/cv-analysis', cvAnalysisRoutes);
 app.use(errorHandler);
 
 module.exports = app;

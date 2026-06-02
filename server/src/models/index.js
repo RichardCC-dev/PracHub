@@ -10,6 +10,7 @@ const Offer = require('./Offer');
 const Application = require('./Application');
 const Simulation = require('./Simulation');
 const Notification = require('./Notification');
+const CVAnalysis = require('./CVAnalysis');
 
 // Validación de carga de todos los modelos (10 en total)
 [
@@ -22,8 +23,9 @@ const Notification = require('./Notification');
   { name: 'ResumeVersion', model: ResumeVersion },
   { name: 'Offer', model: Offer },
   { name: 'Application', model: Application },
-  { name: 'Simulation', model: Simulation },
-  { name: 'Notification', model: Notification }
+  { name: 'Notification', model: Notification },
+  { name: 'CVAnalysis', model: CVAnalysis },
+  { name: 'Simulation', model: Simulation }
 ].forEach(item => {
   if (!item.model || !item.model.prototype || !item.model.prototype.constructor.name) {
     throw new Error(`¡El modelo ${item.name} no se cargó correctamente! Revisa el archivo ${item.name}.js`);
@@ -204,6 +206,40 @@ Notification.belongsTo(User, {
   as: 'user',
 });
 
+// Relaciones de CVAnalysis
+Student.hasMany(CVAnalysis, {
+  foreignKey: 'studentId',
+  as: 'cvAnalyses',
+  onDelete: 'CASCADE',
+});
+
+CVAnalysis.belongsTo(Student, {
+  foreignKey: 'studentId',
+  as: 'student',
+});
+
+Resume.hasMany(CVAnalysis, {
+  foreignKey: 'resumeId',
+  as: 'cvAnalyses',
+  onDelete: 'CASCADE',
+});
+
+CVAnalysis.belongsTo(Resume, {
+  foreignKey: 'resumeId',
+  as: 'resume',
+});
+
+Offer.hasMany(CVAnalysis, {
+  foreignKey: 'offerId',
+  as: 'cvAnalyses',
+  onDelete: 'SET NULL',
+});
+
+CVAnalysis.belongsTo(Offer, {
+  foreignKey: 'offerId',
+  as: 'offer',
+});
+
 module.exports = {
   sequelize,
   User,
@@ -217,4 +253,5 @@ module.exports = {
   Application,
   Simulation,
   Notification,
+  CVAnalysis,
 };

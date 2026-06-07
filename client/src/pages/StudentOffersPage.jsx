@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { 
   Search, 
   Filter, 
@@ -19,10 +19,12 @@ import { getMyApplications, canApply } from '../services/applicationApi';
 import { getRecommendedOffers } from '../services/recommendationApi';
 import ApplyModal from '../components/ApplyModal';
 import CVAnalyzer from '../components/CVAnalyzer';
+import FollowCompanyButton from '../components/FollowCompanyButton';
 import useAuthStore from '../store/authStore';
 
 const StudentOffersPage = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { user } = useAuthStore();
   
   const [offers, setOffers] = useState([]);
@@ -43,6 +45,21 @@ const StudentOffersPage = () => {
     loadData();
     fetchRecommendations();
   }, []);
+
+  useEffect(() => {
+    if (
+      location.state?.openOfferId &&
+      offers.length > 0
+    ) {
+      const offerToOpen = offers.find(
+        offer => offer.id === location.state.openOfferId
+      );
+
+      if (offerToOpen) {
+        setViewingOffer(offerToOpen);
+      }
+    }
+  }, [location.state, offers]);
 
   const fetchRecommendations = async () => {
     try {
@@ -260,9 +277,17 @@ const StudentOffersPage = () => {
                           <h3 className="text-lg font-semibold text-gray-900 truncate">
                             {offer.title}
                           </h3>
-                          <p className="text-gray-600 truncate text-sm">
-                            {offer.company?.tradeName || offer.company?.legalName}
-                          </p>
+                          <div className="flex items-center gap-2 mt-1">
+                            <p className="text-gray-600 truncate text-sm">
+                              {offer.company?.tradeName || offer.company?.legalName}
+                            </p>
+                            {offer.company?.id && (
+                              <FollowCompanyButton 
+                                companyId={offer.company.id} 
+                                className="!px-2 !py-1 !text-xs"
+                              />
+                            )}
+                          </div>
                           <div className="flex flex-wrap gap-2 mt-3">
                             <span className="inline-flex items-center gap-1 px-2 py-1 bg-gray-100 text-gray-700 rounded text-xs">
                               <MapPin className="w-3 h-3" />
@@ -327,9 +352,17 @@ const StudentOffersPage = () => {
                           <h3 className="text-lg font-semibold text-gray-900">
                             {offer.title}
                           </h3>
-                          <p className="text-gray-600">
-                            {offer.company?.tradeName || offer.company?.legalName}
-                          </p>
+                          <div className="flex items-center gap-2">
+                            <p className="text-gray-600">
+                              {offer.company?.tradeName || offer.company?.legalName}
+                            </p>
+                            {offer.company?.id && (
+                              <FollowCompanyButton 
+                                companyId={offer.company.id} 
+                                className="!px-2 !py-0.5 !text-xs"
+                              />
+                            )}
+                          </div>
                           <div className="flex flex-wrap gap-2 mt-2">
                             <span className="inline-flex items-center gap-1 px-2 py-1 bg-blue-50 text-blue-700 rounded text-sm">
                               <MapPin className="w-3 h-3" />
@@ -423,7 +456,15 @@ const StudentOffersPage = () => {
                   </div>
                   <div>
                     <h2 className="text-xl font-bold text-gray-900">{viewingOffer.title}</h2>
-                    <p className="text-gray-600">{viewingOffer.company?.tradeName || viewingOffer.company?.legalName}</p>
+                    <div className="flex items-center gap-2 mt-1">
+                      <p className="text-gray-600">{viewingOffer.company?.tradeName || viewingOffer.company?.legalName}</p>
+                      {viewingOffer.company?.id && (
+                        <FollowCompanyButton 
+                          companyId={viewingOffer.company.id} 
+                          className="!px-2 !py-0.5 !text-xs"
+                        />
+                      )}
+                    </div>
                   </div>
                 </div>
                 <button

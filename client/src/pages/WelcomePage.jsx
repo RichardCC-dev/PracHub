@@ -98,6 +98,14 @@ const WelcomePage = ({ onLogout, onEditProfile, onGoToCVBuilder, onGoToAdmin, on
       disabled: false,
     },
     {
+      icon: '🔔',
+      title: 'Configurar Alertas',
+      description: 'Personaliza las notificaciones de ofertas compatibles y empresas que sigues.',
+      badge: 'Activo',
+      onClick: () => navigate('/alert-settings'),
+      disabled: false,
+    },
+    {
       icon: '👤',
       title: 'Mi perfil',
       description: 'Actualiza tus datos personales, carrera y disponibilidad.',

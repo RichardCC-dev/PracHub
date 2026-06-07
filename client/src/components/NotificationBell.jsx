@@ -13,13 +13,23 @@ const TYPE_STYLES = {
   aceptada:   'bg-green-50 border-green-200',
   descartada: 'bg-red-50 border-red-200',
   revision:   'bg-yellow-50 border-yellow-200',
+  offer_match: 'bg-emerald-50 border-emerald-200',
+  followed_company_offer: 'bg-amber-50 border-amber-200',
   default:    'bg-gray-50 border-gray-200',
 };
 
 const getStyle = (notification) => {
-  if (notification.message.includes('aceptada') || notification.title.includes('aceptada')) return TYPE_STYLES.aceptada;
-  if (notification.message.includes('seleccionada') || notification.title.includes('seleccionada')) return TYPE_STYLES.descartada;
-  if (notification.message.includes('revisión') || notification.title.includes('revisión')) return TYPE_STYLES.revision;
+  // Primero verificar por tipo explícito
+  if (notification.type === 'offer_match') return TYPE_STYLES.offer_match;
+  if (notification.type === 'followed_company_offer') return TYPE_STYLES.followed_company_offer;
+  
+  // Fallback a detección por mensaje/título
+  if (notification.message?.includes('aceptada') || notification.title?.includes('aceptada')) return TYPE_STYLES.aceptada;
+  if (notification.message?.includes('seleccionada') || notification.title?.includes('seleccionada')) return TYPE_STYLES.descartada;
+  if (notification.message?.includes('revisión') || notification.title?.includes('revisión')) return TYPE_STYLES.revision;
+  if (notification.message?.includes('compatible') || notification.title?.includes('compatible')) return TYPE_STYLES.offer_match;
+  if (notification.message?.includes('empresa que sigues') || notification.title?.includes('empresa que sigues')) return TYPE_STYLES.followed_company_offer;
+  
   return TYPE_STYLES.default;
 };
 
@@ -101,6 +111,17 @@ const NotificationBell = () => {
     if (!n.isRead) await handleMarkAsRead(n.id);
     setOpen(false);
     if (n.type === 'status_change') navigate('/my-applications');
+    if (n.type === 'offer_match' || n.type === 'followed_company_offer') {
+      if (n.relatedId) {
+        navigate('/offers', {
+          state: {
+            openOfferId: n.relatedId
+          }
+        });
+      } else {
+        navigate('/alert-history');
+      }
+    }
   };
 
   const handleMarkAllAsRead = async () => {

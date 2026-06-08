@@ -1,8 +1,7 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Briefcase, Building2, Clock, FileText, Loader2, AlertCircle, CheckCircle, Clock3, XCircle } from 'lucide-react';
-import { getMyApplications } from '../services/applicationApi';
-import useAuthStore from '../store/authStore';
+import { ArrowLeft, Briefcase, Building2, FileText, Loader2, AlertCircle, CheckCircle, Clock3, XCircle } from 'lucide-react';
+import { useMyApplications } from '../hooks/useApplications';
 
 const statusConfig = {
   enviada: { label: 'Enviada', color: 'bg-blue-100 text-blue-700', icon: CheckCircle },
@@ -13,16 +12,10 @@ const statusConfig = {
 
 const MyApplicationsPage = () => {
   const navigate = useNavigate();
-  const { user } = useAuthStore();
-  const [applications, setApplications] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
   const [filterStatus, setFilterStatus] = useState('all');
-  const [viewingApplication, setViewingApplication] = useState(null); // Para ver detalle
+  const [viewingApplication, setViewingApplication] = useState(null);
 
-  useEffect(() => {
-    loadApplications();
-  }, []);
+  const { data: applications = [], isLoading, error } = useMyApplications();
 
   const filteredApplications = filterStatus === 'all'
     ? applications
@@ -36,18 +29,6 @@ const MyApplicationsPage = () => {
     descartada: applications.filter(a => a.status === 'descartada').length,
   };
 
-  const loadApplications = async () => {
-    try {
-      setLoading(true);
-      const response = await getMyApplications();
-      setApplications(response.data || []);
-    } catch (err) {
-      setError(err.message || 'Error al cargar las postulaciones');
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const formatDate = (dateString) => {
     if (!dateString) return 'N/A';
     return new Date(dateString).toLocaleDateString('es-ES', {
@@ -57,7 +38,7 @@ const MyApplicationsPage = () => {
     });
   };
 
-  if (loading) {
+  if (isLoading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="flex items-center gap-3">
@@ -120,7 +101,7 @@ const MyApplicationsPage = () => {
             <AlertCircle className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" />
             <div>
               <p className="text-red-700 font-medium">Error al cargar</p>
-              <p className="text-red-600 text-sm">{error}</p>
+              <p className="text-red-600 text-sm">{error.message}</p>
             </div>
           </div>
         ) : applications.length === 0 ? (
@@ -254,11 +235,11 @@ const MyApplicationsPage = () => {
 
       {/* Application Detail Modal */}
       {viewingApplication && (
-        <div 
+        <div
           className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
           onClick={() => setViewingApplication(null)}
         >
-          <div 
+          <div
             className="bg-white rounded-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto"
             onClick={(e) => e.stopPropagation()}
           >

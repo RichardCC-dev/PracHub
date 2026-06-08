@@ -1,22 +1,22 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { 
-  Search, 
-  Filter, 
-  MapPin, 
-  Clock, 
-  Building2, 
+import { useQueryClient } from '@tanstack/react-query';
+import {
+  Search,
+  Filter,
+  MapPin,
+  Clock,
+  Building2,
   Briefcase,
   Loader2,
   ArrowLeft,
-  Bookmark,
-  CheckCircle,
+  Sparkles,
   AlertCircle,
-  Sparkles
 } from 'lucide-react';
-import { getAllOffers } from '../services/offerApi';
-import { getMyApplications, canApply } from '../services/applicationApi';
-import { getRecommendedOffers } from '../services/recommendationApi';
+import { canApply } from '../services/applicationApi';
+import { usePublicOffers } from '../hooks/useOffers';
+import { useRecommendations } from '../hooks/useRecommendations';
+import { useMyApplications, APPLICATIONS_KEYS } from '../hooks/useApplications';
 import ApplyModal from '../components/ApplyModal';
 import CVAnalyzer from '../components/CVAnalyzer';
 import FollowCompanyButton from '../components/FollowCompanyButton';
@@ -25,126 +25,78 @@ import useAuthStore from '../store/authStore';
 const StudentOffersPage = () => {
   const navigate = useNavigate();
   const location = useLocation();
+  const queryClient = useQueryClient();
   const { user } = useAuthStore();
-  
-  const [offers, setOffers] = useState([]);
-  const [applications, setApplications] = useState([]);
-  const [recommendations, setRecommendations] = useState([]);
-  const [loading, setLoading] = useState(true);
+
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedModality, setSelectedModality] = useState('');
   const [selectedOffer, setSelectedOffer] = useState(null);
   const [viewingOffer, setViewingOffer] = useState(null);
-
-  // Filter out recommendations from the "All Offers" list
-  const activeOffers = offers.filter(
-    (offer) => !recommendations.some((rec) => rec.offer.id === offer.id)
-  ); // Para ver detalle
   const [isApplyModalOpen, setIsApplyModalOpen] = useState(false);
   const [isCVAnalysisOpen, setIsCVAnalysisOpen] = useState(false);
   const [checkingStatus, setCheckingStatus] = useState({});
 
+  // --- TanStack Query hooks ---
+  const { data: allOffers = [], isLoading: loadingOffers } = usePublicOffers();
+  const { data: applications = [] } = useMyApplications();
+  const { data: recommendations = [] } = useRecommendations();
+
+  const loading = loadingOffers;
+
   const modalities = ['remoto', 'presencial', 'híbrido'];
 
-  useEffect(() => {
-    loadData();
-    fetchRecommendations();
-  }, []);
+  // Filter out recommended offers from the general list
+  const activeOffers = allOffers.filter(
+    (offer) => !recommendations.some((rec) => rec.offer?.id === offer.id)
+  );
 
+  // Open offer detail from navigation state (e.g. from alert notification)
   useEffect(() => {
-    if (
-      location.state?.openOfferId &&
-      offers.length > 0
-    ) {
+    if (location.state?.openOfferId && allOffers.length > 0) {
       const targetId = String(location.state.openOfferId);
-      const offerToOpen = offers.find(
-        offer => String(offer.id) === targetId
-      );
-
+      const offerToOpen = allOffers.find((o) => String(o.id) === targetId);
       if (offerToOpen) {
         setViewingOffer(offerToOpen);
-        // Limpiar el state para que no se vuelva a abrir al re-renderizar
         navigate('/offers', { replace: true, state: {} });
       }
     }
-  }, [location.state, offers, navigate]);
-
-  const fetchRecommendations = async () => {
-    try {
-      const res = await getRecommendedOffers();
-      setRecommendations(res.data || []);
-    } catch (error) {
-      console.warn('Error loading recommendations:', error);
-    }
-  };
-
-  const loadData = async () => {
-    try {
-      setLoading(true);
-      
-      // Cargar ofertas (público, no requiere auth)
-      const offersResponse = await getAllOffers();
-      setOffers(offersResponse.data?.offers || []);
-      
-      // Cargar aplicaciones del estudiante (requiere auth) - manejar error separadamente
-      try {
-        const applicationsResponse = await getMyApplications();
-        setApplications(applicationsResponse.data || []);
-      } catch (appError) {
-        console.warn('No se pudieron cargar las aplicaciones:', appError.message);
-        setApplications([]);
-      }
-    } catch (error) {
-      console.error('Error loading offers:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
+  }, [location.state, allOffers, navigate]);
 
   const checkApplicationStatus = async (offerId) => {
     try {
-      setCheckingStatus(prev => ({ ...prev, [offerId]: true }));
+      setCheckingStatus((prev) => ({ ...prev, [offerId]: true }));
       const response = await canApply(offerId);
       return response.data;
-    } catch (error) {
+    } catch {
       return { canApply: false, reason: 'Error al verificar' };
     } finally {
-      setCheckingStatus(prev => ({ ...prev, [offerId]: false }));
+      setCheckingStatus((prev) => ({ ...prev, [offerId]: false }));
     }
   };
 
-  const handleApplyClick = async (offer) => {
+  const handleApplyClick = (offer) => {
     setSelectedOffer(offer);
     setIsApplyModalOpen(true);
   };
 
+  // Invalidar caché de postulaciones tras postularse — sin reload
   const handleApplySuccess = () => {
-    loadData(); // Recargar para actualizar estados
-  };
-
-  const handleOpenCVAnalysis = () => {
-    setIsCVAnalysisOpen(true);
-  };
-
-  const handleCloseCVAnalysis = () => {
-    setIsCVAnalysisOpen(false);
+    queryClient.invalidateQueries({ queryKey: APPLICATIONS_KEYS.mine() });
   };
 
   const getApplicationStatusForOffer = (offerId) => {
-    const application = applications.find(app => app.offerId === offerId);
+    const application = applications.find((app) => app.offerId === offerId);
     return application ? application.status : null;
   };
 
   const getStatusBadge = (status) => {
-    const statusConfig = {
+    const statusMap = {
       enviada: { color: 'bg-blue-100 text-blue-700', label: 'Enviada' },
       revision: { color: 'bg-yellow-100 text-yellow-700', label: 'En revisión' },
       descartada: { color: 'bg-red-100 text-red-700', label: 'Descartada' },
       aceptada: { color: 'bg-green-100 text-green-700', label: 'Aceptada' },
     };
-    
-    const config = statusConfig[status] || { color: 'bg-gray-100 text-gray-700', label: status };
-    
+    const config = statusMap[status] || { color: 'bg-gray-100 text-gray-700', label: status };
     return (
       <span className={`px-2 py-1 rounded-full text-xs font-medium ${config.color}`}>
         {config.label}
@@ -153,14 +105,12 @@ const StudentOffersPage = () => {
   };
 
   const filteredOffers = useMemo(() => {
-    return activeOffers.filter(offer => {
-      const matchesSearch = 
+    return activeOffers.filter((offer) => {
+      const matchesSearch =
         offer.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
         offer.company?.tradeName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
         offer.company?.legalName?.toLowerCase().includes(searchQuery.toLowerCase());
-      
       const matchesModality = !selectedModality || offer.modality === selectedModality;
-      
       return matchesSearch && matchesModality && offer.status === 'approved';
     });
   }, [activeOffers, searchQuery, selectedModality]);
@@ -189,11 +139,10 @@ const StudentOffersPage = () => {
               <ArrowLeft className="w-5 h-5 text-gray-600" />
             </button>
             <div>
-              <h1 className="text-xl font-semibold text-gray-900">
-                Bolsa de Prácticas
-              </h1>
+              <h1 className="text-xl font-semibold text-gray-900">Bolsa de Prácticas</h1>
               <p className="text-sm text-gray-500">
-                {filteredOffers.length} {filteredOffers.length === 1 ? 'oferta disponible' : 'ofertas disponibles'}
+                {filteredOffers.length}{' '}
+                {filteredOffers.length === 1 ? 'oferta disponible' : 'ofertas disponibles'}
               </p>
             </div>
             <div className="ml-auto">
@@ -230,7 +179,7 @@ const StudentOffersPage = () => {
                 className="px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               >
                 <option value="">Todas las modalidades</option>
-                {modalities.map(mod => (
+                {modalities.map((mod) => (
                   <option key={mod} value={mod}>
                     {mod.charAt(0).toUpperCase() + mod.slice(1)}
                   </option>
@@ -241,7 +190,7 @@ const StudentOffersPage = () => {
         </div>
 
         {/* Recomendaciones IA */}
-        {recommendations?.length > 0 && !searchQuery && !selectedModality && (
+        {recommendations.length > 0 && !searchQuery && !selectedModality && (
           <div className="mb-10">
             <div className="flex items-center gap-2 mb-4">
               <div className="bg-purple-100 p-2 rounded-lg">
@@ -258,7 +207,6 @@ const StudentOffersPage = () => {
               {recommendations.slice(0, 4).map((rec) => {
                 const offer = rec.offer;
                 const applicationStatus = getApplicationStatusForOffer(offer.id);
-                
                 return (
                   <div
                     key={`rec-${offer.id}`}
@@ -282,16 +230,14 @@ const StudentOffersPage = () => {
                           )}
                         </div>
                         <div className="flex-1 min-w-0 pr-12">
-                          <h3 className="text-lg font-semibold text-gray-900 truncate">
-                            {offer.title}
-                          </h3>
+                          <h3 className="text-lg font-semibold text-gray-900 truncate">{offer.title}</h3>
                           <div className="flex items-center gap-2 mt-1">
                             <p className="text-gray-600 truncate text-sm">
                               {offer.company?.tradeName || offer.company?.legalName}
                             </p>
                             {offer.company?.id && (
-                              <FollowCompanyButton 
-                                companyId={offer.company.id} 
+                              <FollowCompanyButton
+                                companyId={offer.company.id}
                                 className="!px-2 !py-1 !text-xs"
                               />
                             )}
@@ -308,6 +254,35 @@ const StudentOffersPage = () => {
                           </div>
                         </div>
                       </div>
+                      <div className="mt-4 flex items-center justify-between">
+                        {applicationStatus ? (
+                          <div className="flex items-center gap-2">
+                            {getStatusBadge(applicationStatus)}
+                            <span className="text-xs text-gray-500">Ya postulaste</span>
+                          </div>
+                        ) : (
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleApplyClick(offer);
+                            }}
+                            className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium text-sm"
+                          >
+                            Postular
+                          </button>
+                        )}
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setSelectedOffer(offer);
+                            setIsCVAnalysisOpen(true);
+                          }}
+                          className="px-3 py-2 bg-emerald-100 text-emerald-700 rounded-lg text-sm font-medium flex items-center gap-1 hover:bg-emerald-200"
+                        >
+                          <Sparkles className="w-3 h-3" />
+                          Analizar CV
+                        </button>
+                      </div>
                     </div>
                   </div>
                 );
@@ -322,128 +297,117 @@ const StudentOffersPage = () => {
             {searchQuery || selectedModality ? 'Resultados de búsqueda' : 'Todas las ofertas'}
           </h2>
           <div className="space-y-4">
-          {filteredOffers.length === 0 ? (
-            <div className="bg-white rounded-lg shadow-sm p-12 text-center">
-              <Briefcase className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-gray-900 mb-2">
-                No se encontraron ofertas
-              </h3>
-              <p className="text-gray-600">
-                Intenta ajustar tus filtros de búsqueda
-              </p>
-            </div>
-          ) : (
-            filteredOffers.map((offer) => {
-              const applicationStatus = getApplicationStatusForOffer(offer.id);
-              
-              return (
-                <div
-                  key={offer.id}
-                  onClick={() => setViewingOffer(offer)}
-                  className="bg-white rounded-lg shadow-sm border hover:shadow-md transition-shadow cursor-pointer"
-                >
-                  <div className="p-6">
-                    <div className="flex items-start justify-between">
-                      <div className="flex items-start gap-4">
-                        <div className="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                          {offer.company?.logoUrl ? (
-                            <img
-                              src={offer.company.logoUrl}
-                              alt={offer.company.tradeName}
-                              className="w-10 h-10 object-contain"
-                            />
+            {filteredOffers.length === 0 ? (
+              <div className="bg-white rounded-lg shadow-sm p-12 text-center">
+                <Briefcase className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                <h3 className="text-lg font-medium text-gray-900 mb-2">No se encontraron ofertas</h3>
+                <p className="text-gray-600">Intenta ajustar tus filtros de búsqueda</p>
+              </div>
+            ) : (
+              filteredOffers.map((offer) => {
+                const applicationStatus = getApplicationStatusForOffer(offer.id);
+                return (
+                  <div
+                    key={offer.id}
+                    onClick={() => setViewingOffer(offer)}
+                    className="bg-white rounded-lg shadow-sm border hover:shadow-md transition-shadow cursor-pointer"
+                  >
+                    <div className="p-6">
+                      <div className="flex items-start justify-between">
+                        <div className="flex items-start gap-4">
+                          <div className="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                            {offer.company?.logoUrl ? (
+                              <img
+                                src={offer.company.logoUrl}
+                                alt={offer.company.tradeName}
+                                className="w-10 h-10 object-contain"
+                              />
+                            ) : (
+                              <Building2 className="w-6 h-6 text-gray-400" />
+                            )}
+                          </div>
+                          <div>
+                            <h3 className="text-lg font-semibold text-gray-900">{offer.title}</h3>
+                            <div className="flex items-center gap-2">
+                              <p className="text-gray-600">
+                                {offer.company?.tradeName || offer.company?.legalName}
+                              </p>
+                              {offer.company?.id && (
+                                <FollowCompanyButton
+                                  companyId={offer.company.id}
+                                  className="!px-2 !py-0.5 !text-xs"
+                                />
+                              )}
+                            </div>
+                            <div className="flex flex-wrap gap-2 mt-2">
+                              <span className="inline-flex items-center gap-1 px-2 py-1 bg-blue-50 text-blue-700 rounded text-sm">
+                                <MapPin className="w-3 h-3" />
+                                {offer.modality}
+                              </span>
+                              <span className="inline-flex items-center gap-1 px-2 py-1 bg-green-50 text-green-700 rounded text-sm">
+                                <Clock className="w-3 h-3" />
+                                {offer.duration}
+                              </span>
+                              <span className="inline-flex items-center gap-1 px-2 py-1 bg-purple-50 text-purple-700 rounded text-sm">
+                                {offer.area}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                        <div className="flex flex-col items-end gap-2">
+                          {applicationStatus ? (
+                            <>
+                              {getStatusBadge(applicationStatus)}
+                              <span className="text-xs text-gray-500">Ya postulaste</span>
+                            </>
                           ) : (
-                            <Building2 className="w-6 h-6 text-gray-400" />
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleApplyClick(offer);
+                              }}
+                              disabled={checkingStatus[offer.id]}
+                              className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                              {checkingStatus[offer.id] ? (
+                                <Loader2 className="w-4 h-4 animate-spin" />
+                              ) : (
+                                'Postular Ahora'
+                              )}
+                            </button>
                           )}
                         </div>
-                        <div>
-                          <h3 className="text-lg font-semibold text-gray-900">
-                            {offer.title}
-                          </h3>
-                          <div className="flex items-center gap-2">
-                            <p className="text-gray-600">
-                              {offer.company?.tradeName || offer.company?.legalName}
-                            </p>
-                            {offer.company?.id && (
-                              <FollowCompanyButton 
-                                companyId={offer.company.id} 
-                                className="!px-2 !py-0.5 !text-xs"
-                              />
-                            )}
-                          </div>
-                          <div className="flex flex-wrap gap-2 mt-2">
-                            <span className="inline-flex items-center gap-1 px-2 py-1 bg-blue-50 text-blue-700 rounded text-sm">
-                              <MapPin className="w-3 h-3" />
-                              {offer.modality}
+                      </div>
+
+                      {/* Tags de carrera */}
+                      {Array.isArray(offer.careerTags) && offer.careerTags.length > 0 && (
+                        <div className="mt-4 flex flex-wrap gap-2">
+                          {offer.careerTags.map((tag, index) => (
+                            <span key={index} className="px-2 py-1 bg-gray-100 text-gray-700 rounded text-xs">
+                              {tag}
                             </span>
-                            <span className="inline-flex items-center gap-1 px-2 py-1 bg-green-50 text-green-700 rounded text-sm">
-                              <Clock className="w-3 h-3" />
-                              {offer.duration}
-                            </span>
-                            <span className="inline-flex items-center gap-1 px-2 py-1 bg-purple-50 text-purple-700 rounded text-sm">
-                              {offer.area}
-                            </span>
-                          </div>
+                          ))}
                         </div>
-                      </div>
-                      <div className="flex flex-col items-end gap-2">
-                        {applicationStatus ? (
-                          <>
-                            {getStatusBadge(applicationStatus)}
-                            <span className="text-xs text-gray-500">
-                              Ya postulaste
-                            </span>
-                          </>
-                        ) : (
-                          <button
-                            onClick={() => handleApplyClick(offer)}
-                            disabled={checkingStatus[offer.id]}
-                            className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium disabled:opacity-50 disabled:cursor-not-allowed"
-                          >
-                            {checkingStatus[offer.id] ? (
-                              <Loader2 className="w-4 h-4 animate-spin" />
-                            ) : (
-                              'Postular Ahora'
-                            )}
-                          </button>
-                        )}
-                      </div>
+                      )}
+
+                      {/* Descripción preview */}
+                      <p className="mt-4 text-gray-600 text-sm line-clamp-2">{offer.description}</p>
                     </div>
-
-                    {/* Tags de carrera */}
-                    {Array.isArray(offer.careerTags) && offer.careerTags.length > 0 && (
-                      <div className="mt-4 flex flex-wrap gap-2">
-                        {offer.careerTags.map((tag, index) => (
-                          <span
-                            key={index}
-                            className="px-2 py-1 bg-gray-100 text-gray-700 rounded text-xs"
-                          >
-                            {tag}
-                          </span>
-                        ))}
-                      </div>
-                    )}
-
-                    {/* Descripción preview */}
-                    <p className="mt-4 text-gray-600 text-sm line-clamp-2">
-                      {offer.description}
-                    </p>
                   </div>
-                </div>
-              );
-            })
-          )}
+                );
+              })
+            )}
           </div>
         </div>
       </div>
 
       {/* Offer Detail Modal */}
       {viewingOffer && (
-        <div 
+        <div
           className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
           onClick={() => setViewingOffer(null)}
         >
-          <div 
+          <div
             className="bg-white rounded-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto"
             onClick={(e) => e.stopPropagation()}
           >
@@ -465,20 +429,19 @@ const StudentOffersPage = () => {
                   <div>
                     <h2 className="text-xl font-bold text-gray-900">{viewingOffer.title}</h2>
                     <div className="flex items-center gap-2 mt-1">
-                      <p className="text-gray-600">{viewingOffer.company?.tradeName || viewingOffer.company?.legalName}</p>
+                      <p className="text-gray-600">
+                        {viewingOffer.company?.tradeName || viewingOffer.company?.legalName}
+                      </p>
                       {viewingOffer.company?.id && (
-                        <FollowCompanyButton 
-                          companyId={viewingOffer.company.id} 
+                        <FollowCompanyButton
+                          companyId={viewingOffer.company.id}
                           className="!px-2 !py-0.5 !text-xs"
                         />
                       )}
                     </div>
                   </div>
                 </div>
-                <button
-                  onClick={() => setViewingOffer(null)}
-                  className="text-gray-400 hover:text-gray-600"
-                >
+                <button onClick={() => setViewingOffer(null)} className="text-gray-400 hover:text-gray-600">
                   <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                   </svg>
@@ -500,7 +463,7 @@ const StudentOffersPage = () => {
                 </span>
                 {viewingOffer.compensation && (
                   <span className="inline-flex items-center gap-1 px-3 py-1 bg-yellow-50 text-yellow-700 rounded-full text-sm">
-                    <span className="font-semibold">S/</span> 
+                    <span className="font-semibold">S/</span>
                     {viewingOffer.compensation.replace(/&#x2F;/g, '/')}
                   </span>
                 )}
@@ -588,11 +551,11 @@ const StudentOffersPage = () => {
 
       {/* CV Analysis Modal */}
       {isCVAnalysisOpen && (
-        <div 
+        <div
           className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
-          onClick={handleCloseCVAnalysis}
+          onClick={() => setIsCVAnalysisOpen(false)}
         >
-          <div 
+          <div
             className="bg-white rounded-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto"
             onClick={(e) => e.stopPropagation()}
           >
@@ -603,7 +566,7 @@ const StudentOffersPage = () => {
                   Análisis de CV
                 </h2>
                 <button
-                  onClick={handleCloseCVAnalysis}
+                  onClick={() => setIsCVAnalysisOpen(false)}
                   className="text-gray-400 hover:text-gray-600"
                 >
                   <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -611,14 +574,7 @@ const StudentOffersPage = () => {
                   </svg>
                 </button>
               </div>
-              <CVAnalyzer
-                offers={selectedOffer ? [{
-                  id: selectedOffer.id,
-                  title: selectedOffer.title,
-                  company: selectedOffer.company,
-                }] : []}
-                currentOfferId={selectedOffer?.id || null}
-              />
+              <CVAnalyzer offerId={selectedOffer?.id} onClose={() => setIsCVAnalysisOpen(false)} />
             </div>
           </div>
         </div>

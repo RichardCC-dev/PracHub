@@ -1,4 +1,30 @@
+# ── Dependencias ──────────────────────────────────────────────────────────────
 node_modules/
-.env
-.DS_Store
 
+# ── Variables de entorno (nunca subir secretos) ───────────────────────────────
+.env
+.env.local
+.env.*.local
+
+# ── Archivos de sistema operativo ────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# ── IDEs ─────────────────────────────────────────────────────────────────────
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# ── Logs de la raíz ──────────────────────────────────────────────────────────
+*.log
+logs/
+
+# ── Scripts temporales de diagnóstico ────────────────────────────────────────
+patch.py
+check-rl.js
+apply-rate-limiters.js
+commit-msg.txt

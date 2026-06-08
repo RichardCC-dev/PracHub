@@ -24,7 +24,7 @@ export function useSimulationHistory() {
 
   return useQuery({
     queryKey: SIMULATIONS_KEYS.history(),
-    queryFn: () => getSimulationHistory(token),
+    queryFn: () => getSimulationHistory(),
     select: (data) => data?.simulations ?? [],
     enabled: !!token && isStudent,
   });
@@ -39,7 +39,7 @@ export function useSimulationStats() {
 
   return useQuery({
     queryKey: SIMULATIONS_KEYS.stats(),
-    queryFn: () => getSimulationStats(token),
+    queryFn: () => getSimulationStats(),
     select: (data) => data?.stats ?? null,
     enabled: !!token && isStudent,
     staleTime: 1000 * 60 * 5,
@@ -55,7 +55,7 @@ export function useSimulationDetail(id) {
 
   return useQuery({
     queryKey: SIMULATIONS_KEYS.detail(id),
-    queryFn: () => getSimulationDetails(id, token),
+    queryFn: () => getSimulationDetails(id),
     select: (data) => data?.simulation ?? null,
     enabled: !!token && !!id,
   });
@@ -64,13 +64,15 @@ export function useSimulationDetail(id) {
 /**
  * Mutación para iniciar una nueva simulación.
  * Invalida el historial automáticamente.
+ *
+ * NOTA: startSimulation(simulatedRole, career, sector) — el token NO es un parámetro;
+ * las funciones de api.js leen el token internamente vía getAuthHeaders().
  */
 export function useStartSimulation() {
   const queryClient = useQueryClient();
-  const { token } = useAuthStore();
 
   return useMutation({
-    mutationFn: ({ role, career, sector }) => startSimulation(role, token, career, sector),
+    mutationFn: ({ role, career, sector }) => startSimulation(role, career, sector),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: SIMULATIONS_KEYS.history() });
     },
@@ -83,10 +85,9 @@ export function useStartSimulation() {
  */
 export function useSendSimulationMessage(simulationId) {
   const queryClient = useQueryClient();
-  const { token } = useAuthStore();
 
   return useMutation({
-    mutationFn: ({ message }) => sendMessageToSimulation(simulationId, message, token),
+    mutationFn: ({ message }) => sendMessageToSimulation(simulationId, message),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: SIMULATIONS_KEYS.detail(simulationId) });
     },
@@ -98,10 +99,9 @@ export function useSendSimulationMessage(simulationId) {
  */
 export function useEndSimulation() {
   const queryClient = useQueryClient();
-  const { token } = useAuthStore();
 
   return useMutation({
-    mutationFn: (simulationId) => endSimulation(simulationId, token),
+    mutationFn: (simulationId) => endSimulation(simulationId),
     onSuccess: (data) => {
       const id = data?.simulation?.id;
       queryClient.invalidateQueries({ queryKey: SIMULATIONS_KEYS.history() });

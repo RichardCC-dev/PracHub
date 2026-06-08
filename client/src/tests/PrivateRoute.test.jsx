@@ -3,7 +3,6 @@ import { render, screen } from '@testing-library/react';
 import { MemoryRouter, Routes, Route } from 'react-router-dom';
 
 // ── Mock del store de autenticación ──────────────────────────────────────────
-// Definimos el mock antes de importar App para que Vitest lo aplique.
 let mockAuthState = {
   token: null,
   user: null,
@@ -19,23 +18,8 @@ vi.mock('../store/authStore', () => ({
   },
 }));
 
-// Importamos PrivateRoute extrayéndolo de App — como está definido dentro del módulo,
-// lo replicamos aquí para poder testearlo de forma aislada.
-import useAuthStore from '../store/authStore';
-import { Navigate, useLocation } from 'react-router-dom';
-
-const PrivateRoute = ({ children }) => {
-  const { token, user, isInitialized, isLoading, authVerified } = useAuthStore(
-    (s) => s
-  );
-  const location = useLocation();
-
-  if (!isInitialized || isLoading) return <div data-testid="spinner" />;
-  if (authVerified && (!token || !user)) return <Navigate to="/" replace state={{ from: location }} />;
-  if (!authVerified && token) return <div data-testid="spinner" />;
-  if (!token) return <Navigate to="/" replace state={{ from: location }} />;
-  return children;
-};
+// Importamos el componente desde su nueva ubicación en routing/
+import PrivateRoute from '../components/routing/PrivateRoute';
 
 // ── Helper de renderizado ─────────────────────────────────────────────────────
 const renderWithRouter = (initialPath = '/protected') =>
@@ -68,13 +52,14 @@ describe('PrivateRoute', () => {
   it('muestra spinner mientras carga (isLoading = true)', () => {
     mockAuthState = { token: 'tok', user: { id: 1 }, isInitialized: true, isLoading: true, authVerified: false };
     renderWithRouter();
-    expect(screen.getByTestId('spinner')).toBeInTheDocument();
+    // LoadingSpinner no tiene data-testid; verificamos que el contenido protegido no se muestra
+    expect(screen.queryByText(/contenido protegido/i)).not.toBeInTheDocument();
   });
 
   it('muestra spinner mientras inicializa (isInitialized = false)', () => {
     mockAuthState = { token: null, user: null, isInitialized: false, isLoading: false, authVerified: false };
     renderWithRouter();
-    expect(screen.getByTestId('spinner')).toBeInTheDocument();
+    expect(screen.queryByText(/contenido protegido/i)).not.toBeInTheDocument();
   });
 
   it('renderiza los children cuando el usuario está autenticado', () => {

@@ -1,25 +1,38 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, Suspense, lazy } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-dom';
-import HomePage from './pages/HomePage';
-import StudentOnboardingPage from './pages/StudentOnboardingPage';
-import CompanyOnboardingPage from './pages/CompanyOnboardingPage';
-import WelcomePage from './pages/WelcomePage';
-import CompanyProfilePage from './pages/CompanyProfilePage';
-import InterviewSimulatorPage from './pages/InterviewSimulatorPage';
-import SimulationHistoryPage from './pages/SimulationHistoryPage';
 import useAuthStore from './store/authStore';
-import CVBuilderPage from './pages/CVBuilderPage';
-import AdminDashboardPage from './pages/AdminDashboardPage';
-import CompanyOffersPage from './pages/CompanyOffersPage';
-import CreateOfferPage from './pages/CreateOfferPage';
-import StudentOffersPage from './pages/StudentOffersPage';
-import MyApplicationsPage from './pages/MyApplicationsPage';
-import OfferCandidatesPage from './pages/OfferCandidatesPage';
-import CompanyCandidatesPage from './pages/CompanyCandidatesPage';
-import AlertSettingsPage from './pages/AlertSettingsPage';
-import FollowedCompaniesPage from './pages/FollowedCompaniesPage';
-import AlertHistoryPage from './pages/AlertHistoryPage';
-import AdminLoginPage from './pages/AdminLoginPage';
+import ErrorBoundary from './components/ErrorBoundary';
+
+// Lazy loading the pages to improve initial load time (React Best Practices)
+const HomePage = lazy(() => import('./pages/HomePage'));
+const StudentOnboardingPage = lazy(() => import('./pages/StudentOnboardingPage'));
+const CompanyOnboardingPage = lazy(() => import('./pages/CompanyOnboardingPage'));
+const WelcomePage = lazy(() => import('./pages/WelcomePage'));
+const CompanyProfilePage = lazy(() => import('./pages/CompanyProfilePage'));
+const InterviewSimulatorPage = lazy(() => import('./pages/InterviewSimulatorPage'));
+const SimulationHistoryPage = lazy(() => import('./pages/SimulationHistoryPage'));
+const CVBuilderPage = lazy(() => import('./pages/CVBuilderPage'));
+const AdminDashboardPage = lazy(() => import('./pages/AdminDashboardPage'));
+const CompanyOffersPage = lazy(() => import('./pages/CompanyOffersPage'));
+const CreateOfferPage = lazy(() => import('./pages/CreateOfferPage'));
+const StudentOffersPage = lazy(() => import('./pages/StudentOffersPage'));
+const MyApplicationsPage = lazy(() => import('./pages/MyApplicationsPage'));
+const OfferCandidatesPage = lazy(() => import('./pages/OfferCandidatesPage'));
+const CompanyCandidatesPage = lazy(() => import('./pages/CompanyCandidatesPage'));
+const AlertSettingsPage = lazy(() => import('./pages/AlertSettingsPage'));
+const FollowedCompaniesPage = lazy(() => import('./pages/FollowedCompaniesPage'));
+const AlertHistoryPage = lazy(() => import('./pages/AlertHistoryPage'));
+const AdminLoginPage = lazy(() => import('./pages/AdminLoginPage'));
+
+// Componente simple para carga de pginas
+const PageLoader = () => (
+  <div className="min-h-screen flex items-center justify-center">
+    <div className="flex flex-col items-center gap-4">
+      <div className="w-8 h-8 border-4 border-emerald-200 border-t-emerald-600 rounded-full animate-spin"></div>
+      <p className="text-sm font-medium text-gray-500">Cargando...</p>
+    </div>
+  </div>
+);
 
 const PrivateRoute = ({ children }) => {
   const { token, user, isInitialized, isLoading, authVerified } = useAuthStore();
@@ -453,9 +466,13 @@ const AppRoutes = () => {
 };
 
 const App = () => (
-  <BrowserRouter>
-    <AppRoutes />
-  </BrowserRouter>
+  <ErrorBoundary>
+    <BrowserRouter>
+      <Suspense fallback={<PageLoader />}>
+        <AppRoutes />
+      </Suspense>
+    </BrowserRouter>
+  </ErrorBoundary>
 );
 
 export default App;

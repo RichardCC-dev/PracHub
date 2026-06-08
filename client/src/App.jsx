@@ -16,6 +16,9 @@ import StudentOffersPage from './pages/StudentOffersPage';
 import MyApplicationsPage from './pages/MyApplicationsPage';
 import OfferCandidatesPage from './pages/OfferCandidatesPage';
 import CompanyCandidatesPage from './pages/CompanyCandidatesPage';
+import AlertSettingsPage from './pages/AlertSettingsPage';
+import FollowedCompaniesPage from './pages/FollowedCompaniesPage';
+import AlertHistoryPage from './pages/AlertHistoryPage';
 import AdminLoginPage from './pages/AdminLoginPage';
 
 const PrivateRoute = ({ children }) => {
@@ -360,6 +363,27 @@ const AppRoutes = () => {
       <Route path="/my-applications" element={
         <StudentRoute>
           <MyApplicationsPage />
+        </StudentRoute>
+      } />
+
+      {/* Configuración de alertas (protegido, solo student) - HU-13 */}
+      <Route path="/alert-settings" element={
+        <StudentRoute>
+          <AlertSettingsPage />
+        </StudentRoute>
+      } />
+
+      {/* Empresas seguidas (protegido, solo student) - HU-13 */}
+      <Route path="/followed-companies" element={
+        <StudentRoute>
+          <FollowedCompaniesPage />
+        </StudentRoute>
+      } />
+
+      {/* Historial de alertas (protegido, solo student) - HU-13 */}
+      <Route path="/alert-history" element={
+        <StudentRoute>
+          <AlertHistoryPage />
         </StudentRoute>
       } />
 

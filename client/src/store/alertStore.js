@@ -66,10 +66,6 @@ const useAlertStore = create((set, get) => ({
     return labels[frequency] || 'Inmediata';
   },
 
-  getMinCompatibility: () => {
-    return get().settings?.minCompatibility || 70;
-  },
-
   areAlertsEnabled: () => {
     const settings = get().settings;
     if (!settings) return false;

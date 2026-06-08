@@ -31,7 +31,6 @@ export default function AlertSettingsForm() {
   } = useForm({
     defaultValues: {
       frequency: 'immediate',
-      minCompatibility: 70,
       emailEnabled: true,
       platformEnabled: true,
       dailyDigestTime: '09:00',
@@ -51,7 +50,6 @@ export default function AlertSettingsForm() {
     if (settings) {
       reset({
         frequency: settings.frequency,
-        minCompatibility: settings.minCompatibility,
         emailEnabled: settings.emailEnabled,
         platformEnabled: settings.platformEnabled,
         dailyDigestTime: settings.dailyDigestTime?.slice(0, 5) || '09:00',
@@ -166,29 +164,6 @@ export default function AlertSettingsForm() {
             </div>
           </div>
         )}
-
-        {/* Umbral de compatibilidad */}
-        <div>
-          <label className="text-sm font-medium text-gray-700 mb-2 block">
-            Compatibilidad mínima para alertas
-          </label>
-          <div className="flex items-center space-x-4">
-            <input
-              type="range"
-              min="50"
-              max="95"
-              step="5"
-              {...register('minCompatibility', { valueAsNumber: true })}
-              className="flex-1 h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-emerald-600"
-            />
-            <span className="text-lg font-semibold text-emerald-600 w-16 text-right">
-              {watch('minCompatibility')}%
-            </span>
-          </div>
-          <p className="text-sm text-gray-500 mt-2">
-            Solo recibirás alertas de ofertas con compatibilidad igual o superior a este valor
-          </p>
-        </div>
 
         {/* Canales de notificación */}
         <div>

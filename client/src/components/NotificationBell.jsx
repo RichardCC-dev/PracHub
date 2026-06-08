@@ -110,17 +110,21 @@ const NotificationBell = () => {
   const handleNotificationClick = async (n) => {
     if (!n.isRead) await handleMarkAsRead(n.id);
     setOpen(false);
-    if (n.type === 'status_change') navigate('/my-applications');
-    if (n.type === 'offer_match' || n.type === 'followed_company_offer') {
-      if (n.relatedId) {
-        navigate('/offers', {
-          state: {
-            openOfferId: n.relatedId
-          }
-        });
-      } else {
-        navigate('/alert-history');
-      }
+    
+    if (n.type === 'status_change') {
+      navigate('/my-applications');
+      return;
+    }
+    
+    // Para ofertas recomendadas, empresas seguidas, o cualquier notificación con relatedId
+    if (n.relatedId) {
+      navigate('/offers', {
+        state: {
+          openOfferId: n.relatedId
+        }
+      });
+    } else {
+      navigate('/alert-history');
     }
   };
 

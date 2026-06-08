@@ -34,7 +34,12 @@ const StudentOffersPage = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedModality, setSelectedModality] = useState('');
   const [selectedOffer, setSelectedOffer] = useState(null);
-  const [viewingOffer, setViewingOffer] = useState(null); // Para ver detalle
+  const [viewingOffer, setViewingOffer] = useState(null);
+
+  // Filter out recommendations from the "All Offers" list
+  const activeOffers = offers.filter(
+    (offer) => !recommendations.some((rec) => rec.offer.id === offer.id)
+  ); // Para ver detalle
   const [isApplyModalOpen, setIsApplyModalOpen] = useState(false);
   const [isCVAnalysisOpen, setIsCVAnalysisOpen] = useState(false);
   const [checkingStatus, setCheckingStatus] = useState({});
@@ -51,15 +56,18 @@ const StudentOffersPage = () => {
       location.state?.openOfferId &&
       offers.length > 0
     ) {
+      const targetId = String(location.state.openOfferId);
       const offerToOpen = offers.find(
-        offer => offer.id === location.state.openOfferId
+        offer => String(offer.id) === targetId
       );
 
       if (offerToOpen) {
         setViewingOffer(offerToOpen);
+        // Limpiar el state para que no se vuelva a abrir al re-renderizar
+        navigate('/offers', { replace: true, state: {} });
       }
     }
-  }, [location.state, offers]);
+  }, [location.state, offers, navigate]);
 
   const fetchRecommendations = async () => {
     try {
@@ -145,7 +153,7 @@ const StudentOffersPage = () => {
   };
 
   const filteredOffers = useMemo(() => {
-    return offers.filter(offer => {
+    return activeOffers.filter(offer => {
       const matchesSearch = 
         offer.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
         offer.company?.tradeName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -155,7 +163,7 @@ const StudentOffersPage = () => {
       
       return matchesSearch && matchesModality && offer.status === 'approved';
     });
-  }, [offers, searchQuery, selectedModality]);
+  }, [activeOffers, searchQuery, selectedModality]);
 
   if (loading) {
     return (

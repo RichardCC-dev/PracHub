@@ -2,12 +2,39 @@ const express = require('express');
 const { body } = require('express-validator');
 const authController = require('../controllers/authController');
 const validateRequest = require('../middlewares/validateRequest');
-const { adminLoginLimiter } = require('../middlewares/rateLimit');
+const { adminLoginLimiter, loginLimiter, registerLimiter } = require('../middlewares/rateLimit');
 
 const router = express.Router();
 
+/**
+ * @swagger
+ * /auth/login:
+ *   post:
+ *     summary: Iniciar sesión
+ *     tags: [Auth]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - email
+ *               - password
+ *             properties:
+ *               email:
+ *                 type: string
+ *               password:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Login exitoso
+ *       400:
+ *         description: Error en credenciales
+ */
 router.post(
   '/login',
+  loginLimiter,
   [
     body('email').isEmail().normalizeEmail().withMessage('Ingresa un correo válido.'),
     body('password').notEmpty().withMessage('Ingresa tu contraseña.'),
@@ -28,8 +55,54 @@ router.post(
   authController.login,
 );
 
+/**
+ * @swagger
+ * /auth/students/register:
+ *   post:
+ *     summary: Registrar estudiante
+ *     tags: [Auth]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - email
+ *               - password
+ *               - firstName
+ *               - lastName
+ *               - career
+ *               - cycle
+ *               - availability
+ *             properties:
+ *               email:
+ *                 type: string
+ *               password:
+ *                 type: string
+ *               firstName:
+ *                 type: string
+ *               lastName:
+ *                 type: string
+ *               university:
+ *                 type: string
+ *               career:
+ *                 type: string
+ *               cycle:
+ *                 type: string
+ *               availability:
+ *                 type: string
+ *               phoneNumber:
+ *                 type: string
+ *     responses:
+ *       201:
+ *         description: Estudiante registrado exitosamente
+ *       400:
+ *         description: Datos inválidos o el correo ya existe
+ */
 router.post(
   '/students/register',
+  registerLimiter,
   [
     body('email').isEmail().normalizeEmail().withMessage('Ingresa un correo válido.'),
     body('password')

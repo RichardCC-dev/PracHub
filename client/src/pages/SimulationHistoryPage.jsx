@@ -1,9 +1,10 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import useAuthStore from '../store/authStore';
-import useSimulationStore from '../store/simulationStore';
+import { useSimulationHistory, useSimulationStats } from '../hooks/useSimulations';
 import SimulationProgressStats from '../components/SimulationProgressStats';
 import SimulationHistoryCard from '../components/SimulationHistoryCard';
+import useAuthStore from '../store/authStore';
+import { getSimulationDetails } from '../services/api';
 
 const TAB_HISTORY = 'history';
 const TAB_PROGRESS = 'progress';
@@ -11,53 +12,39 @@ const TAB_PROGRESS = 'progress';
 const SimulationHistoryPage = () => {
   const navigate = useNavigate();
   const { token } = useAuthStore();
-  const {
-    simulationsHistory,
-    simulationStats,
-    currentSimulation,
-    fetchHistory,
-    fetchStats,
-    fetchSimulationDetails,
-    isLoading,
-    error: storeError,
-  } = useSimulationStore();
-
   const [activeTab, setActiveTab] = useState(TAB_PROGRESS);
-  const [localError, setLocalError] = useState(null);
-  const [loadedTabs, setLoadedTabs] = useState(new Set());
 
-  useEffect(() => {
-    if (!token) return;
-    if (activeTab === TAB_PROGRESS && !loadedTabs.has(TAB_PROGRESS)) {
-      setLocalError(null);
-      fetchStats(token)
-        .then(() => setLoadedTabs(prev => new Set(prev).add(TAB_PROGRESS)))
-        .catch(err => setLocalError(err.message));
-    }
-    if (activeTab === TAB_HISTORY && !loadedTabs.has(TAB_HISTORY)) {
-      setLocalError(null);
-      fetchHistory(token)
-        .then(() => setLoadedTabs(prev => new Set(prev).add(TAB_HISTORY)))
-        .catch(err => setLocalError(err.message));
-    }
-  }, [token, activeTab]);
+  const {
+    data: simulationsHistory = [],
+    isLoading: loadingHistory,
+    error: historyError,
+  } = useSimulationHistory();
 
-  const handleViewSimulation = (sim) => {
-    setLocalError(null);
-    fetchSimulationDetails(sim.id, token)
-      .then(() =>
-        navigate('/simulator', {
-          state: {
-            fromHistory: true,
-            simulationId: sim.id,
-            initialView: 'chat',
-          },
-        })
-      )
-      .catch(err => setLocalError(err.message || 'Error al cargar la simulación.'));
+  const {
+    data: simulationStats,
+    isLoading: loadingStats,
+    error: statsError,
+  } = useSimulationStats();
+
+  const isLoading = activeTab === TAB_PROGRESS ? loadingStats : loadingHistory;
+  const displayError = activeTab === TAB_PROGRESS
+    ? statsError?.message
+    : historyError?.message;
+
+  const handleViewSimulation = async (sim) => {
+    try {
+      await getSimulationDetails(sim.id, token);
+      navigate('/simulator', {
+        state: {
+          fromHistory: true,
+          simulationId: sim.id,
+          initialView: 'chat',
+        },
+      });
+    } catch (err) {
+      alert(err.message || 'Error al cargar la simulación.');
+    }
   };
-
-  const displayError = localError || storeError;
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-8">
@@ -80,7 +67,7 @@ const SimulationHistoryPage = () => {
         {[
           { key: TAB_PROGRESS, label: 'Mi Progreso' },
           { key: TAB_HISTORY, label: 'Historial de Sesiones' },
-        ].map(tab => (
+        ].map((tab) => (
           <button
             key={tab.key}
             onClick={() => setActiveTab(tab.key)}
@@ -120,7 +107,7 @@ const SimulationHistoryPage = () => {
       {/* Tab: Historial */}
       {!isLoading && activeTab === TAB_HISTORY && (
         <>
-          {!simulationsHistory || simulationsHistory.length === 0 ? (
+          {simulationsHistory.length === 0 ? (
             <div className="text-center py-16">
               <div className="text-5xl mb-4">📋</div>
               <h3 className="text-lg font-semibold text-gray-800 mb-1">Aún no tienes simulaciones</h3>
@@ -134,12 +121,8 @@ const SimulationHistoryPage = () => {
             </div>
           ) : (
             <div className="space-y-3">
-              {simulationsHistory.map(sim => (
-                <SimulationHistoryCard
-                  key={sim.id}
-                  sim={sim}
-                  onView={handleViewSimulation}
-                />
+              {simulationsHistory.map((sim) => (
+                <SimulationHistoryCard key={sim.id} sim={sim} onView={handleViewSimulation} />
               ))}
             </div>
           )}

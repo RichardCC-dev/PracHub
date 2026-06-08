@@ -1,16 +1,4 @@
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:4000/api';
-
-const getToken = () => {
-  return localStorage.getItem('prachub_token') ?? sessionStorage.getItem('prachub_token');
-};
-
-const parseResponse = async (response) => {
-  const data = await response.json().catch(() => ({}));
-  if (!response.ok) {
-    throw new Error(data.message || 'No se pudo completar la solicitud.');
-  }
-  return data;
-};
+import { API_URL, getToken, parseResponse } from './apiBase';
 
 /**
  * Previsualizar datos antes de postular

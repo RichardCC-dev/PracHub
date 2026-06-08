@@ -1,12 +1,4 @@
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:4000/api';
-
-const parseResponse = async (response) => {
-  const data = await response.json().catch(() => ({}));
-  if (!response.ok) {
-    throw new Error(data.message || 'No se pudo completar la solicitud.');
-  }
-  return data;
-};
+import { API_URL, parseResponse } from './apiBase';
 
 export const createOffer = async (token, offerData) => {
   const response = await fetch(`${API_URL}/offers`, {

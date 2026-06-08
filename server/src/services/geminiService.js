@@ -1,7 +1,6 @@
-const { GoogleGenerativeAI } = require('@google/generative-ai');
+const { genAI, GEMINI_MODELS } = require('../config/geminiClient');
+const logger = require('../utils/logger');
 
-// Inicializa el cliente de Gemini con la API Key
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
 const getSystemPrompt = (role, career, sector) => {
   const contextInfo = career ? `El candidato estudia ${career}` : 'El candidato es universitario';
@@ -37,7 +36,7 @@ const ensureArray = (historyData) => {
     try {
       return JSON.parse(historyData || '[]');
     } catch (e) {
-      console.error('Error parseando chatHistory en el servidor:', e);
+      logger.error('Error parseando chatHistory en el servidor:', e);
       return [];
     }
   }
@@ -45,7 +44,7 @@ const ensureArray = (historyData) => {
 };
 
 const chatWithGemini = async (chatHistory, simulatedRole, newMessage, career, sector) => {
-  const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
+  const model = genAI.getGenerativeModel({ model: GEMINI_MODELS.FLASH_2_5 });
   const safeChatHistory = ensureArray(chatHistory);
 
   // Filtramos solo mensajes con contenido real (excluye system prompt y vacíos)
@@ -117,7 +116,7 @@ const chatWithGemini = async (chatHistory, simulatedRole, newMessage, career, se
     } catch (err) {
       if (err.status === 429 && retries > 0) {
         const delay = getRetryDelay(err);
-        console.warn(`Gemini 429 - reintentando en ${delay / 1000}s...`);
+        logger.warn(`Gemini 429 - reintentando en ${delay / 1000}s...`);
         await new Promise(resolve => setTimeout(resolve, delay));
         return sendWithRetry(retries - 1);
       }
@@ -151,7 +150,7 @@ const generateFallbackSummary = (chatHistory) => {
 };
 
 const generateSimulationSummary = async (chatHistory) => {
-  const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
+  const model = genAI.getGenerativeModel({ model: GEMINI_MODELS.FLASH_2_5 });
   const safeChatHistory = ensureArray(chatHistory);
   
   const formattedHistory = safeChatHistory
@@ -198,12 +197,12 @@ Reglas estrictas de evaluación:
       };
     } catch (err) {
       if (err.status === 429 && retries > 0) {
-        console.warn(`Gemini 429 en summary - reintentando en ${delayMs / 1000}s...`);
+        logger.warn(`Gemini 429 en summary - reintentando en ${delayMs / 1000}s...`);
         await new Promise(resolve => setTimeout(resolve, delayMs));
         return tryGenerate(retries - 1, delayMs);
       }
       // Si se agotaron reintentos o es otro error, usamos fallback local
-      console.error('Error en generateSimulationSummary, usando fallback local:', err.message);
+      logger.error('Error en generateSimulationSummary, usando fallback local:', err.message);
       return generateFallbackSummary(chatHistory);
     }
   };

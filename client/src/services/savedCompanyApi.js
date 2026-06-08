@@ -1,13 +1,4 @@
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:4000/api';
-
-const getToken = () =>
-  localStorage.getItem('prachub_token') ?? sessionStorage.getItem('prachub_token');
-
-const parseResponse = async (response) => {
-  const data = await response.json().catch(() => ({}));
-  if (!response.ok) throw new Error(data.message || 'Error en la solicitud.');
-  return data;
-};
+import { API_URL, getToken, parseResponse } from './apiBase';
 
 // Seguir/Dejar de seguir empresas
 export const followCompany = async (companyId) => {

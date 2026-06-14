@@ -64,3 +64,16 @@ export const markConversationRead = async (userId) => {
   });
   return parseResponse(response);
 };
+
+/**
+ * Busca usuarios del sistema por nombre o email para iniciar conversaciones (HU-26).
+ * @param {string} query - Texto a buscar (mín. 2 caracteres)
+ * @param {number} limit - Máximo de resultados (default 10, máx. 20)
+ */
+export const searchUsers = async (query, limit = 10) => {
+  const params = new URLSearchParams({ q: query, limit: String(limit) });
+  const response = await fetch(`${API_URL}/messages/users/search?${params}`, {
+    headers: authHeaders(),
+  });
+  return parseResponse(response);
+};

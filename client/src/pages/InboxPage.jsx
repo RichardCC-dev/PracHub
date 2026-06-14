@@ -8,6 +8,8 @@ import {
   CheckCheck,
   Clock,
   RefreshCw,
+  Search,
+  Users,
 } from 'lucide-react';
 import useMessageStore from '../store/messageStore';
 import useAuthStore from '../store/authStore';
@@ -66,9 +68,93 @@ const Avatar = ({ user, size = 'md' }) => {
   );
 };
 
+// ── UserSearchDropdown ────────────────────────────────────────────────────────
+// Buscador de usuarios para iniciar nueva conversación (HU-26 networking)
+
+const UserSearchDropdown = ({ onSelect, onClose }) => {
+  const [query, setQuery] = useState('');
+  const { searchResults, isSearching, searchUsers, clearSearchResults } = useMessageStore();
+  const inputRef = useRef(null);
+
+  useEffect(() => {
+    inputRef.current?.focus();
+    return () => clearSearchResults();
+  }, [clearSearchResults]);
+
+  const handleChange = (e) => {
+    const val = e.target.value;
+    setQuery(val);
+    if (val.length >= 2) {
+      searchUsers(val);
+    } else {
+      clearSearchResults();
+    }
+  };
+
+  return (
+    <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-xl shadow-xl z-30 overflow-hidden">
+      <div className="flex items-center gap-2 px-3 py-2 border-b border-gray-100">
+        <Search className="w-4 h-4 text-gray-400 flex-shrink-0" />
+        <input
+          ref={inputRef}
+          type="text"
+          value={query}
+          onChange={handleChange}
+          placeholder="Buscar por nombre o email..."
+          className="flex-1 text-sm outline-none text-gray-800 placeholder-gray-400"
+        />
+        <button
+          onClick={onClose}
+          className="text-gray-400 hover:text-gray-600 text-xs"
+        >
+          Cancelar
+        </button>
+      </div>
+      <div className="max-h-60 overflow-y-auto">
+        {isSearching ? (
+          <div className="flex items-center justify-center py-4">
+            <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-emerald-600" />
+          </div>
+        ) : query.length < 2 ? (
+          <p className="text-xs text-gray-400 text-center py-4 px-3">
+            Escribe al menos 2 caracteres para buscar
+          </p>
+        ) : searchResults.length === 0 ? (
+          <p className="text-xs text-gray-400 text-center py-4 px-3">
+            No se encontraron usuarios
+          </p>
+        ) : (
+          searchResults.map((u) => (
+            <button
+              key={u.id}
+              onClick={() => onSelect(u)}
+              className="w-full flex items-center gap-3 px-3 py-2.5 hover:bg-gray-50 transition-colors text-left"
+            >
+              <Avatar user={u} size="sm" />
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium text-gray-900 truncate">{u.displayName}</p>
+                <p className="text-xs text-gray-400 capitalize">
+                  {u.role === 'company' ? 'Empresa' : 'Estudiante'}
+                </p>
+              </div>
+            </button>
+          ))
+        )}
+      </div>
+    </div>
+  );
+};
+
 // ── ConversationList ──────────────────────────────────────────────────────────
 
-const ConversationList = ({ conversations, selectedUserId, onSelect, isLoading }) => {
+const ConversationList = ({ conversations, selectedUserId, onSelect, isLoading, onNewConversation }) => {
+  const [showSearch, setShowSearch] = useState(false);
+
+  const handleSelectUser = (u) => {
+    setShowSearch(false);
+    onNewConversation(u.id);
+  };
+
   if (isLoading) {
     return (
       <div className="flex-1 flex items-center justify-center">
@@ -77,64 +163,91 @@ const ConversationList = ({ conversations, selectedUserId, onSelect, isLoading }
     );
   }
 
-  if (conversations.length === 0) {
-    return (
-      <div className="flex-1 flex flex-col items-center justify-center py-12 px-4 text-center">
-        <MessageSquare className="w-12 h-12 text-gray-300 mb-3" />
-        <p className="text-sm font-medium text-gray-600 mb-1">Sin mensajes aún</p>
-        <p className="text-xs text-gray-400">
-          Los reclutadores podrán escribirte aquí cuando revisen tu perfil.
-        </p>
-      </div>
-    );
-  }
-
   return (
-    <div className="flex-1 overflow-y-auto divide-y divide-gray-100">
-      {conversations.map((conv) => {
-        const { otherUser, lastMessage, unreadCount } = conv;
-        const isSelected = selectedUserId === otherUser?.id;
+    <div className="flex-1 flex flex-col overflow-hidden">
+      {/* Botón nueva conversación */}
+      <div className="relative px-3 py-2 border-b border-gray-100">
+        <button
+          onClick={() => setShowSearch(!showSearch)}
+          className="w-full flex items-center gap-2 px-3 py-2 text-sm text-emerald-700 bg-emerald-50 hover:bg-emerald-100 rounded-lg transition-colors font-medium"
+        >
+          <Users className="w-4 h-4" />
+          Nueva conversación
+        </button>
+        {showSearch && (
+          <UserSearchDropdown
+            onSelect={handleSelectUser}
+            onClose={() => setShowSearch(false)}
+          />
+        )}
+      </div>
 
-        return (
-          <button
-            key={otherUser?.id}
-            onClick={() => onSelect(otherUser?.id)}
-            className={`w-full text-left px-4 py-3 flex items-center gap-3 hover:bg-gray-50 transition-colors ${
-              isSelected ? 'bg-emerald-50 border-r-2 border-emerald-500' : ''
-            }`}
-          >
-            <Avatar user={otherUser} size="md" />
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center justify-between mb-0.5">
-                <span
-                  className={`text-sm truncate ${
-                    unreadCount > 0 ? 'font-semibold text-gray-900' : 'font-medium text-gray-700'
-                  }`}
-                >
-                  {otherUser?.displayName || 'Usuario'}
-                </span>
-                <span className="text-xs text-gray-400 flex-shrink-0 ml-2">
-                  {formatDate(lastMessage?.createdAt)}
-                </span>
-              </div>
-              <div className="flex items-center justify-between">
-                <p
-                  className={`text-xs truncate ${
-                    unreadCount > 0 ? 'text-gray-700' : 'text-gray-400'
-                  }`}
-                >
-                  {lastMessage?.content || ''}
-                </p>
-                {unreadCount > 0 && (
-                  <span className="ml-2 min-w-[18px] h-[18px] bg-emerald-500 text-white text-xs rounded-full flex items-center justify-center px-1 font-bold flex-shrink-0">
-                    {unreadCount > 9 ? '9+' : unreadCount}
-                  </span>
-                )}
-              </div>
-            </div>
-          </button>
-        );
-      })}
+      {/* Lista de conversaciones */}
+      {conversations.length === 0 ? (
+        <div className="flex-1 flex flex-col items-center justify-center py-8 px-4 text-center">
+          <MessageSquare className="w-12 h-12 text-gray-300 mb-3" />
+          <p className="text-sm font-medium text-gray-600 mb-1">Sin mensajes aún</p>
+          <p className="text-xs text-gray-400">
+            Los reclutadores pueden escribirte aquí al revisar tu postulación.
+          </p>
+        </div>
+      ) : (
+        <div className="flex-1 overflow-y-auto divide-y divide-gray-100">
+          {conversations.map((conv) => {
+            const { otherUser, lastMessage, unreadCount } = conv;
+            const isSelected = selectedUserId === otherUser?.id;
+            const isCompanyContact = otherUser?.role === 'company';
+
+            return (
+              <button
+                key={otherUser?.id}
+                onClick={() => onSelect(otherUser?.id)}
+                className={`w-full text-left px-4 py-3 flex items-center gap-3 hover:bg-gray-50 transition-colors ${
+                  isSelected ? 'bg-emerald-50 border-r-2 border-emerald-500' : ''
+                }`}
+              >
+                <Avatar user={otherUser} size="md" />
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center justify-between mb-0.5">
+                    <div className="flex items-center gap-1.5 min-w-0">
+                      <span
+                        className={`text-sm truncate ${
+                          unreadCount > 0 ? 'font-semibold text-gray-900' : 'font-medium text-gray-700'
+                        }`}
+                      >
+                        {otherUser?.displayName || 'Usuario'}
+                      </span>
+                      {/* Badge de rol para networking (HU-26) */}
+                      {!isCompanyContact && (
+                        <span className="flex-shrink-0 text-xs px-1.5 py-0.5 bg-emerald-100 text-emerald-700 rounded-full">
+                          Red
+                        </span>
+                      )}
+                    </div>
+                    <span className="text-xs text-gray-400 flex-shrink-0 ml-1">
+                      {formatDate(lastMessage?.createdAt)}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <p
+                      className={`text-xs truncate ${
+                        unreadCount > 0 ? 'text-gray-700' : 'text-gray-400'
+                      }`}
+                    >
+                      {lastMessage?.content || ''}
+                    </p>
+                    {unreadCount > 0 && (
+                      <span className="ml-2 min-w-[18px] h-[18px] bg-emerald-500 text-white text-xs rounded-full flex items-center justify-center px-1 font-bold flex-shrink-0">
+                        {unreadCount > 9 ? '9+' : unreadCount}
+                      </span>
+                    )}
+                  </div>
+                </div>
+              </button>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 };
@@ -180,7 +293,8 @@ const MessageThread = ({
           Selecciona una conversación
         </h3>
         <p className="text-sm text-gray-400 max-w-xs">
-          Elige un hilo de la bandeja para leer y responder mensajes de reclutadores.
+          Elige un hilo para leer y responder mensajes, o inicia una nueva conversación
+          usando el buscador.
         </p>
       </div>
     );
@@ -188,9 +302,8 @@ const MessageThread = ({
 
   return (
     <div className="flex-1 flex flex-col min-h-0">
-      {/* Header de la conversación */}
+      {/* Header */}
       <div className="flex items-center gap-3 px-4 py-3 border-b border-gray-200 bg-white">
-        {/* Botón volver (solo móvil) */}
         <button
           onClick={onBack}
           className="md:hidden p-1.5 hover:bg-gray-100 rounded-lg transition-colors flex-shrink-0"
@@ -202,12 +315,12 @@ const MessageThread = ({
         <div className="flex-1 min-w-0">
           <p className="font-semibold text-gray-900 text-sm truncate">{otherUser.displayName}</p>
           <p className="text-xs text-gray-400 capitalize">
-            {otherUser.role === 'company' ? 'Empresa reclutadora' : 'Estudiante'}
+            {otherUser.role === 'company' ? 'Empresa reclutadora' : 'Estudiante · Red de contactos'}
           </p>
         </div>
       </div>
 
-      {/* Lista de mensajes */}
+      {/* Mensajes */}
       <div className="flex-1 overflow-y-auto px-4 py-4 space-y-3 bg-gray-50">
         {isLoading ? (
           <div className="flex items-center justify-center py-8">
@@ -215,7 +328,7 @@ const MessageThread = ({
           </div>
         ) : messages.length === 0 ? (
           <div className="text-center py-8">
-            <p className="text-sm text-gray-400">Inicia la conversación respondiendo abajo.</p>
+            <p className="text-sm text-gray-400">Comienza la conversación con un mensaje.</p>
           </div>
         ) : (
           messages.map((msg) => {
@@ -253,7 +366,7 @@ const MessageThread = ({
         <div ref={bottomRef} />
       </div>
 
-      {/* Input de respuesta */}
+      {/* Input */}
       <form
         onSubmit={handleSubmit}
         className="flex items-end gap-2 px-4 py-3 border-t border-gray-200 bg-white"
@@ -262,7 +375,7 @@ const MessageThread = ({
           value={text}
           onChange={(e) => setText(e.target.value)}
           onKeyDown={handleKeyDown}
-          placeholder="Escribe tu respuesta… (Enter para enviar)"
+          placeholder="Escribe tu mensaje… (Enter para enviar, Shift+Enter para nueva línea)"
           rows={1}
           maxLength={2000}
           className="flex-1 resize-none rounded-xl border border-gray-300 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all max-h-32 overflow-y-auto"
@@ -310,10 +423,9 @@ const InboxPage = () => {
   const [selectedUserId, setSelectedUserId] = useState(
     paramUserId ? parseInt(paramUserId) : null
   );
-  // En móvil: mostrar lista o conversación
   const [mobileView, setMobileView] = useState(paramUserId ? 'thread' : 'list');
 
-  // Cargar bandeja al montar + polling cada 30 segundos
+  // Cargar bandeja + polling cada 30s
   useEffect(() => {
     fetchInbox();
     fetchUnreadCount();
@@ -324,7 +436,6 @@ const InboxPage = () => {
     return () => clearInterval(interval);
   }, [fetchInbox, fetchUnreadCount]);
 
-  // Reaccionar a cambios del userId en la URL
   useEffect(() => {
     if (paramUserId) {
       const id = parseInt(paramUserId);
@@ -358,7 +469,7 @@ const InboxPage = () => {
 
   return (
     <div className="h-screen flex flex-col bg-white">
-      {/* Header global */}
+      {/* Header */}
       <header className="bg-white border-b border-gray-200 flex-shrink-0">
         <div className="max-w-5xl mx-auto px-4 py-3 flex items-center gap-3">
           <button
@@ -377,7 +488,6 @@ const InboxPage = () => {
               </span>
             )}
           </div>
-          {/* Botón de refrescar manual */}
           <button
             onClick={() => { fetchInbox(); fetchUnreadCount(); }}
             className="p-2 hover:bg-gray-100 rounded-lg transition-colors text-gray-500"
@@ -404,8 +514,7 @@ const InboxPage = () => {
       {/* Layout principal */}
       <div className="flex flex-1 min-h-0 max-w-5xl mx-auto w-full">
 
-        {/* Panel izquierdo: lista de conversaciones */}
-        {/* En desktop: siempre visible. En móvil: solo si mobileView === 'list' */}
+        {/* Panel izquierdo */}
         <div
           className={`w-full md:w-72 md:flex flex-shrink-0 border-r border-gray-200 flex-col ${
             mobileView === 'list' ? 'flex' : 'hidden md:flex'
@@ -424,11 +533,11 @@ const InboxPage = () => {
             selectedUserId={selectedUserId}
             onSelect={handleSelectConversation}
             isLoading={isLoading && conversations.length === 0}
+            onNewConversation={handleSelectConversation}
           />
         </div>
 
-        {/* Panel derecho: hilo de mensajes */}
-        {/* En desktop: siempre visible. En móvil: solo si mobileView === 'thread' */}
+        {/* Panel derecho */}
         <div
           className={`flex-1 min-w-0 flex flex-col ${
             mobileView === 'thread' ? 'flex' : 'hidden md:flex'

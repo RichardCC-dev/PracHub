@@ -33,7 +33,9 @@ vi.mock('../store/messageStore', () => ({
       fetchUnreadCount: vi.fn().mockResolvedValue(0),
       fetchConversation: vi.fn().mockResolvedValue({}),
       sendMessage: vi.fn().mockResolvedValue({}),
+      searchUsers: vi.fn().mockResolvedValue([]),
       clearCurrentConversation: vi.fn(),
+      clearSearchResults: vi.fn(),
       clearError: vi.fn(),
     };
     return typeof selector === 'function' ? selector(state) : state;

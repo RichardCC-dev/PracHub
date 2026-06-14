@@ -5,6 +5,7 @@ import {
   getUnreadMessageCount as apiGetUnreadCount,
   getConversation as apiGetConversation,
   markConversationRead as apiMarkRead,
+  searchUsers as apiSearchUsers,
 } from '../services/messageApi';
 
 /**
@@ -15,8 +16,10 @@ import {
  *  - currentMessages Mensajes del hilo abierto actualmente
  *  - currentOtherUser Participante del hilo abierto
  *  - unreadCount     Total de mensajes no leídos
+ *  - searchResults   Resultados de búsqueda de usuarios (HU-26)
  *  - isLoading       Carga general
  *  - isSending       Envío en curso
+ *  - isSearching     Búsqueda en curso
  *  - error           Último error
  */
 const useMessageStore = create((set, get) => ({
@@ -26,8 +29,10 @@ const useMessageStore = create((set, get) => ({
   currentOtherUser: null,
   currentPagination: { total: 0, limit: 50, offset: 0 },
   unreadCount: 0,
+  searchResults: [],
   isLoading: false,
   isSending: false,
+  isSearching: false,
   error: null,
 
   // ── Acciones ─────────────────────────────────────────────────────────────────
@@ -79,10 +84,14 @@ const useMessageStore = create((set, get) => ({
 
       // Marcar como leídos y actualizar bandeja
       await apiMarkRead(userId).catch(() => {});
-      // Decrementar unreadCount en la conversación
       set((state) => ({
         conversations: state.conversations.map((conv) =>
           conv.otherUser?.id === userId ? { ...conv, unreadCount: 0 } : conv
+        ),
+        unreadCount: Math.max(
+          0,
+          state.unreadCount -
+            (state.conversations.find((c) => c.otherUser?.id === userId)?.unreadCount || 0)
         ),
       }));
 
@@ -121,6 +130,32 @@ const useMessageStore = create((set, get) => ({
   },
 
   /**
+   * Busca usuarios del sistema por nombre o email (HU-26 — networking).
+   * @param {string} query
+   * @param {number} limit
+   */
+  searchUsers: async (query, limit = 10) => {
+    if (!query || query.length < 2) {
+      set({ searchResults: [] });
+      return [];
+    }
+    set({ isSearching: true });
+    try {
+      const response = await apiSearchUsers(query, limit);
+      set({ searchResults: response.data || [], isSearching: false });
+      return response.data;
+    } catch {
+      set({ isSearching: false });
+      return [];
+    }
+  },
+
+  /**
+   * Limpia los resultados de búsqueda.
+   */
+  clearSearchResults: () => set({ searchResults: [] }),
+
+  /**
    * Limpia la conversación actualmente abierta.
    */
   clearCurrentConversation: () =>
@@ -135,8 +170,10 @@ const useMessageStore = create((set, get) => ({
       currentOtherUser: null,
       currentPagination: { total: 0, limit: 50, offset: 0 },
       unreadCount: 0,
+      searchResults: [],
       isLoading: false,
       isSending: false,
+      isSearching: false,
       error: null,
     }),
 }));

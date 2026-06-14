@@ -5,9 +5,9 @@ import {
   MessageSquare,
   Send,
   Building2,
-  User,
   CheckCheck,
   Clock,
+  RefreshCw,
 } from 'lucide-react';
 import useMessageStore from '../store/messageStore';
 import useAuthStore from '../store/authStore';
@@ -15,6 +15,7 @@ import useAuthStore from '../store/authStore';
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
 const formatDate = (date) => {
+  if (!date) return '';
   const d = new Date(date);
   const now = new Date();
   const diffMs = now - d;
@@ -57,19 +58,33 @@ const Avatar = ({ user, size = 'md' }) => {
         isCompany ? 'bg-blue-100 text-blue-700' : 'bg-emerald-100 text-emerald-700'
       }`}
     >
-      {isCompany ? <Building2 className="w-4 h-4" /> : <span className="font-semibold">{initials}</span>}
+      {isCompany
+        ? <Building2 className="w-4 h-4" />
+        : <span className="font-semibold">{initials}</span>
+      }
     </div>
   );
 };
 
 // ── ConversationList ──────────────────────────────────────────────────────────
 
-const ConversationList = ({ conversations, selectedUserId, onSelect }) => {
+const ConversationList = ({ conversations, selectedUserId, onSelect, isLoading }) => {
+  if (isLoading) {
+    return (
+      <div className="flex-1 flex items-center justify-center">
+        <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-emerald-600" />
+      </div>
+    );
+  }
+
   if (conversations.length === 0) {
     return (
       <div className="flex-1 flex flex-col items-center justify-center py-12 px-4 text-center">
         <MessageSquare className="w-12 h-12 text-gray-300 mb-3" />
-        <p className="text-sm text-gray-500">No tienes conversaciones aún.</p>
+        <p className="text-sm font-medium text-gray-600 mb-1">Sin mensajes aún</p>
+        <p className="text-xs text-gray-400">
+          Los reclutadores podrán escribirte aquí cuando revisen tu perfil.
+        </p>
       </div>
     );
   }
@@ -91,15 +106,23 @@ const ConversationList = ({ conversations, selectedUserId, onSelect }) => {
             <Avatar user={otherUser} size="md" />
             <div className="flex-1 min-w-0">
               <div className="flex items-center justify-between mb-0.5">
-                <span className={`text-sm truncate ${unreadCount > 0 ? 'font-semibold text-gray-900' : 'font-medium text-gray-700'}`}>
+                <span
+                  className={`text-sm truncate ${
+                    unreadCount > 0 ? 'font-semibold text-gray-900' : 'font-medium text-gray-700'
+                  }`}
+                >
                   {otherUser?.displayName || 'Usuario'}
                 </span>
                 <span className="text-xs text-gray-400 flex-shrink-0 ml-2">
-                  {lastMessage?.createdAt ? formatDate(lastMessage.createdAt) : ''}
+                  {formatDate(lastMessage?.createdAt)}
                 </span>
               </div>
               <div className="flex items-center justify-between">
-                <p className={`text-xs truncate ${unreadCount > 0 ? 'text-gray-700' : 'text-gray-400'}`}>
+                <p
+                  className={`text-xs truncate ${
+                    unreadCount > 0 ? 'text-gray-700' : 'text-gray-400'
+                  }`}
+                >
                   {lastMessage?.content || ''}
                 </p>
                 {unreadCount > 0 && (
@@ -118,7 +141,15 @@ const ConversationList = ({ conversations, selectedUserId, onSelect }) => {
 
 // ── MessageThread ─────────────────────────────────────────────────────────────
 
-const MessageThread = ({ messages, currentUserId, otherUser, isLoading, isSending, onSend }) => {
+const MessageThread = ({
+  messages,
+  currentUserId,
+  otherUser,
+  isLoading,
+  isSending,
+  onSend,
+  onBack,
+}) => {
   const [text, setText] = useState('');
   const bottomRef = useRef(null);
 
@@ -129,8 +160,9 @@ const MessageThread = ({ messages, currentUserId, otherUser, isLoading, isSendin
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!text.trim() || isSending) return;
-    await onSend(text.trim());
+    const toSend = text.trim();
     setText('');
+    await onSend(toSend);
   };
 
   const handleKeyDown = (e) => {
@@ -142,13 +174,13 @@ const MessageThread = ({ messages, currentUserId, otherUser, isLoading, isSendin
 
   if (!otherUser) {
     return (
-      <div className="flex-1 flex flex-col items-center justify-center text-center px-8">
+      <div className="flex-1 hidden md:flex flex-col items-center justify-center text-center px-8 bg-gray-50">
         <MessageSquare className="w-16 h-16 text-gray-200 mb-4" />
         <h3 className="text-lg font-medium text-gray-700 mb-2">
           Selecciona una conversación
         </h3>
-        <p className="text-sm text-gray-400">
-          Elige un hilo de la bandeja para leer y responder mensajes.
+        <p className="text-sm text-gray-400 max-w-xs">
+          Elige un hilo de la bandeja para leer y responder mensajes de reclutadores.
         </p>
       </div>
     );
@@ -158,14 +190,24 @@ const MessageThread = ({ messages, currentUserId, otherUser, isLoading, isSendin
     <div className="flex-1 flex flex-col min-h-0">
       {/* Header de la conversación */}
       <div className="flex items-center gap-3 px-4 py-3 border-b border-gray-200 bg-white">
+        {/* Botón volver (solo móvil) */}
+        <button
+          onClick={onBack}
+          className="md:hidden p-1.5 hover:bg-gray-100 rounded-lg transition-colors flex-shrink-0"
+          aria-label="Volver a conversaciones"
+        >
+          <ArrowLeft className="w-4 h-4 text-gray-600" />
+        </button>
         <Avatar user={otherUser} size="md" />
-        <div>
-          <p className="font-semibold text-gray-900 text-sm">{otherUser.displayName}</p>
-          <p className="text-xs text-gray-400 capitalize">{otherUser.role === 'company' ? 'Empresa' : 'Estudiante'}</p>
+        <div className="flex-1 min-w-0">
+          <p className="font-semibold text-gray-900 text-sm truncate">{otherUser.displayName}</p>
+          <p className="text-xs text-gray-400 capitalize">
+            {otherUser.role === 'company' ? 'Empresa reclutadora' : 'Estudiante'}
+          </p>
         </div>
       </div>
 
-      {/* Mensajes */}
+      {/* Lista de mensajes */}
       <div className="flex-1 overflow-y-auto px-4 py-4 space-y-3 bg-gray-50">
         {isLoading ? (
           <div className="flex items-center justify-center py-8">
@@ -173,33 +215,34 @@ const MessageThread = ({ messages, currentUserId, otherUser, isLoading, isSendin
           </div>
         ) : messages.length === 0 ? (
           <div className="text-center py-8">
-            <p className="text-sm text-gray-400">Aún no hay mensajes en esta conversación.</p>
+            <p className="text-sm text-gray-400">Inicia la conversación respondiendo abajo.</p>
           </div>
         ) : (
           messages.map((msg) => {
             const isMine = msg.senderId === currentUserId;
             return (
-              <div
-                key={msg.id}
-                className={`flex ${isMine ? 'justify-end' : 'justify-start'}`}
-              >
+              <div key={msg.id} className={`flex ${isMine ? 'justify-end' : 'justify-start'}`}>
                 <div
-                  className={`max-w-xs sm:max-w-sm lg:max-w-md rounded-2xl px-4 py-2.5 ${
+                  className={`max-w-xs sm:max-w-sm lg:max-w-md rounded-2xl px-4 py-2.5 shadow-sm ${
                     isMine
                       ? 'bg-emerald-600 text-white rounded-br-sm'
-                      : 'bg-white text-gray-800 border border-gray-200 rounded-bl-sm shadow-sm'
+                      : 'bg-white text-gray-800 border border-gray-200 rounded-bl-sm'
                   }`}
                 >
                   <p className="text-sm leading-relaxed whitespace-pre-wrap break-words">
                     {msg.content}
                   </p>
-                  <div className={`flex items-center gap-1 mt-1 ${isMine ? 'justify-end' : 'justify-start'}`}>
-                    <Clock className="w-3 h-3 opacity-60" />
-                    <span className={`text-xs opacity-60`}>
+                  <div
+                    className={`flex items-center gap-1 mt-1 ${
+                      isMine ? 'justify-end' : 'justify-start'
+                    }`}
+                  >
+                    <Clock className="w-3 h-3 opacity-50" />
+                    <span className="text-xs opacity-50">
                       {formatDate(msg.createdAt || msg.created_at)}
                     </span>
                     {isMine && msg.isRead && (
-                      <CheckCheck className="w-3 h-3 opacity-60" />
+                      <CheckCheck className="w-3 h-3 opacity-50" />
                     )}
                   </div>
                 </div>
@@ -219,7 +262,7 @@ const MessageThread = ({ messages, currentUserId, otherUser, isLoading, isSendin
           value={text}
           onChange={(e) => setText(e.target.value)}
           onKeyDown={handleKeyDown}
-          placeholder="Escribe un mensaje... (Enter para enviar)"
+          placeholder="Escribe tu respuesta… (Enter para enviar)"
           rows={1}
           maxLength={2000}
           className="flex-1 resize-none rounded-xl border border-gray-300 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all max-h-32 overflow-y-auto"
@@ -253,10 +296,12 @@ const InboxPage = () => {
     conversations,
     currentMessages,
     currentOtherUser,
+    unreadCount,
     isLoading,
     isSending,
     error,
     fetchInbox,
+    fetchUnreadCount,
     fetchConversation,
     sendMessage,
     clearCurrentConversation,
@@ -265,33 +310,51 @@ const InboxPage = () => {
   const [selectedUserId, setSelectedUserId] = useState(
     paramUserId ? parseInt(paramUserId) : null
   );
+  // En móvil: mostrar lista o conversación
+  const [mobileView, setMobileView] = useState(paramUserId ? 'thread' : 'list');
 
-  // Cargar bandeja al montar
+  // Cargar bandeja al montar + polling cada 30 segundos
   useEffect(() => {
     fetchInbox();
-  }, [fetchInbox]);
+    fetchUnreadCount();
+    const interval = setInterval(() => {
+      fetchInbox();
+      fetchUnreadCount();
+    }, 30000);
+    return () => clearInterval(interval);
+  }, [fetchInbox, fetchUnreadCount]);
 
-  // Si hay userId en la URL, cargar esa conversación
+  // Reaccionar a cambios del userId en la URL
   useEffect(() => {
     if (paramUserId) {
       const id = parseInt(paramUserId);
       setSelectedUserId(id);
+      setMobileView('thread');
       fetchConversation(id);
     } else {
       clearCurrentConversation();
       setSelectedUserId(null);
+      setMobileView('list');
     }
   }, [paramUserId, fetchConversation, clearCurrentConversation]);
 
   const handleSelectConversation = (userId) => {
     setSelectedUserId(userId);
+    setMobileView('thread');
     navigate(`/inbox/${userId}`, { replace: true });
+  };
+
+  const handleBackToList = () => {
+    setMobileView('list');
+    navigate('/inbox', { replace: true });
   };
 
   const handleSend = async (content) => {
     if (!selectedUserId) return;
     await sendMessage(selectedUserId, content);
   };
+
+  const totalUnread = conversations.reduce((sum, c) => sum + (c.unreadCount || 0), 0);
 
   return (
     <div className="h-screen flex flex-col bg-white">
@@ -305,10 +368,23 @@ const InboxPage = () => {
           >
             <ArrowLeft className="w-5 h-5 text-gray-600" />
           </button>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-1">
             <MessageSquare className="w-5 h-5 text-emerald-600" />
             <h1 className="text-lg font-semibold text-gray-900">Mensajes</h1>
+            {totalUnread > 0 && (
+              <span className="min-w-[20px] h-5 bg-emerald-500 text-white text-xs font-bold rounded-full flex items-center justify-center px-1.5">
+                {totalUnread > 99 ? '99+' : totalUnread}
+              </span>
+            )}
           </div>
+          {/* Botón de refrescar manual */}
+          <button
+            onClick={() => { fetchInbox(); fetchUnreadCount(); }}
+            className="p-2 hover:bg-gray-100 rounded-lg transition-colors text-gray-500"
+            aria-label="Actualizar mensajes"
+          >
+            <RefreshCw className="w-4 h-4" />
+          </button>
         </div>
       </header>
 
@@ -316,41 +392,58 @@ const InboxPage = () => {
       {error && (
         <div className="bg-red-50 border-b border-red-200 px-4 py-2 text-sm text-red-700 flex items-center justify-between">
           <span>{error}</span>
-          <button onClick={() => useMessageStore.getState().clearError()} className="ml-2 text-red-500 hover:text-red-700">✕</button>
+          <button
+            onClick={() => useMessageStore.getState().clearError()}
+            className="ml-2 text-red-500 hover:text-red-700 font-bold"
+          >
+            ✕
+          </button>
         </div>
       )}
 
       {/* Layout principal */}
       <div className="flex flex-1 min-h-0 max-w-5xl mx-auto w-full">
+
         {/* Panel izquierdo: lista de conversaciones */}
-        <div className="w-72 flex-shrink-0 border-r border-gray-200 flex flex-col">
-          <div className="px-4 py-3 border-b border-gray-100 bg-gray-50">
+        {/* En desktop: siempre visible. En móvil: solo si mobileView === 'list' */}
+        <div
+          className={`w-full md:w-72 md:flex flex-shrink-0 border-r border-gray-200 flex-col ${
+            mobileView === 'list' ? 'flex' : 'hidden md:flex'
+          }`}
+        >
+          <div className="px-4 py-3 border-b border-gray-100 bg-gray-50 flex items-center justify-between">
             <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
               Conversaciones
             </p>
+            {conversations.length > 0 && (
+              <span className="text-xs text-gray-400">{conversations.length}</span>
+            )}
           </div>
-          {isLoading && conversations.length === 0 ? (
-            <div className="flex items-center justify-center flex-1">
-              <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-emerald-600" />
-            </div>
-          ) : (
-            <ConversationList
-              conversations={conversations}
-              selectedUserId={selectedUserId}
-              onSelect={handleSelectConversation}
-            />
-          )}
+          <ConversationList
+            conversations={conversations}
+            selectedUserId={selectedUserId}
+            onSelect={handleSelectConversation}
+            isLoading={isLoading && conversations.length === 0}
+          />
         </div>
 
         {/* Panel derecho: hilo de mensajes */}
-        <MessageThread
-          messages={currentMessages}
-          currentUserId={user?.id}
-          otherUser={currentOtherUser}
-          isLoading={isLoading && selectedUserId !== null}
-          isSending={isSending}
-          onSend={handleSend}
-        />
+        {/* En desktop: siempre visible. En móvil: solo si mobileView === 'thread' */}
+        <div
+          className={`flex-1 min-w-0 flex flex-col ${
+            mobileView === 'thread' ? 'flex' : 'hidden md:flex'
+          }`}
+        >
+          <MessageThread
+            messages={currentMessages}
+            currentUserId={user?.id}
+            otherUser={currentOtherUser}
+            isLoading={isLoading && selectedUserId !== null && currentMessages.length === 0}
+            isSending={isSending}
+            onSend={handleSend}
+            onBack={handleBackToList}
+          />
+        </div>
       </div>
     </div>
   );

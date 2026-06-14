@@ -1,5 +1,6 @@
 import { useNavigate } from 'react-router-dom';
 import useAuthStore from '../store/authStore';
+import useMessageStore from '../store/messageStore';
 import NotificationBell from '../components/NotificationBell';
 
 const FeatureCard = ({ icon, title, description, badge, onClick, disabled }) => (
@@ -51,6 +52,7 @@ const WelcomePage = ({ onLogout, onEditProfile, onGoToCVBuilder, onGoToAdmin, on
   };
 
   const isCompany = user?.role === 'company';
+  const messageUnreadCount = useMessageStore((s) => s.unreadCount);
   const isStudent = user?.role === 'student';
   const companyProfile = user?.companyProfile;
   const studentProfile = user?.studentProfile;
@@ -116,7 +118,7 @@ const WelcomePage = ({ onLogout, onEditProfile, onGoToCVBuilder, onGoToAdmin, on
         {
       icon: '📬',
       title: 'Mensajes',
-      description: 'Lee y responde mensajes directos de reclutadores y de tu red de contactos.',
+      description: messageUnreadCount > 0 ? `Tienes ${messageUnreadCount} mensaje${messageUnreadCount > 1 ? 's' : ''} sin leer de reclutadores.` : 'Lee y responde mensajes directos de reclutadores.',
       badge: 'Activo',
       onClick: () => navigate('/inbox'),
       disabled: false,

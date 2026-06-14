@@ -30,6 +30,7 @@ vi.mock('../store/messageStore', () => ({
       isSending: false,
       error: null,
       fetchInbox: vi.fn().mockResolvedValue([]),
+      fetchUnreadCount: vi.fn().mockResolvedValue(0),
       fetchConversation: vi.fn().mockResolvedValue({}),
       sendMessage: vi.fn().mockResolvedValue({}),
       clearCurrentConversation: vi.fn(),
@@ -71,7 +72,7 @@ describe('InboxPage', () => {
 
   it('muestra mensaje de estado vacío cuando no hay conversaciones', () => {
     renderInbox();
-    expect(screen.getByText(/No tienes conversaciones aún/i)).toBeInTheDocument();
+    expect(screen.getByText(/Sin mensajes aún/i)).toBeInTheDocument();
   });
 
   it('muestra panel derecho con instrucción al no tener conversación seleccionada', () => {

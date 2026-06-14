@@ -114,6 +114,14 @@ const WelcomePage = ({ onLogout, onEditProfile, onGoToCVBuilder, onGoToAdmin, on
       disabled: false,
     },
         {
+      icon: '📬',
+      title: 'Mensajes',
+      description: 'Lee y responde mensajes directos de reclutadores y de tu red de contactos.',
+      badge: 'Activo',
+      onClick: () => navigate('/inbox'),
+      disabled: false,
+    },
+    {
       icon: '👤',
       title: 'Mi perfil',
       description: 'Actualiza tus datos personales, carrera y disponibilidad.',
@@ -148,6 +156,14 @@ const WelcomePage = ({ onLogout, onEditProfile, onGoToCVBuilder, onGoToAdmin, on
       badge: 'Activo',
       onClick: () => navigate('/company/candidates'),
       disabled: !companyProfile?.canPublishOffers,
+    },
+    {
+      icon: '📬',
+      title: 'Mensajes',
+      description: 'Comunica a los candidatos sobre el proceso de seleccion directamente.',
+      badge: 'Activo',
+      onClick: () => navigate('/inbox'),
+      disabled: false,
     },
   ];
 

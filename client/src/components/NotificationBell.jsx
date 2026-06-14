@@ -15,6 +15,7 @@ const TYPE_STYLES = {
   revision:   'bg-yellow-50 border-yellow-200',
   offer_match: 'bg-emerald-50 border-emerald-200',
   followed_company_offer: 'bg-amber-50 border-amber-200',
+  message_received: 'bg-purple-50 border-purple-200',
   default:    'bg-gray-50 border-gray-200',
 };
 
@@ -22,6 +23,7 @@ const getStyle = (notification) => {
   // Primero verificar por tipo explícito
   if (notification.type === 'offer_match') return TYPE_STYLES.offer_match;
   if (notification.type === 'followed_company_offer') return TYPE_STYLES.followed_company_offer;
+  if (notification.type === 'message_received') return TYPE_STYLES.message_received;
   
   // Fallback a detección por mensaje/título
   if (notification.message?.includes('aceptada') || notification.title?.includes('aceptada')) return TYPE_STYLES.aceptada;
@@ -113,6 +115,12 @@ const NotificationBell = () => {
     
     if (n.type === 'status_change') {
       navigate('/my-applications');
+      return;
+    }
+
+    // Mensajes directos (HU-25)
+    if (n.type === 'message_received') {
+      navigate('/inbox');
       return;
     }
     

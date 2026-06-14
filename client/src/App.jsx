@@ -32,6 +32,7 @@ const AlertHistoryPage        = lazy(() => import('./pages/AlertHistoryPage'));
 const AdminLoginPage          = lazy(() => import('./pages/AdminLoginPage'));
 const VerifyEmailPage         = lazy(() => import('./pages/VerifyEmailPage'));
 const CompanyFeedPage         = lazy(() => import('./pages/CompanyFeedPage'));
+const InboxPage               = lazy(() => import('./pages/InboxPage'));
 
 // ── Fallback de Suspense ──────────────────────────────────────────────────────
 const PageLoader = () => (
@@ -272,7 +273,19 @@ const AppRoutes = () => {
         </CompanyRoute>
       } />
 
-      {/* ── Fallback ────────────────────────────────────────────────────── */}
+      {/* ── Bandeja de mensajes (HU-25) ───────────────────────────── */}
+      <Route path="/inbox" element={
+        <PrivateRoute>
+          <InboxPage />
+        </PrivateRoute>
+      } />
+      <Route path="/inbox/:userId" element={
+        <PrivateRoute>
+          <InboxPage />
+        </PrivateRoute>
+      } />
+
+            {/* ── Fallback ────────────────────────────────────────────────────── */}
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );

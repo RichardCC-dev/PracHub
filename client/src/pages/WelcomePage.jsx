@@ -106,6 +106,14 @@ const WelcomePage = ({ onLogout, onEditProfile, onGoToCVBuilder, onGoToAdmin, on
       disabled: false,
     },
     {
+      icon: '📡',
+      title: 'Feed de empresas',
+      description: 'Consulta las últimas ofertas de prácticas publicadas por las empresas que sigues.',
+      badge: 'Activo',
+      onClick: () => navigate('/company-feed'),
+      disabled: false,
+    },
+        {
       icon: '👤',
       title: 'Mi perfil',
       description: 'Actualiza tus datos personales, carrera y disponibilidad.',

@@ -31,6 +31,7 @@ const FollowedCompaniesPage   = lazy(() => import('./pages/FollowedCompaniesPage
 const AlertHistoryPage        = lazy(() => import('./pages/AlertHistoryPage'));
 const AdminLoginPage          = lazy(() => import('./pages/AdminLoginPage'));
 const VerifyEmailPage         = lazy(() => import('./pages/VerifyEmailPage'));
+const CompanyFeedPage         = lazy(() => import('./pages/CompanyFeedPage'));
 
 // ── Fallback de Suspense ──────────────────────────────────────────────────────
 const PageLoader = () => (
@@ -198,7 +199,14 @@ const AppRoutes = () => {
         </StudentRoute>
       } />
 
-      {/* ── Historial de alertas (protegido, solo student) ─────────────── */}
+            {/* ── Feed personalizado de empresas seguidas (HU-22) ───────── */}
+      <Route path="/company-feed" element={
+        <StudentRoute>
+          <CompanyFeedPage />
+        </StudentRoute>
+      } />
+
+{/* ── Historial de alertas (protegido, solo student) ─────────────── */}
       <Route path="/alert-history" element={
         <StudentRoute>
           <AlertHistoryPage />

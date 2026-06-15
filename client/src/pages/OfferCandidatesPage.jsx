@@ -8,6 +8,7 @@ import {
   XCircle,
   Clock,
   Mail,
+  MessageSquare,
   Building2,
   FileText,
   AlertCircle,

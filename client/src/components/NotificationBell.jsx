@@ -116,10 +116,15 @@ const NotificationBell = () => {
       return;
     }
 
-    // Mensajes directos (HU-25)
-    if (n.type === 'message_received') {
-      navigate('/inbox');
-      return;
+    // Para ofertas recomendadas, empresas seguidas, o cualquier notificación con relatedId
+    if (n.relatedId) {
+      navigate('/offers', {
+        state: {
+          openOfferId: n.relatedId
+        }
+      });
+    } else {
+      navigate('/alert-history');
     }
     
     // Para ofertas recomendadas, empresas seguidas, o cualquier notificación con relatedId

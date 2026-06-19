@@ -138,10 +138,33 @@ const AppRoutes = () => {
       {/* ── Vistas autenticadas (con AppShell) ─────────────────────────── */}
       <Route element={<ShellLayout />}>
         {/* Cualquier usuario autenticado */}
-        <Route path="/dashboard" element={<WelcomePage />} />
-        <Route path="/inbox" element={<InboxPage />} />
-        <Route path="/inbox/:userId" element={<InboxPage />} />
+        {/* Solo estudiante */}
+        <Route element={<StudentOnly />}>
+          <Route path="/inbox" element={<InboxPage />} />
+          <Route path="/inbox/:userId" element={<InboxPage />} />
+          <Route path="/student/profile" element={<StudentProfilePage />} />
+          <Route path="/offers" element={<StudentOffersPage />} />
+          <Route path="/offers/:offerId" element={<OfferDetailPage />} />
+          <Route path="/my-applications" element={<MyApplicationsPage />} />
+          <Route path="/cv-builder" element={<CVBuilderPage />} />
+          <Route path="/simulator" element={<InterviewSimulatorPage />} />
+          <Route path="/simulator/history" element={<SimulationHistoryPage />} />
+          <Route path="/followed-companies" element={<FollowedCompaniesPage />} />
+          <Route path="/company-feed" element={<CompanyFeedPage />} />
+          <Route path="/alert-settings" element={<AlertSettingsPage />} />
+          <Route path="/alert-history" element={<AlertHistoryPage />} />
+        </Route>
 
+        {/* Solo empresa */}
+        <Route element={<CompanyOnly />}>
+          <Route path="/inbox" element={<InboxPage />} />
+          <Route path="/inbox/:userId" element={<InboxPage />} />
+          <Route path="/company/profile" element={<CompanyProfilePage />} />
+          <Route path="/company/offers" element={<CompanyOffersPage />} />
+          <Route path="/company/offers/new" element={<CreateOfferPage />} />
+          <Route path="/company/offers/edit" element={<CreateOfferPage />} />
+          <Route path="/company/offers/:offerId/candidates" element={<OfferCandidatesPage />} />
+        </Route>
         {/* Solo estudiante */}
         <Route element={<StudentOnly />}>
           <Route path="/student/profile" element={<StudentProfilePage />} />

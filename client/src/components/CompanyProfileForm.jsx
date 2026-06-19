@@ -88,7 +88,7 @@ const CompanyProfileForm = ({ company, token, onUpdate }) => {
     setIsUploading(true);
 
     try {
-      const result = await uploadLogo(token, file);
+      const result = await uploadLogo(file);
       setUploadedLogoUrl(result.logoUrl);
       setPreviewUrl(result.logoUrl);
       setLogoMode('upload');
@@ -117,7 +117,7 @@ const CompanyProfileForm = ({ company, token, onUpdate }) => {
         cultureTags: selectedTags,
       };
 
-      const result = await updateCompanyProfile(token, payload);
+      const result = await updateCompanyProfile(payload);
       onUpdate(result);
       setSuccess(true);
       setTimeout(() => setSuccess(false), 3000);

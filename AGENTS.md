@@ -9,7 +9,7 @@ Referencia rápida sobre la estructura del proyecto, comandos de desarrollo y co
 ```
 PracHub/
 ├── client/          # React 18 + Vite + TailwindCSS (SPA)
-├── server/          # Express + Sequelize + PostgreSQL (REST API)
+├── server/          # Express + Sequelize + MySQL (REST API)
 ├── .github/
 │   └── workflows/   # CI/CD (ci.yml — lint + tests en cada PR)
 └── AGENTS.md        # Este archivo
@@ -54,7 +54,7 @@ Variables críticas del servidor:
 
 | Variable | Descripción |
 |---|---|
-| `DATABASE_URL` | Cadena de conexión PostgreSQL |
+| `DATABASE_URL` | Cadena de conexión MySQL |
 | `JWT_SECRET` | Secret para firmar tokens (mín. 32 chars) |
 | `GEMINI_API_KEY` | API key de Google Gemini |
 | `EMAIL_*` | Configuración SMTP para emails transaccionales |
@@ -95,6 +95,7 @@ server/src/
 ```
 client/src/
 ├── components/
+│   ├── layout/           # AppShell, Sidebar, TopBar (navegación global)
 │   ├── routing/           # Guards de ruta: PrivateRoute, CompanyRoute, AdminRoute, StudentRoute
 │   │   └── LoadingSpinner.jsx
 │   └── ErrorBoundary.jsx
@@ -109,8 +110,10 @@ client/src/
 │   ├── alertApi.js
 │   ├── savedCompanyApi.js
 │   └── recommendationApi.js
-└── store/
-    └── authStore.js       # Zustand — estado de autenticación global
+├── store/
+│   └── authStore.js       # Zustand — estado de autenticación global
+└── utils/
+    └── format.js          # Utilidades de formato (modalidad, fechas, etc.)
 ```
 
 ### Convenciones del frontend
@@ -119,6 +122,7 @@ client/src/
 - **Servicios**: importar `API_URL`, `getToken`, `authHeaders` y `parseResponse` desde `services/apiBase.js`.
 - **Hooks TanStack Query**: las `queryFn` NO deben recibir el token como argumento; las funciones de `api.js` leen el token internamente vía `getToken()`.
 - **`App.jsx`**: solo debe contener el árbol de rutas y las importaciones lazy. Sin componentes de UI ni lógica inline.
+- **Navegación**: usar `AppShell` para todas las páginas autenticadas. No agregar botones "Volver" ad-hoc (el shell tiene un botón único de retroceso).
 
 ---
 
@@ -155,3 +159,29 @@ Configurado en `server/src/middlewares/rateLimit.js`:
 
 - **Producción**: límites activos (configurable vía env vars).
 - **Desarrollo / test**: desactivado automáticamente para no bloquear pruebas locales con múltiples usuarios.
+
+---
+
+## Notas de implementación (Refactor 2026-1)
+
+### Backend
+- **Endpoint público de oferta**: `GET /offers/:offerId` permite acceso sin autenticación al detalle de oferta.
+- **CV versioning**: `ResumeVersion` tiene columna `title`. Guardado manual desacoplado de export PDF.
+- **Mensajería restringida**: empresa→candidatos (solo postulantes), estudiante solo responde, sin chat estudiante↔estudiante.
+- **Notificaciones**: solo de empleos (no se crea `message_received`).
+- **Feed de empresas seguidas**: corregido para mostrar ofertas de empresas seguidas.
+
+### Frontend
+- **AppShell**: layout global con Sidebar (navegación por rol) y TopBar (logo→inicio, botón único Atrás, avatar→perfil, badge mensajes).
+- **LandingPage pública**: sin autenticación, con selector de login/registro.
+- **Dashboard estudiante**: 3 columnas (perfil/CV, búsqueda + recomendadas, métricas).
+- **Recomendadas**: muestran info básica + nombre empresa.
+- **Detalle de oferta pública**: filtros avanzados + postular/análisis desde detalle.
+- **CV builder**: guardado manual con título + panel dinámico de historial de análisis.
+- **CVAnalyzer**: solo por-oferta + reporte con sección exacta.
+- **ApplyModal**: sin info duplicada y sin carta de presentación.
+- **AlertSettings**: quitado "Empresas que sigo".
+- **Inbox**: reply-only + badge mensajes + sin chat estudiante↔estudiante.
+- **Dashboard empresa**: métricas + datos + fix guardado perfil/logo.
+- **Unificación**: Gestionar ofertas + Ver candidatos integrados.
+- **Admin**: pestaña Reportes (placeholder).

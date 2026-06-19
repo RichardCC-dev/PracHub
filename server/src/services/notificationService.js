@@ -1,3 +1,4 @@
+const { Op } = require('sequelize');
 const { Notification } = require('../models');
 
 const STATUS_MESSAGES = {
@@ -17,6 +18,10 @@ const STATUS_MESSAGES = {
   },
 };
 
+// Las notificaciones de la campana son SOLO sobre empleos.
+// Los mensajes directos NO generan notificación: su conteo se muestra en el ícono de Mensajes.
+const NON_JOB_TYPES = ['message_received'];
+
 const notificationService = {
   async createStatusChangeNotification(userId, applicationId, offerTitle, newStatus, notes = null) {
     const config = STATUS_MESSAGES[newStatus];
@@ -34,7 +39,7 @@ const notificationService = {
 
   async getUserNotifications(userId) {
     return await Notification.findAll({
-      where: { userId },
+      where: { userId, type: { [Op.notIn]: NON_JOB_TYPES } },
       order: [['created_at', 'DESC']],
       limit: 50,
     });
@@ -59,7 +64,7 @@ const notificationService = {
 
   async getUnreadCount(userId) {
     return await Notification.count({
-      where: { userId, isRead: false },
+      where: { userId, isRead: false, type: { [Op.notIn]: NON_JOB_TYPES } },
     });
   },
 };

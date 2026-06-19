@@ -170,6 +170,15 @@ export const exportResumePdf = async (template) => {
 
 // --- RESUME VERSIONS ---
 
+export const saveResumeVersion = async (title, template = null) => {
+  const response = await fetch(`${API_URL}/resume/versions`, {
+    method: 'POST',
+    headers: getAuthHeaders(),
+    body: JSON.stringify({ title, template }),
+  });
+  return parseResponse(response);
+};
+
 export const getResumeVersions = async (limit = 20) => {
   const response = await fetch(`${API_URL}/resume/versions?limit=${limit}`, {
     headers: getAuthHeaders(),

@@ -1,5 +1,5 @@
 import { Suspense, lazy } from 'react';
-import { BrowserRouter, Routes, Route, Navigate, useNavigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate, Outlet, useNavigate } from 'react-router-dom';
 import useAuthStore from './store/authStore';
 import ErrorBoundary from './components/ErrorBoundary';
 
@@ -9,12 +9,15 @@ import CompanyRoute from './components/routing/CompanyRoute';
 import AdminRoute from './components/routing/AdminRoute';
 import StudentRoute from './components/routing/StudentRoute';
 import LoadingSpinner from './components/routing/LoadingSpinner';
+import AppShell from './components/layout/AppShell';
 
 // ── Lazy-loaded pages ─────────────────────────────────────────────────────────
+const LandingPage             = lazy(() => import('./pages/LandingPage'));
 const HomePage                = lazy(() => import('./pages/HomePage'));
 const StudentOnboardingPage   = lazy(() => import('./pages/StudentOnboardingPage'));
 const CompanyOnboardingPage   = lazy(() => import('./pages/CompanyOnboardingPage'));
 const WelcomePage             = lazy(() => import('./pages/WelcomePage'));
+const StudentProfilePage      = lazy(() => import('./pages/StudentProfilePage'));
 const CompanyProfilePage      = lazy(() => import('./pages/CompanyProfilePage'));
 const InterviewSimulatorPage  = lazy(() => import('./pages/InterviewSimulatorPage'));
 const SimulationHistoryPage   = lazy(() => import('./pages/SimulationHistoryPage'));
@@ -23,14 +26,16 @@ const AdminDashboardPage      = lazy(() => import('./pages/AdminDashboardPage'))
 const CompanyOffersPage       = lazy(() => import('./pages/CompanyOffersPage'));
 const CreateOfferPage         = lazy(() => import('./pages/CreateOfferPage'));
 const StudentOffersPage       = lazy(() => import('./pages/StudentOffersPage'));
+const OfferDetailPage         = lazy(() => import('./pages/OfferDetailPage'));
 const MyApplicationsPage      = lazy(() => import('./pages/MyApplicationsPage'));
 const OfferCandidatesPage     = lazy(() => import('./pages/OfferCandidatesPage'));
-const CompanyCandidatesPage   = lazy(() => import('./pages/CompanyCandidatesPage'));
 const AlertSettingsPage       = lazy(() => import('./pages/AlertSettingsPage'));
 const FollowedCompaniesPage   = lazy(() => import('./pages/FollowedCompaniesPage'));
 const AlertHistoryPage        = lazy(() => import('./pages/AlertHistoryPage'));
 const AdminLoginPage          = lazy(() => import('./pages/AdminLoginPage'));
 const VerifyEmailPage         = lazy(() => import('./pages/VerifyEmailPage'));
+const CompanyFeedPage         = lazy(() => import('./pages/CompanyFeedPage'));
+const InboxPage               = lazy(() => import('./pages/InboxPage'));
 
 // ── Fallback de Suspense ──────────────────────────────────────────────────────
 const PageLoader = () => (
@@ -42,22 +47,50 @@ const PageLoader = () => (
   </div>
 );
 
+// Layout autenticado: aplica el guard + el AppShell (sidebar, barra superior, etc.)
+const ShellLayout = () => (
+  <PrivateRoute>
+    <AppShell>
+      <Outlet />
+    </AppShell>
+  </PrivateRoute>
+);
+
+const StudentOnly = () => (
+  <StudentRoute>
+    <Outlet />
+  </StudentRoute>
+);
+
+const CompanyOnly = () => (
+  <CompanyRoute>
+    <Outlet />
+  </CompanyRoute>
+);
+
 // ── Árbol de rutas ────────────────────────────────────────────────────────────
 const AppRoutes = () => {
   const { token, user, isInitialized, isLoading, authVerified } = useAuthStore();
   const navigate = useNavigate();
 
-  // Mostrar loading mientras se inicializa o si hay token pero auth no está verificada
   if (!isInitialized || isLoading || (token && !authVerified)) {
     return <LoadingSpinner />;
   }
 
+  const authed = authVerified && token && user;
+  const homeFor = (u) => (u?.role === 'admin' ? '/admin' : '/dashboard');
+
   return (
     <Routes>
-      {/* ── Pública: home ──────────────────────────────────────────────── */}
+      {/* ── Landing pública ───────────────────────────────────────────── */}
       <Route path="/" element={
-        authVerified && token && user
-          ? <Navigate to={user.role === 'admin' ? '/admin' : '/dashboard'} replace />
+        authed ? <Navigate to={homeFor(user)} replace /> : <LandingPage />
+      } />
+
+      {/* ── Pantalla de acceso (selección estudiante/empresa) ──────────── */}
+      <Route path="/acceder" element={
+        authed
+          ? <Navigate to={homeFor(user)} replace />
           : <HomePage
               onLoginStudent={() => navigate('/login/student')}
               onLoginCompany={() => navigate('/login/company')}
@@ -66,203 +99,77 @@ const AppRoutes = () => {
             />
       } />
 
-      {/* Redirección legacy /login → /login/student */}
+      {/* Redirecciones legacy */}
       <Route path="/login" element={<Navigate to="/login/student" replace />} />
 
       {/* ── Auth: login admin ──────────────────────────────────────────── */}
       <Route path="/login/admin" element={
-        authVerified && token && user
-          ? <Navigate to={user.role === 'admin' ? '/admin' : '/dashboard'} replace />
-          : <AdminLoginPage />
+        authed ? <Navigate to={homeFor(user)} replace /> : <AdminLoginPage />
       } />
 
-      {/* ── Auth: login / registro estudiante ─────────────────────────── */}
+      {/* ── Auth: estudiante ───────────────────────────────────────────── */}
       <Route path="/login/student" element={
-        authVerified && token && user
-          ? <Navigate to={user.role === 'admin' ? '/admin' : '/dashboard'} replace />
-          : <StudentOnboardingPage onLoginSuccess={() => navigate('/dashboard', { replace: true })} />
+        authed ? <Navigate to={homeFor(user)} replace /> : <StudentOnboardingPage onLoginSuccess={() => navigate('/dashboard', { replace: true })} />
       } />
       <Route path="/register/student" element={
-        authVerified && token && user
-          ? <Navigate to={user.role === 'admin' ? '/admin' : '/dashboard'} replace />
-          : <StudentOnboardingPage onLoginSuccess={() => navigate('/dashboard', { replace: true })} />
+        authed ? <Navigate to={homeFor(user)} replace /> : <StudentOnboardingPage onLoginSuccess={() => navigate('/dashboard', { replace: true })} />
       } />
       <Route path="/forgot-password" element={
-        authVerified && token && user
-          ? <Navigate to={user.role === 'admin' ? '/admin' : '/dashboard'} replace />
-          : <StudentOnboardingPage onLoginSuccess={() => navigate('/dashboard', { replace: true })} />
+        authed ? <Navigate to={homeFor(user)} replace /> : <StudentOnboardingPage onLoginSuccess={() => navigate('/dashboard', { replace: true })} />
       } />
       <Route path="/reset-password" element={
         <StudentOnboardingPage onLoginSuccess={() => navigate('/dashboard', { replace: true })} />
       } />
 
-      {/* ── Auth: login / registro empresa ────────────────────────────── */}
+      {/* ── Auth: empresa ──────────────────────────────────────────────── */}
       <Route path="/login/company" element={
-        authVerified && token && user
-          ? <Navigate to={user.role === 'admin' ? '/admin' : '/dashboard'} replace />
-          : <CompanyOnboardingPage onLoginSuccess={() => navigate('/dashboard', { replace: true })} />
+        authed ? <Navigate to={homeFor(user)} replace /> : <CompanyOnboardingPage onLoginSuccess={() => navigate('/dashboard', { replace: true })} />
       } />
       <Route path="/register/company" element={
-        authVerified && token && user
-          ? <Navigate to={user.role === 'admin' ? '/admin' : '/dashboard'} replace />
-          : <CompanyOnboardingPage onLoginSuccess={() => navigate('/dashboard', { replace: true })} />
+        authed ? <Navigate to={homeFor(user)} replace /> : <CompanyOnboardingPage onLoginSuccess={() => navigate('/dashboard', { replace: true })} />
       } />
       <Route path="/forgot-password/company" element={
-        authVerified && token && user
-          ? <Navigate to={user.role === 'admin' ? '/admin' : '/dashboard'} replace />
-          : <CompanyOnboardingPage onLoginSuccess={() => navigate('/dashboard', { replace: true })} />
+        authed ? <Navigate to={homeFor(user)} replace /> : <CompanyOnboardingPage onLoginSuccess={() => navigate('/dashboard', { replace: true })} />
       } />
 
       {/* ── Verificación de email ──────────────────────────────────────── */}
       <Route path="/verify-email" element={<VerifyEmailPage />} />
 
-      {/* ── Dashboard (cualquier usuario autenticado) ──────────────────── */}
-      <Route path="/dashboard" element={
-        <PrivateRoute>
-          <WelcomePage
-            onLogout={() => navigate('/', { replace: true })}
-            onEditProfile={() => navigate('/company/profile')}
-            onGoToCVBuilder={() => navigate('/cv-builder')}
-            onGoToAdmin={() => navigate('/admin')}
-            onGoToOffers={() => navigate('/company/offers')}
-            onGoToStudentOffers={() => navigate('/offers')}
-            onNavigateToSimulator={() => navigate('/simulator')}
-            onGoToSimulatorHistory={() => navigate('/simulator/history')}
-          />
-        </PrivateRoute>
-      } />
+      {/* ── Vistas autenticadas (con AppShell) ─────────────────────────── */}
+      <Route element={<ShellLayout />}>
+        {/* Solo estudiante */}
+        <Route element={<StudentOnly />}>
+          <Route path="/inbox" element={<InboxPage />} />
+          <Route path="/inbox/:userId" element={<InboxPage />} />
+          <Route path="/student/profile" element={<StudentProfilePage />} />
+          <Route path="/offers" element={<StudentOffersPage />} />
+          <Route path="/offers/:offerId" element={<OfferDetailPage />} />
+          <Route path="/my-applications" element={<MyApplicationsPage />} />
+          <Route path="/cv-builder" element={<CVBuilderPage />} />
+          <Route path="/simulator" element={<InterviewSimulatorPage />} />
+          <Route path="/simulator/history" element={<SimulationHistoryPage />} />
+          <Route path="/followed-companies" element={<FollowedCompaniesPage />} />
+          <Route path="/company-feed" element={<CompanyFeedPage />} />
+          <Route path="/alert-settings" element={<AlertSettingsPage />} />
+          <Route path="/alert-history" element={<AlertHistoryPage />} />
+        </Route>
 
-      {/* ── Simulador de entrevistas (protegido) ───────────────────────── */}
-      <Route path="/simulator" element={
-        <PrivateRoute>
-          <div>
-            <nav className="bg-white border-b border-gray-200 px-4 py-3 flex justify-between items-center shadow-sm">
-              <button
-                onClick={() => navigate('/dashboard')}
-                className="flex items-center gap-2 text-sm font-medium text-gray-600 hover:text-gray-900"
-              >
-                ← Volver al inicio
-              </button>
-              <span className="text-sm font-semibold text-emerald-700">Simulador de Entrevistas</span>
-              <button
-                onClick={() => navigate('/simulator/history')}
-                className="text-sm text-gray-500 hover:text-gray-700"
-              >
-                Historial
-              </button>
-            </nav>
-            <InterviewSimulatorPage />
-          </div>
-        </PrivateRoute>
-      } />
+        {/* Solo empresa */}
+        <Route element={<CompanyOnly />}>
+          <Route path="/inbox" element={<InboxPage />} />
+          <Route path="/inbox/:userId" element={<InboxPage />} />
+          <Route path="/company/profile" element={<CompanyProfilePage />} />
+          <Route path="/company/offers" element={<CompanyOffersPage />} />
+          <Route path="/company/offers/new" element={<CreateOfferPage />} />
+          <Route path="/company/offers/edit" element={<CreateOfferPage />} />
+          <Route path="/company/offers/:offerId/candidates" element={<OfferCandidatesPage />} />
+        </Route>
+      </Route>
 
-      {/* ── Historial de simulaciones (protegido, solo student) ────────── */}
-      <Route path="/simulator/history" element={
-        <StudentRoute>
-          <SimulationHistoryPage />
-        </StudentRoute>
-      } />
-
-      {/* ── CV Builder (protegido, solo student) ──────────────────────── */}
-      <Route path="/cv-builder" element={
-        <StudentRoute>
-          <CVBuilderPage />
-        </StudentRoute>
-      } />
-
-      {/* ── Ofertas (protegido, solo student) ─────────────────────────── */}
-      <Route path="/offers" element={
-        <StudentRoute>
-          <StudentOffersPage />
-        </StudentRoute>
-      } />
-
-      {/* ── Mis postulaciones (protegido, solo student) ────────────────── */}
-      <Route path="/my-applications" element={
-        <StudentRoute>
-          <MyApplicationsPage />
-        </StudentRoute>
-      } />
-
-      {/* ── Alertas (protegido, solo student) ─────────────────────────── */}
-      <Route path="/alert-settings" element={
-        <StudentRoute>
-          <AlertSettingsPage />
-        </StudentRoute>
-      } />
-
-      {/* ── Empresas seguidas (protegido, solo student) ────────────────── */}
-      <Route path="/followed-companies" element={
-        <StudentRoute>
-          <FollowedCompaniesPage />
-        </StudentRoute>
-      } />
-
-      {/* ── Historial de alertas (protegido, solo student) ─────────────── */}
-      <Route path="/alert-history" element={
-        <StudentRoute>
-          <AlertHistoryPage />
-        </StudentRoute>
-      } />
-
-      {/* ── Perfil empresa (protegido, solo company) ───────────────────── */}
-      <Route path="/company/profile" element={
-        <CompanyRoute>
-          <CompanyProfilePage onBack={() => navigate('/dashboard')} />
-        </CompanyRoute>
-      } />
-
-      {/* ── Panel de administración (protegido, solo admin) ────────────── */}
-      <Route path="/admin" element={
-        <AdminRoute>
-          <AdminDashboardPage />
-        </AdminRoute>
-      } />
-
-      {/* ── Gestión de ofertas (protegido, solo company) ───────────────── */}
-      <Route path="/company/offers" element={
-        <CompanyRoute>
-          <CompanyOffersPage
-            onBack={() => navigate('/dashboard')}
-            onCreateOffer={() => navigate('/company/offers/new')}
-            onEditOffer={(offer) => navigate('/company/offers/edit', { state: { offer } })}
-          />
-        </CompanyRoute>
-      } />
-
-      {/* Crear oferta — estático antes que dinámico */}
-      <Route path="/company/offers/new" element={
-        <CompanyRoute>
-          <CreateOfferPage
-            onBack={() => navigate('/company/offers')}
-            onSuccess={() => navigate('/company/offers')}
-          />
-        </CompanyRoute>
-      } />
-
-      {/* Editar oferta */}
-      <Route path="/company/offers/edit" element={
-        <CompanyRoute>
-          <CreateOfferPage
-            onBack={() => navigate('/company/offers')}
-            onSuccess={() => navigate('/company/offers')}
-          />
-        </CompanyRoute>
-      } />
-
-      {/* Gestión de candidatos */}
-      <Route path="/company/candidates" element={
-        <CompanyRoute>
-          <CompanyCandidatesPage />
-        </CompanyRoute>
-      } />
-
-      {/* Ver candidatos de una oferta */}
-      <Route path="/company/offers/:offerId/candidates" element={
-        <CompanyRoute>
-          <OfferCandidatesPage />
-        </CompanyRoute>
-      } />
+      {/* ── Panel de administración (AppShell propio) ──────────────────── */}
+      <Route element={<AdminRoute><AppShell><Outlet /></AppShell></AdminRoute>}>
+        <Route path="/admin" element={<AdminDashboardPage />} />
+      </Route>
 
       {/* ── Fallback ────────────────────────────────────────────────────── */}
       <Route path="*" element={<Navigate to="/" replace />} />

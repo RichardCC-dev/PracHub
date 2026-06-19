@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import useAuthStore from '../store/authStore';
 import { createOffer, updateOffer } from '../services/offerApi';
 
@@ -14,7 +15,10 @@ const CAREERS = [
   'Psicología', 'Comunicaciones', 'Diseño Gráfico', 'Arquitectura',
 ];
 
-const CreateOfferPage = ({ onBack, onSuccess, editOffer = null }) => {
+const CreateOfferPage = () => {
+  const navigate = useNavigate();
+  const location = useLocation();
+  const editOffer = location.state?.offer || null;
   const { token } = useAuthStore();
   const isEditing = !!editOffer;
 
@@ -84,7 +88,7 @@ const CreateOfferPage = ({ onBack, onSuccess, editOffer = null }) => {
         await createOffer(token, payload);
       }
 
-      onSuccess?.();
+      navigate('/company/offers');
     } catch (err) {
       setSubmitError(err.message);
     } finally {
@@ -97,7 +101,7 @@ const CreateOfferPage = ({ onBack, onSuccess, editOffer = null }) => {
       <header className="bg-white shadow-sm border-b border-gray-200">
         <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex items-center gap-4">
           <button
-            onClick={onBack}
+            onClick={() => navigate('/company/offers')}
             className="text-gray-500 hover:text-gray-800 transition"
           >
             ← Volver
@@ -284,7 +288,7 @@ const CreateOfferPage = ({ onBack, onSuccess, editOffer = null }) => {
           <div className="flex gap-3 justify-end">
             <button
               type="button"
-              onClick={onBack}
+              onClick={() => navigate('/company/offers')}
               className="px-6 py-3 text-gray-700 hover:bg-gray-100 rounded-xl transition"
             >
               Cancelar

@@ -8,6 +8,7 @@ import {
   getResumeVersions,
   restoreResumeVersion,
   deleteResumeVersion,
+  saveResumeVersion,
 } from '../services/api';
 
 const EMPTY_RESUME_SECTIONS = {
@@ -183,6 +184,21 @@ const useCVStore = create((set, get) => ({
   },
 
   clearSuggestion: () => set({ suggestion: null, activeSection: null }),
+
+  // Guardado manual de una versión con título (no automático).
+  isSavingVersion: false,
+  saveNamedVersion: async (title, template = null) => {
+    set({ isSavingVersion: true, error: null });
+    try {
+      await saveResumeVersion(title, template);
+      await get().fetchVersions();
+      set({ isSavingVersion: false, lastSaved: new Date() });
+      return true;
+    } catch (error) {
+      set({ error: error.message, isSavingVersion: false });
+      return false;
+    }
+  },
 
   fetchVersions: async (limit = 20) => {
     set({ isLoadingVersions: true, versionsError: null });

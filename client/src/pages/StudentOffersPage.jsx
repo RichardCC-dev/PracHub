@@ -1,582 +1,228 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useMemo } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { useQueryClient } from '@tanstack/react-query';
 import {
-  Search,
-  Filter,
-  MapPin,
-  Clock,
-  Building2,
-  Briefcase,
-  Loader2,
-  ArrowLeft,
-  Sparkles,
-  AlertCircle,
+  Search, Filter, Building2, Briefcase, Loader2, Sparkles, ChevronRight, X,
 } from 'lucide-react';
-import { canApply } from '../services/applicationApi';
 import { usePublicOffers } from '../hooks/useOffers';
 import { useRecommendations } from '../hooks/useRecommendations';
-import { useMyApplications, APPLICATIONS_KEYS } from '../hooks/useApplications';
-import ApplyModal from '../components/ApplyModal';
-import CVAnalyzer from '../components/CVAnalyzer';
-import FollowCompanyButton from '../components/FollowCompanyButton';
-import useAuthStore from '../store/authStore';
+import { useMyApplications } from '../hooks/useApplications';
+import {
+  MODALITY_OPTIONS, formatModality, companyName, formatApplicationStatus, formatRelativeDate,
+} from '../utils/format';
+
+// Tarjeta de oferta recomendada — SOLO información básica (sin requisitos/funciones).
+const RecommendedCard = ({ offer, matchScore, onOpen }) => (
+  <button
+    onClick={onOpen}
+    className="flex w-full flex-col gap-2 rounded-xl border border-violet-100 bg-white p-4 text-left shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
+  >
+    <div className="flex items-center justify-between gap-2">
+      <span className="inline-flex items-center gap-1 rounded-full bg-violet-100 px-2 py-0.5 text-xs font-semibold text-violet-700">
+        <Sparkles className="h-3 w-3" /> {Number.isFinite(matchScore) ? `${matchScore}% match` : 'Recomendada'}
+      </span>
+      <ChevronRight className="h-4 w-4 text-gray-300" />
+    </div>
+    <h3 className="line-clamp-2 font-semibold text-gray-900">{offer.title}</h3>
+    <div className="flex items-center gap-2 text-sm text-emerald-700">
+      <Building2 className="h-4 w-4" />
+      {companyName(offer.company)}
+    </div>
+    <span className="inline-flex w-fit items-center gap-1 rounded-full bg-gray-100 px-2 py-0.5 text-xs text-gray-600">
+      <Briefcase className="h-3 w-3" /> {formatModality(offer.modality)}
+    </span>
+  </button>
+);
+
+const OfferCard = ({ offer, status, onOpen }) => {
+  const badge = status ? formatApplicationStatus(status) : null;
+  return (
+    <button
+      onClick={onOpen}
+      className="flex w-full items-start gap-4 rounded-xl border border-gray-100 bg-white p-5 text-left shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
+    >
+      {offer.company?.logoUrl ? (
+        <img src={offer.company.logoUrl} alt={companyName(offer.company)} className="h-12 w-12 rounded-lg object-contain bg-gray-50" />
+      ) : (
+        <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-emerald-100 text-emerald-700">
+          <Building2 className="h-6 w-6" />
+        </div>
+      )}
+      <div className="min-w-0 flex-1">
+        <div className="flex items-start justify-between gap-2">
+          <h3 className="font-semibold text-gray-900">{offer.title}</h3>
+          {badge && <span className={`flex-shrink-0 rounded-full px-2 py-0.5 text-xs font-medium ${badge.color}`}>{badge.label}</span>}
+        </div>
+        <p className="text-sm font-medium text-emerald-700">{companyName(offer.company)}</p>
+        <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-gray-500">
+          <span className="inline-flex items-center gap-1 rounded-full bg-gray-100 px-2 py-0.5"><Briefcase className="h-3 w-3" />{formatModality(offer.modality)}</span>
+          {offer.area && <span className="rounded-full bg-gray-100 px-2 py-0.5">{offer.area}</span>}
+          <span>{formatRelativeDate(offer.createdAt)}</span>
+        </div>
+      </div>
+      <ChevronRight className="h-5 w-5 flex-shrink-0 self-center text-gray-300" />
+    </button>
+  );
+};
 
 const StudentOffersPage = () => {
   const navigate = useNavigate();
+
   const location = useLocation();
-  const queryClient = useQueryClient();
-  const { user } = useAuthStore();
-
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchQuery, setSearchQuery] = useState(location.state?.search || '');
   const [selectedModality, setSelectedModality] = useState('');
-  const [selectedOffer, setSelectedOffer] = useState(null);
-  const [viewingOffer, setViewingOffer] = useState(null);
-  const [isApplyModalOpen, setIsApplyModalOpen] = useState(false);
-  const [isCVAnalysisOpen, setIsCVAnalysisOpen] = useState(false);
-  const [checkingStatus, setCheckingStatus] = useState({});
+  const [selectedArea, setSelectedArea] = useState('');
 
-  // --- TanStack Query hooks ---
-  const { data: allOffers = [], isLoading: loadingOffers } = usePublicOffers();
+  const { data: allOffers = [], isLoading } = usePublicOffers();
   const { data: applications = [] } = useMyApplications();
   const { data: recommendations = [] } = useRecommendations();
 
-  const loading = loadingOffers;
-
-  const modalities = ['remoto', 'presencial', 'híbrido'];
-
-  // Filter out recommended offers from the general list
-  const activeOffers = allOffers.filter(
-    (offer) => !recommendations.some((rec) => rec.offer?.id === offer.id)
+  const recommendedIds = useMemo(
+    () => new Set(recommendations.map((r) => r.offer?.id).filter(Boolean)),
+    [recommendations]
   );
 
-  // Open offer detail from navigation state (e.g. from alert notification)
-  useEffect(() => {
-    if (location.state?.openOfferId && allOffers.length > 0) {
-      const targetId = String(location.state.openOfferId);
-      const offerToOpen = allOffers.find((o) => String(o.id) === targetId);
-      if (offerToOpen) {
-        setViewingOffer(offerToOpen);
-        navigate('/offers', { replace: true, state: {} });
-      }
-    }
-  }, [location.state, allOffers, navigate]);
+  const areas = useMemo(() => {
+    const set = new Set(allOffers.map((o) => o.area).filter(Boolean));
+    return Array.from(set).sort();
+  }, [allOffers]);
 
-  const checkApplicationStatus = async (offerId) => {
-    try {
-      setCheckingStatus((prev) => ({ ...prev, [offerId]: true }));
-      const response = await canApply(offerId);
-      return response.data;
-    } catch {
-      return { canApply: false, reason: 'Error al verificar' };
-    } finally {
-      setCheckingStatus((prev) => ({ ...prev, [offerId]: false }));
-    }
-  };
+  const statusByOffer = useMemo(() => {
+    const map = {};
+    applications.forEach((a) => { map[a.offerId] = a.status; });
+    return map;
+  }, [applications]);
 
-  const handleApplyClick = (offer) => {
-    setSelectedOffer(offer);
-    setIsApplyModalOpen(true);
-  };
-
-  // Invalidar caché de postulaciones tras postularse — sin reload
-  const handleApplySuccess = () => {
-    queryClient.invalidateQueries({ queryKey: APPLICATIONS_KEYS.mine() });
-  };
-
-  const getApplicationStatusForOffer = (offerId) => {
-    const application = applications.find((app) => app.offerId === offerId);
-    return application ? application.status : null;
-  };
-
-  const getStatusBadge = (status) => {
-    const statusMap = {
-      enviada: { color: 'bg-blue-100 text-blue-700', label: 'Enviada' },
-      revision: { color: 'bg-yellow-100 text-yellow-700', label: 'En revisión' },
-      descartada: { color: 'bg-red-100 text-red-700', label: 'Descartada' },
-      aceptada: { color: 'bg-green-100 text-green-700', label: 'Aceptada' },
-    };
-    const config = statusMap[status] || { color: 'bg-gray-100 text-gray-700', label: status };
-    return (
-      <span className={`px-2 py-1 rounded-full text-xs font-medium ${config.color}`}>
-        {config.label}
-      </span>
-    );
-  };
+  const hasFilters = searchQuery || selectedModality || selectedArea;
 
   const filteredOffers = useMemo(() => {
-    return activeOffers.filter((offer) => {
+    const q = searchQuery.toLowerCase();
+    return allOffers.filter((offer) => {
+      if (offer.status !== 'approved') return false;
       const matchesSearch =
-        offer.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        offer.company?.tradeName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        offer.company?.legalName?.toLowerCase().includes(searchQuery.toLowerCase());
+        !q ||
+        offer.title?.toLowerCase().includes(q) ||
+        companyName(offer.company).toLowerCase().includes(q);
       const matchesModality = !selectedModality || offer.modality === selectedModality;
-      return matchesSearch && matchesModality && offer.status === 'approved';
+      const matchesArea = !selectedArea || offer.area === selectedArea;
+      return matchesSearch && matchesModality && matchesArea;
     });
-  }, [activeOffers, searchQuery, selectedModality]);
+  }, [allOffers, searchQuery, selectedModality, selectedArea]);
 
-  if (loading) {
+  // En el listado general no repetimos las recomendadas (salvo que haya filtros activos).
+  const listOffers = hasFilters
+    ? filteredOffers
+    : filteredOffers.filter((o) => !recommendedIds.has(o.id));
+
+  const clearFilters = () => {
+    setSearchQuery('');
+    setSelectedModality('');
+    setSelectedArea('');
+  };
+
+  if (isLoading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="flex items-center gap-3">
-          <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
-          <span className="text-gray-600">Cargando ofertas...</span>
-        </div>
+      <div className="flex min-h-[60vh] items-center justify-center gap-3 text-gray-600">
+        <Loader2 className="h-7 w-7 animate-spin text-emerald-600" /> Cargando ofertas...
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <div className="bg-white border-b">
-        <div className="max-w-6xl mx-auto px-4 py-4">
-          <div className="flex items-center gap-4">
-            <button
-              onClick={() => navigate('/dashboard')}
-              className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-            >
-              <ArrowLeft className="w-5 h-5 text-gray-600" />
-            </button>
-            <div>
-              <h1 className="text-xl font-semibold text-gray-900">Bolsa de Prácticas</h1>
-              <p className="text-sm text-gray-500">
-                {filteredOffers.length}{' '}
-                {filteredOffers.length === 1 ? 'oferta disponible' : 'ofertas disponibles'}
-              </p>
-            </div>
-            <div className="ml-auto">
-              <button
-                onClick={() => navigate('/my-applications')}
-                className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium text-sm"
-              >
-                Mis Postulaciones
-              </button>
-            </div>
-          </div>
+    <div className="mx-auto max-w-6xl px-4 py-8">
+      {/* Encabezado */}
+      <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-950">Bolsa de Prácticas</h1>
+          <p className="text-sm text-gray-500">
+            {listOffers.length} {listOffers.length === 1 ? 'oferta disponible' : 'ofertas disponibles'}
+          </p>
         </div>
+        <button
+          onClick={() => navigate('/my-applications')}
+          className="rounded-xl bg-emerald-700 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-600"
+        >
+          Mis postulaciones
+        </button>
       </div>
 
-      <div className="max-w-6xl mx-auto px-4 py-8">
-        {/* Filtros */}
-        <div className="bg-white rounded-lg shadow-sm p-4 mb-6">
-          <div className="flex flex-col sm:flex-row gap-4">
-            <div className="flex-1 relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
-              <input
-                type="text"
-                placeholder="Buscar por título o empresa..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              />
-            </div>
-            <div className="flex items-center gap-2">
-              <Filter className="w-5 h-5 text-gray-500" />
-              <select
-                value={selectedModality}
-                onChange={(e) => setSelectedModality(e.target.value)}
-                className="px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              >
-                <option value="">Todas las modalidades</option>
-                {modalities.map((mod) => (
-                  <option key={mod} value={mod}>
-                    {mod.charAt(0).toUpperCase() + mod.slice(1)}
-                  </option>
-                ))}
-              </select>
-            </div>
+      {/* Filtros avanzados */}
+      <div className="mb-8 rounded-2xl border border-gray-100 bg-white p-4 shadow-sm">
+        <div className="flex flex-col gap-3 lg:flex-row">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400" />
+            <input
+              type="text"
+              placeholder="Buscar por título o empresa..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full rounded-lg border py-2 pl-10 pr-4 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200"
+            />
           </div>
-        </div>
-
-        {/* Recomendaciones IA */}
-        {recommendations.length > 0 && !searchQuery && !selectedModality && (
-          <div className="mb-10">
-            <div className="flex items-center gap-2 mb-4">
-              <div className="bg-purple-100 p-2 rounded-lg">
-                <svg className="w-5 h-5 text-purple-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                </svg>
-              </div>
-              <h2 className="text-xl font-bold text-gray-900">Recomendadas para ti</h2>
-              <span className="bg-purple-100 text-purple-700 text-xs font-semibold px-2 py-0.5 rounded-full ml-2">
-                IA Matching
-              </span>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {recommendations.slice(0, 4).map((rec) => {
-                const offer = rec.offer;
-                const applicationStatus = getApplicationStatusForOffer(offer.id);
-                return (
-                  <div
-                    key={`rec-${offer.id}`}
-                    onClick={() => setViewingOffer(offer)}
-                    className="bg-white rounded-xl shadow-sm border border-purple-100 hover:shadow-md hover:border-purple-300 transition-all cursor-pointer relative overflow-hidden"
-                  >
-                    <div className="absolute top-0 right-0 bg-purple-600 text-white text-xs font-bold px-3 py-1 rounded-bl-lg">
-                      {rec.matchScore}% Match
-                    </div>
-                    <div className="p-5">
-                      <div className="flex items-start gap-4">
-                        <div className="w-12 h-12 bg-gray-50 rounded-lg flex items-center justify-center flex-shrink-0 border border-gray-100">
-                          {offer.company?.logoUrl ? (
-                            <img
-                              src={offer.company.logoUrl}
-                              alt={offer.company.tradeName}
-                              className="w-10 h-10 object-contain"
-                            />
-                          ) : (
-                            <Building2 className="w-6 h-6 text-gray-400" />
-                          )}
-                        </div>
-                        <div className="flex-1 min-w-0 pr-12">
-                          <h3 className="text-lg font-semibold text-gray-900 truncate">{offer.title}</h3>
-                          <div className="flex items-center gap-2 mt-1">
-                            <p className="text-gray-600 truncate text-sm">
-                              {offer.company?.tradeName || offer.company?.legalName}
-                            </p>
-                            {offer.company?.id && (
-                              <FollowCompanyButton
-                                companyId={offer.company.id}
-                                className="!px-2 !py-1 !text-xs"
-                              />
-                            )}
-                          </div>
-                          <div className="flex flex-wrap gap-2 mt-3">
-                            <span className="inline-flex items-center gap-1 px-2 py-1 bg-gray-100 text-gray-700 rounded text-xs">
-                              <MapPin className="w-3 h-3" />
-                              {offer.modality}
-                            </span>
-                            <span className="inline-flex items-center gap-1 px-2 py-1 bg-gray-100 text-gray-700 rounded text-xs">
-                              <Clock className="w-3 h-3" />
-                              {offer.duration}
-                            </span>
-                          </div>
-                        </div>
-                      </div>
-                      <div className="mt-4 flex items-center justify-between">
-                        {applicationStatus ? (
-                          <div className="flex items-center gap-2">
-                            {getStatusBadge(applicationStatus)}
-                            <span className="text-xs text-gray-500">Ya postulaste</span>
-                          </div>
-                        ) : (
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleApplyClick(offer);
-                            }}
-                            className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium text-sm"
-                          >
-                            Postular
-                          </button>
-                        )}
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setSelectedOffer(offer);
-                            setIsCVAnalysisOpen(true);
-                          }}
-                          className="px-3 py-2 bg-emerald-100 text-emerald-700 rounded-lg text-sm font-medium flex items-center gap-1 hover:bg-emerald-200"
-                        >
-                          <Sparkles className="w-3 h-3" />
-                          Analizar CV
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        )}
-
-        {/* Resultados Generales */}
-        <div>
-          <h2 className="text-xl font-bold text-gray-900 mb-4">
-            {searchQuery || selectedModality ? 'Resultados de búsqueda' : 'Todas las ofertas'}
-          </h2>
-          <div className="space-y-4">
-            {filteredOffers.length === 0 ? (
-              <div className="bg-white rounded-lg shadow-sm p-12 text-center">
-                <Briefcase className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                <h3 className="text-lg font-medium text-gray-900 mb-2">No se encontraron ofertas</h3>
-                <p className="text-gray-600">Intenta ajustar tus filtros de búsqueda</p>
-              </div>
-            ) : (
-              filteredOffers.map((offer) => {
-                const applicationStatus = getApplicationStatusForOffer(offer.id);
-                return (
-                  <div
-                    key={offer.id}
-                    onClick={() => setViewingOffer(offer)}
-                    className="bg-white rounded-lg shadow-sm border hover:shadow-md transition-shadow cursor-pointer"
-                  >
-                    <div className="p-6">
-                      <div className="flex items-start justify-between">
-                        <div className="flex items-start gap-4">
-                          <div className="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                            {offer.company?.logoUrl ? (
-                              <img
-                                src={offer.company.logoUrl}
-                                alt={offer.company.tradeName}
-                                className="w-10 h-10 object-contain"
-                              />
-                            ) : (
-                              <Building2 className="w-6 h-6 text-gray-400" />
-                            )}
-                          </div>
-                          <div>
-                            <h3 className="text-lg font-semibold text-gray-900">{offer.title}</h3>
-                            <div className="flex items-center gap-2">
-                              <p className="text-gray-600">
-                                {offer.company?.tradeName || offer.company?.legalName}
-                              </p>
-                              {offer.company?.id && (
-                                <FollowCompanyButton
-                                  companyId={offer.company.id}
-                                  className="!px-2 !py-0.5 !text-xs"
-                                />
-                              )}
-                            </div>
-                            <div className="flex flex-wrap gap-2 mt-2">
-                              <span className="inline-flex items-center gap-1 px-2 py-1 bg-blue-50 text-blue-700 rounded text-sm">
-                                <MapPin className="w-3 h-3" />
-                                {offer.modality}
-                              </span>
-                              <span className="inline-flex items-center gap-1 px-2 py-1 bg-green-50 text-green-700 rounded text-sm">
-                                <Clock className="w-3 h-3" />
-                                {offer.duration}
-                              </span>
-                              <span className="inline-flex items-center gap-1 px-2 py-1 bg-purple-50 text-purple-700 rounded text-sm">
-                                {offer.area}
-                              </span>
-                            </div>
-                          </div>
-                        </div>
-                        <div className="flex flex-col items-end gap-2">
-                          {applicationStatus ? (
-                            <>
-                              {getStatusBadge(applicationStatus)}
-                              <span className="text-xs text-gray-500">Ya postulaste</span>
-                            </>
-                          ) : (
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleApplyClick(offer);
-                              }}
-                              disabled={checkingStatus[offer.id]}
-                              className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium disabled:opacity-50 disabled:cursor-not-allowed"
-                            >
-                              {checkingStatus[offer.id] ? (
-                                <Loader2 className="w-4 h-4 animate-spin" />
-                              ) : (
-                                'Postular Ahora'
-                              )}
-                            </button>
-                          )}
-                        </div>
-                      </div>
-
-                      {/* Tags de carrera */}
-                      {Array.isArray(offer.careerTags) && offer.careerTags.length > 0 && (
-                        <div className="mt-4 flex flex-wrap gap-2">
-                          {offer.careerTags.map((tag, index) => (
-                            <span key={index} className="px-2 py-1 bg-gray-100 text-gray-700 rounded text-xs">
-                              {tag}
-                            </span>
-                          ))}
-                        </div>
-                      )}
-
-                      {/* Descripción preview */}
-                      <p className="mt-4 text-gray-600 text-sm line-clamp-2">{offer.description}</p>
-                    </div>
-                  </div>
-                );
-              })
+          <div className="flex items-center gap-2">
+            <Filter className="h-5 w-5 text-gray-400" />
+            <select
+              value={selectedModality}
+              onChange={(e) => setSelectedModality(e.target.value)}
+              className="rounded-lg border px-3 py-2 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200"
+            >
+              <option value="">Todas las modalidades</option>
+              {MODALITY_OPTIONS.map((m) => <option key={m.value} value={m.value}>{m.label}</option>)}
+            </select>
+            <select
+              value={selectedArea}
+              onChange={(e) => setSelectedArea(e.target.value)}
+              className="rounded-lg border px-3 py-2 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200"
+            >
+              <option value="">Todas las áreas</option>
+              {areas.map((a) => <option key={a} value={a}>{a}</option>)}
+            </select>
+            {hasFilters && (
+              <button onClick={clearFilters} className="inline-flex items-center gap-1 rounded-lg px-3 py-2 text-sm text-gray-500 hover:bg-gray-100">
+                <X className="h-4 w-4" /> Limpiar
+              </button>
             )}
           </div>
         </div>
       </div>
 
-      {/* Offer Detail Modal */}
-      {viewingOffer && (
-        <div
-          className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
-          onClick={() => setViewingOffer(null)}
-        >
-          <div
-            className="bg-white rounded-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="p-6">
-              {/* Header */}
-              <div className="flex items-start justify-between mb-6">
-                <div className="flex items-start gap-4">
-                  <div className="w-16 h-16 bg-gray-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                    {viewingOffer.company?.logoUrl ? (
-                      <img
-                        src={viewingOffer.company.logoUrl}
-                        alt={viewingOffer.company.tradeName}
-                        className="w-12 h-12 object-contain"
-                      />
-                    ) : (
-                      <Building2 className="w-8 h-8 text-gray-400" />
-                    )}
-                  </div>
-                  <div>
-                    <h2 className="text-xl font-bold text-gray-900">{viewingOffer.title}</h2>
-                    <div className="flex items-center gap-2 mt-1">
-                      <p className="text-gray-600">
-                        {viewingOffer.company?.tradeName || viewingOffer.company?.legalName}
-                      </p>
-                      {viewingOffer.company?.id && (
-                        <FollowCompanyButton
-                          companyId={viewingOffer.company.id}
-                          className="!px-2 !py-0.5 !text-xs"
-                        />
-                      )}
-                    </div>
-                  </div>
-                </div>
-                <button onClick={() => setViewingOffer(null)} className="text-gray-400 hover:text-gray-600">
-                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                  </svg>
-                </button>
-              </div>
-
-              {/* Tags */}
-              <div className="flex flex-wrap gap-2 mb-6">
-                <span className="inline-flex items-center gap-1 px-3 py-1 bg-blue-50 text-blue-700 rounded-full text-sm">
-                  <MapPin className="w-4 h-4" />
-                  {viewingOffer.modality}
-                </span>
-                <span className="inline-flex items-center gap-1 px-3 py-1 bg-green-50 text-green-700 rounded-full text-sm">
-                  <Clock className="w-4 h-4" />
-                  {viewingOffer.duration}
-                </span>
-                <span className="inline-flex items-center gap-1 px-3 py-1 bg-purple-50 text-purple-700 rounded-full text-sm">
-                  {viewingOffer.area}
-                </span>
-                {viewingOffer.compensation && (
-                  <span className="inline-flex items-center gap-1 px-3 py-1 bg-yellow-50 text-yellow-700 rounded-full text-sm">
-                    <span className="font-semibold">S/</span>
-                    {viewingOffer.compensation.replace(/&#x2F;/g, '/')}
-                  </span>
-                )}
-              </div>
-
-              {/* Description */}
-              <div className="mb-6">
-                <h3 className="font-semibold text-gray-900 mb-2">Descripción</h3>
-                <p className="text-gray-600 whitespace-pre-line">{viewingOffer.description}</p>
-              </div>
-
-              {/* Requirements */}
-              {viewingOffer.requirements && (
-                <div className="mb-6">
-                  <h3 className="font-semibold text-gray-900 mb-2">Requisitos</h3>
-                  <p className="text-gray-600 whitespace-pre-line">{viewingOffer.requirements}</p>
-                </div>
-              )}
-
-              {/* Career Tags */}
-              {Array.isArray(viewingOffer.careerTags) && viewingOffer.careerTags.length > 0 && (
-                <div className="mb-6">
-                  <h3 className="font-semibold text-gray-900 mb-2">Carreras relacionadas</h3>
-                  <div className="flex flex-wrap gap-2">
-                    {viewingOffer.careerTags.map((tag, i) => (
-                      <span key={i} className="px-3 py-1 bg-gray-100 text-gray-700 rounded-full text-sm">
-                        {tag}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* Action Buttons */}
-              <div className="flex flex-col gap-3">
-                {!getApplicationStatusForOffer(viewingOffer.id) && (
-                  <button
-                    onClick={() => {
-                      setSelectedOffer(viewingOffer);
-                      setIsApplyModalOpen(true);
-                      setViewingOffer(null);
-                    }}
-                    className="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium"
-                  >
-                    Postular ahora
-                  </button>
-                )}
-                <div className="flex gap-3">
-                  <button
-                    onClick={() => setViewingOffer(null)}
-                    className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50"
-                  >
-                    Cerrar
-                  </button>
-                  {!getApplicationStatusForOffer(viewingOffer.id) && (
-                    <button
-                      onClick={() => {
-                        setSelectedOffer(viewingOffer);
-                        setIsCVAnalysisOpen(true);
-                        setViewingOffer(null);
-                      }}
-                      className="flex-1 px-4 py-2 bg-emerald-100 text-emerald-700 rounded-lg hover:bg-emerald-200 font-medium flex items-center justify-center gap-2"
-                    >
-                      <Sparkles className="w-4 h-4" />
-                      Analizar mi CV
-                    </button>
-                  )}
-                </div>
-              </div>
-            </div>
+      {/* Recomendadas (IA matching) — solo info básica */}
+      {recommendations.length > 0 && !hasFilters && (
+        <section className="mb-10">
+          <div className="mb-4 flex items-center gap-2">
+            <span className="rounded-lg bg-violet-100 p-2"><Sparkles className="h-5 w-5 text-violet-600" /></span>
+            <h2 className="text-xl font-bold text-gray-900">Recomendadas para ti</h2>
+            <span className="rounded-full bg-violet-100 px-2 py-0.5 text-xs font-semibold text-violet-700">IA Matching</span>
           </div>
-        </div>
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {recommendations.slice(0, 6).map((rec) => (
+              <RecommendedCard
+                key={rec.offer?.id}
+                offer={rec.offer}
+                matchScore={rec.matchScore}
+                onOpen={() => navigate(`/offers/${rec.offer.id}`)}
+              />
+            ))}
+          </div>
+        </section>
       )}
 
-      {/* Apply Modal */}
-      <ApplyModal
-        offerId={selectedOffer?.id}
-        isOpen={isApplyModalOpen}
-        onClose={() => {
-          setIsApplyModalOpen(false);
-          setSelectedOffer(null);
-        }}
-        onSuccess={handleApplySuccess}
-      />
-
-      {/* CV Analysis Modal */}
-      {isCVAnalysisOpen && (
-        <div
-          className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
-          onClick={() => setIsCVAnalysisOpen(false)}
-        >
-          <div
-            className="bg-white rounded-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="p-6">
-              <div className="flex items-center justify-between mb-6">
-                <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2">
-                  <Sparkles className="w-6 h-6 text-emerald-600" />
-                  Análisis de CV
-                </h2>
-                <button
-                  onClick={() => setIsCVAnalysisOpen(false)}
-                  className="text-gray-400 hover:text-gray-600"
-                >
-                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                  </svg>
-                </button>
-              </div>
-              <CVAnalyzer offerId={selectedOffer?.id} onClose={() => setIsCVAnalysisOpen(false)} />
-            </div>
-          </div>
+      {/* Listado general */}
+      {listOffers.length === 0 ? (
+        <div className="rounded-2xl border border-dashed border-gray-200 bg-white p-12 text-center">
+          <Briefcase className="mx-auto mb-3 h-12 w-12 text-gray-300" />
+          <p className="font-medium text-gray-700">No hay ofertas que coincidan</p>
+          <p className="text-sm text-gray-400">Prueba ajustando los filtros de búsqueda.</p>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 gap-4">
+          {listOffers.map((offer) => (
+            <OfferCard
+              key={offer.id}
+              offer={offer}
+              status={statusByOffer[offer.id]}
+              onOpen={() => navigate(`/offers/${offer.id}`)}
+            />
+          ))}
         </div>
       )}
     </div>

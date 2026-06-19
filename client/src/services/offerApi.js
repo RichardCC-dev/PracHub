@@ -48,23 +48,36 @@ export const closeOffer = async (token, offerId) => {
 
 /**
  * Obtener todas las ofertas públicas (para estudiantes)
- * @param {object} filters - Filtros opcionales (modality, search, etc.)
+ * @param {object} filters - Filtros opcionales (modality, area, search, status)
  */
 export const getAllOffers = async (filters = {}) => {
   const params = new URLSearchParams();
-  
+
   if (filters.modality) params.append('modality', filters.modality);
+  if (filters.area) params.append('area', filters.area);
   if (filters.search) params.append('search', filters.search);
   if (filters.status) params.append('status', filters.status);
-  
+
   const queryString = params.toString();
   const url = queryString ? `${API_URL}/offers?${queryString}` : `${API_URL}/offers`;
-  
+
   const response = await fetch(url, {
     method: 'GET',
     headers: {
       'Content-Type': 'application/json',
     },
+  });
+  return parseResponse(response);
+};
+
+/**
+ * Obtener el detalle público de una oferta por su ID.
+ * @param {number|string} offerId
+ */
+export const getOfferById = async (offerId) => {
+  const response = await fetch(`${API_URL}/offers/${offerId}`, {
+    method: 'GET',
+    headers: { 'Content-Type': 'application/json' },
   });
   return parseResponse(response);
 };

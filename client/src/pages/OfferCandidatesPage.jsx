@@ -8,6 +8,7 @@ import {
   XCircle,
   Clock,
   Mail,
+  MessageSquare,
   Building2,
   FileText,
   AlertCircle,
@@ -353,6 +354,14 @@ const OfferCandidatesPage = () => {
                           <Download className="w-4 h-4" />
                         )}
                         Descargar CV
+                      </button>
+                      <button
+                        onClick={() => navigate(`/inbox/${app.student?.userId}`)}
+                        disabled={!app.student?.userId}
+                        className="flex items-center gap-2 px-4 py-2 border border-emerald-300 text-emerald-700 rounded-lg hover:bg-emerald-50 transition text-sm disabled:opacity-50"
+                      >
+                        <MessageSquare className="w-4 h-4" />
+                        Enviar mensaje
                       </button>
                       <button
                         onClick={() => {

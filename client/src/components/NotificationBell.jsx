@@ -115,6 +115,17 @@ const NotificationBell = () => {
       navigate('/my-applications');
       return;
     }
+
+    // Para ofertas recomendadas, empresas seguidas, o cualquier notificación con relatedId
+    if (n.relatedId) {
+      navigate('/offers', {
+        state: {
+          openOfferId: n.relatedId
+        }
+      });
+    } else {
+      navigate('/alert-history');
+    }
     
     // Para ofertas recomendadas, empresas seguidas, o cualquier notificación con relatedId
     if (n.relatedId) {

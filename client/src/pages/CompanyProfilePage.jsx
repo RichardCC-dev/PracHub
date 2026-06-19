@@ -24,7 +24,7 @@ const CompanyProfilePage = ({ onBack }) => {
       
       try {
         setLoading(true);
-        const data = await getCompanyProfile(token);
+        const data = await getCompanyProfile();
         if (data.user) {
           setUser(data.user);
           setCompany(normalizeCompany(data.user.companyProfile));

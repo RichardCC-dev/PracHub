@@ -8,17 +8,15 @@ import {
   Lightbulb,
   CheckCircle,
   XCircle,
-  ChevronDown,
-  ChevronUp,
-  Trash2,
-  History,
   TrendingUp,
   Loader2,
   Download,
+  X,
 } from 'lucide-react';
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import useCVAnalysisStore from '../store/cvAnalysisStore';
+import { companyName } from '../utils/format';
 
 const ScoreRing = ({ score, size = 120, strokeWidth = 10 }) => {
   const { getScoreCategory } = useCVAnalysisStore.getState();
@@ -37,14 +35,7 @@ const ScoreRing = ({ score, size = 120, strokeWidth = 10 }) => {
   return (
     <div className="relative" style={{ width: size, height: size }}>
       <svg width={size} height={size} className="transform -rotate-90">
-        <circle
-          cx={size / 2}
-          cy={size / 2}
-          r={radius}
-          stroke="#E5E7EB"
-          strokeWidth={strokeWidth}
-          fill="none"
-        />
+        <circle cx={size / 2} cy={size / 2} r={radius} stroke="#E5E7EB" strokeWidth={strokeWidth} fill="none" />
         <circle
           cx={size / 2}
           cy={size / 2}
@@ -83,13 +74,10 @@ const SectionScore = ({ label, score, icon: Icon }) => {
         <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
           <div
             className={`h-full rounded-full transition-all duration-500 ${
-              category.color === 'green'
-                ? 'bg-green-500'
-                : category.color === 'yellow'
-                  ? 'bg-yellow-500'
-                  : category.color === 'orange'
-                    ? 'bg-orange-500'
-                    : 'bg-red-500'
+              category.color === 'green' ? 'bg-green-500'
+                : category.color === 'yellow' ? 'bg-yellow-500'
+                : category.color === 'orange' ? 'bg-orange-500'
+                : 'bg-red-500'
             }`}
             style={{ width: `${score}%` }}
           />
@@ -100,8 +88,6 @@ const SectionScore = ({ label, score, icon: Icon }) => {
 };
 
 const ObservationCard = ({ observation }) => {
-  const [expanded, setExpanded] = useState(false);
-
   const icons = {
     strength: { icon: CheckCircle, color: 'text-green-600', bg: 'bg-green-50', border: 'border-green-200' },
     improvement: { icon: AlertCircle, color: 'text-amber-600', bg: 'bg-amber-50', border: 'border-amber-200' },
@@ -116,8 +102,9 @@ const ObservationCard = ({ observation }) => {
       <div className="flex items-start gap-3">
         <Icon className={`w-5 h-5 mt-0.5 ${style.color} flex-shrink-0`} />
         <div className="flex-1 min-w-0">
-          <p className={`text-sm font-medium ${style.color}`}>
-            {observation.section}
+          {/* La sección indica exactamente dónde aplicar el cambio */}
+          <p className={`text-sm font-semibold ${style.color}`}>
+            {observation.section || 'General'}
           </p>
           <p className="text-sm text-gray-700 mt-1">{observation.message}</p>
         </div>
@@ -126,14 +113,23 @@ const ObservationCard = ({ observation }) => {
   );
 };
 
-const RecommendationCard = ({ recommendation, index }) => (
-  <div className="flex items-start gap-3 p-3 bg-white border border-gray-200 rounded-lg">
-    <div className="flex-shrink-0 w-6 h-6 rounded-full bg-emerald-100 flex items-center justify-center">
-      <span className="text-xs font-semibold text-emerald-700">{index + 1}</span>
+const RecommendationCard = ({ recommendation, index }) => {
+  const text = typeof recommendation === 'string'
+    ? recommendation
+    : (recommendation.message || recommendation.title || recommendation.description || '');
+  const section = typeof recommendation === 'object' ? (recommendation.section || null) : null;
+  return (
+    <div className="flex items-start gap-3 p-3 bg-white border border-gray-200 rounded-lg">
+      <div className="flex-shrink-0 w-6 h-6 rounded-full bg-emerald-100 flex items-center justify-center">
+        <span className="text-xs font-semibold text-emerald-700">{index + 1}</span>
+      </div>
+      <p className="text-sm text-gray-700">
+        {section && <span className="font-semibold text-emerald-700">[{section}] </span>}
+        {text}
+      </p>
     </div>
-    <p className="text-sm text-gray-700">{recommendation}</p>
-  </div>
-);
+  );
+};
 
 const KeywordsAnalysis = ({ keywords }) => (
   <div className="space-y-4">
@@ -145,9 +141,7 @@ const KeywordsAnalysis = ({ keywords }) => (
         </h4>
         <div className="flex flex-wrap gap-2">
           {keywords.matched.map((keyword, i) => (
-            <span key={i} className="px-2 py-1 bg-green-100 text-green-700 text-xs rounded-full">
-              {keyword}
-            </span>
+            <span key={i} className="px-2 py-1 bg-green-100 text-green-700 text-xs rounded-full">{keyword}</span>
           ))}
         </div>
       </div>
@@ -161,9 +155,7 @@ const KeywordsAnalysis = ({ keywords }) => (
         </h4>
         <div className="flex flex-wrap gap-2">
           {keywords.missing.map((keyword, i) => (
-            <span key={i} className="px-2 py-1 bg-amber-100 text-amber-700 text-xs rounded-full">
-              {keyword}
-            </span>
+            <span key={i} className="px-2 py-1 bg-amber-100 text-amber-700 text-xs rounded-full">{keyword}</span>
           ))}
         </div>
       </div>
@@ -188,93 +180,33 @@ const KeywordsAnalysis = ({ keywords }) => (
   </div>
 );
 
-const HistoryItem = ({ item, onSelect, onDelete, isSelected }) => {
-  const [showDelete, setShowDelete] = useState(false);
-
-  return (
-    <div
-      className={`p-3 rounded-lg border cursor-pointer transition-all ${
-        isSelected
-          ? 'border-emerald-500 bg-emerald-50'
-          : 'border-gray-200 hover:border-gray-300 bg-white'
-      }`}
-      onClick={() => onSelect(item.id)}
-      onMouseEnter={() => setShowDelete(true)}
-      onMouseLeave={() => setShowDelete(false)}
-    >
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold ${item.scoreCategory.bg} ${item.scoreCategory.text}`}>
-            {item.overallScore}
-          </div>
-          <div>
-            <p className="text-sm font-medium text-gray-900">
-              {item.offer ? `Para: ${item.offer.title}` : 'Análisis general'}
-            </p>
-            <p className="text-xs text-gray-500">
-              {new Date(item.createdAt).toLocaleDateString('es-PE', {
-                day: 'numeric',
-                month: 'short',
-                year: 'numeric',
-              })}
-            </p>
-          </div>
-        </div>
-        {showDelete && (
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              onDelete(item.id);
-            }}
-            className="p-1.5 text-red-500 hover:bg-red-50 rounded-lg transition-colors"
-          >
-            <Trash2 className="w-4 h-4" />
-          </button>
-        )}
-      </div>
-    </div>
-  );
-};
-
-const CVAnalyzer = ({ offers = [], currentOfferId = null }) => {
-  const [showHistory, setShowHistory] = useState(false);
-  const [selectedOfferId, setSelectedOfferId] = useState(currentOfferId);
+/**
+ * CVAnalyzer — análisis del CV SIEMPRE en el contexto de una oferta específica.
+ * @param {object} offer - Oferta para la que se analiza el CV (requerida)
+ * @param {function} onClose - Opcional, para cerrar cuando se usa como modal
+ */
+const CVAnalyzer = ({ offer, onClose }) => {
   const [activeTab, setActiveTab] = useState('overview');
 
   const {
     currentAnalysis,
-    analysisHistory,
     isAnalyzing,
-    isLoadingHistory,
-    isLoadingDetails,
     error,
     analyzeCV,
-    fetchAnalysisHistory,
-    fetchAnalysisDetails,
-    deleteAnalysis,
     clearError,
     clearCurrentAnalysis,
   } = useCVAnalysisStore();
 
-  // Cargar historial al montar
+  // Reiniciar el análisis al cambiar de oferta.
   useEffect(() => {
-    fetchAnalysisHistory();
-  }, [fetchAnalysisHistory]);
+    clearCurrentAnalysis();
+    clearError();
+  }, [offer?.id, clearCurrentAnalysis, clearError]);
 
   const handleAnalyze = async () => {
+    if (!offer?.id) return;
     clearError();
-    await analyzeCV(selectedOfferId);
-  };
-
-  const handleSelectHistory = async (analysisId) => {
-    await fetchAnalysisDetails(analysisId);
-    setActiveTab('overview');
-  };
-
-  const handleDelete = async (analysisId) => {
-    if (window.confirm('¿Estás seguro de eliminar este análisis?')) {
-      await deleteAnalysis(analysisId);
-    }
+    await analyzeCV(offer.id);
   };
 
   const downloadReport = () => {
@@ -283,27 +215,21 @@ const CVAnalyzer = ({ offers = [], currentOfferId = null }) => {
     const doc = new jsPDF({ unit: 'pt', format: 'a4' });
     const pageW = doc.internal.pageSize.getWidth();
     const pageH = doc.internal.pageSize.getHeight();
-    const m = 36; // margin ~14mm
+    const m = 36;
     const contentW = pageW - m * 2;
 
-    // Helpers
     const hexToRgb = (hex) => {
       const v = hex.replace('#', '');
-      return [
-        parseInt(v.substring(0, 2), 16),
-        parseInt(v.substring(2, 4), 16),
-        parseInt(v.substring(4, 6), 16),
-      ];
+      return [parseInt(v.substring(0, 2), 16), parseInt(v.substring(2, 4), 16), parseInt(v.substring(4, 6), 16)];
     };
 
     const categoryColor =
       currentAnalysis.scoreCategory?.color === 'green' ? '#059669' :
       currentAnalysis.scoreCategory?.color === 'yellow' ? '#D97706' :
       currentAnalysis.scoreCategory?.color === 'orange' ? '#EA580C' : '#DC2626';
-
     const rgb = hexToRgb(categoryColor);
 
-    // ---- Header band ----
+    // Header band
     doc.setFillColor(16, 185, 129);
     doc.rect(0, 0, pageW, 90, 'F');
     doc.setTextColor(255, 255, 255);
@@ -314,27 +240,27 @@ const CVAnalyzer = ({ offers = [], currentOfferId = null }) => {
     doc.setFontSize(11);
     doc.text('PracHub - Análisis con Inteligencia Artificial', m, 65);
 
-    // ---- Meta info ----
     let y = 110;
     doc.setTextColor(80, 80, 80);
     doc.setFontSize(10);
     const dateStr = new Date(currentAnalysis.createdAt || Date.now()).toLocaleString('es-PE', {
-      day: '2-digit', month: '2-digit', year: 'numeric',
-      hour: '2-digit', minute: '2-digit',
+      day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit',
     });
     doc.text(`Generado: ${dateStr}`, m, y);
     y += 16;
-    if (currentAnalysis.offer) {
+
+    const offerObj = currentAnalysis.offer || offer;
+    if (offerObj) {
       doc.setFont('helvetica', 'bold');
       doc.text('Oferta:', m, y);
       doc.setFont('helvetica', 'normal');
-      const offerText = `${currentAnalysis.offer.title} - ${currentAnalysis.offer.company?.legalName || 'Empresa'}`;
+      const offerText = `${offerObj.title} - ${companyName(offerObj.company)}`;
       const offerLines = doc.splitTextToSize(offerText, contentW - 50);
       doc.text(offerLines, m + 42, y);
       y += offerLines.length * 13 + 6;
     }
 
-    // ---- Score badge ----
+    // Score badge
     const badgeH = 56;
     doc.setFillColor(rgb[0], rgb[1], rgb[2]);
     doc.setDrawColor(rgb[0], rgb[1], rgb[2]);
@@ -352,7 +278,7 @@ const CVAnalyzer = ({ offers = [], currentOfferId = null }) => {
     doc.text(catLabel, pageW - m - doc.getTextWidth(catLabel) - 18, y + 34);
     y += badgeH + 20;
 
-    // ---- Section scores with mini bars ----
+    // Section scores
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(13);
     doc.setTextColor(30, 30, 30);
@@ -375,13 +301,10 @@ const CVAnalyzer = ({ offers = [], currentOfferId = null }) => {
       doc.text(item.label, m, y);
       doc.setFont('helvetica', 'normal');
       doc.text(`${val}/100`, pageW - m - doc.getTextWidth(`${val}/100`), y);
-
-      // Bar background
       const barY = y + 6;
       const barH = 8;
       doc.setFillColor(230, 230, 230);
       doc.roundedRect(m, barY, contentW, barH, 3, 3, 'F');
-      // Bar fill
       const fillW = (val / 100) * contentW;
       if (fillW > 0) {
         const r = val >= 70 ? 5 : val >= 40 ? 234 : 220;
@@ -392,64 +315,53 @@ const CVAnalyzer = ({ offers = [], currentOfferId = null }) => {
       }
       y += 28;
     });
-
     y += 8;
 
-    // ---- Observations ----
+    // Observations (con SECCIÓN para indicar exactamente dónde cambiar)
     if (Array.isArray(currentAnalysis.observations) && currentAnalysis.observations.length > 0) {
       doc.setFont('helvetica', 'bold');
       doc.setFontSize(13);
       doc.setTextColor(30, 30, 30);
-      doc.text('Observaciones', m, y);
+      doc.text('Observaciones por sección', m, y);
       y += 14;
 
       const obsBody = currentAnalysis.observations.map((obs) => {
         const text = typeof obs === 'string' ? obs : (obs.message || obs.text || '-');
+        const section = typeof obs === 'object' ? (obs.section || 'General') : 'General';
         const type = typeof obs === 'object'
-          ? (obs.type === 'error' ? 'Error' : obs.type === 'warning' ? 'Advertencia' : 'Info')
+          ? (obs.type === 'error' ? 'Error' : obs.type === 'strength' ? 'Fortaleza' : 'Mejora')
           : 'Observación';
-        return [type, text];
+        return [section, type, text];
       });
 
       autoTable(doc, {
         startY: y,
-        head: [['Tipo', 'Descripción']],
+        head: [['Sección', 'Tipo', 'Descripción']],
         body: obsBody,
         theme: 'plain',
-        headStyles: {
-          fillColor: [245, 158, 11],
-          textColor: 255,
-          fontStyle: 'bold',
-          fontSize: 10,
-          cellPadding: { top: 6, right: 8, bottom: 6, left: 8 },
-        },
-        styles: {
-          fontSize: 9,
-          overflow: 'linebreak',
-          cellPadding: { top: 5, right: 8, bottom: 5, left: 8 },
-          lineColor: [220, 220, 220],
-          lineWidth: 0.5,
-        },
+        headStyles: { fillColor: [245, 158, 11], textColor: 255, fontStyle: 'bold', fontSize: 10, cellPadding: { top: 6, right: 8, bottom: 6, left: 8 } },
+        styles: { fontSize: 9, overflow: 'linebreak', cellPadding: { top: 5, right: 8, bottom: 5, left: 8 }, lineColor: [220, 220, 220], lineWidth: 0.5 },
         margin: { left: m, right: m },
         tableWidth: 'auto',
         pageBreak: 'auto',
         columnStyles: {
-          0: { cellWidth: 60, fontStyle: 'bold' },
-          1: { cellWidth: 'auto' },
+          0: { cellWidth: 90, fontStyle: 'bold', textColor: [16, 185, 129] },
+          1: { cellWidth: 60, fontStyle: 'bold' },
+          2: { cellWidth: 'auto' },
         },
         didParseCell: (data) => {
-          if (data.section === 'body' && data.column.index === 0) {
+          if (data.section === 'body' && data.column.index === 1) {
             const t = data.cell.raw;
             if (t === 'Error') data.cell.styles.textColor = [220, 38, 38];
-            else if (t === 'Advertencia') data.cell.styles.textColor = [234, 88, 12];
-            else data.cell.styles.textColor = [37, 99, 235];
+            else if (t === 'Fortaleza') data.cell.styles.textColor = [5, 150, 105];
+            else data.cell.styles.textColor = [234, 88, 12];
           }
         },
       });
       y = doc.lastAutoTable.finalY + 20;
     }
 
-    // ---- Recommendations ----
+    // Recommendations (con sección)
     if (Array.isArray(currentAnalysis.recommendations) && currentAnalysis.recommendations.length > 0) {
       if (y > pageH - 120) { doc.addPage(); y = 30; }
       doc.setFont('helvetica', 'bold');
@@ -469,32 +381,20 @@ const CVAnalyzer = ({ offers = [], currentOfferId = null }) => {
         head: [['Sección', 'Recomendación']],
         body: recBody,
         theme: 'plain',
-        headStyles: {
-          fillColor: [16, 185, 129],
-          textColor: 255,
-          fontStyle: 'bold',
-          fontSize: 10,
-          cellPadding: { top: 6, right: 8, bottom: 6, left: 8 },
-        },
-        styles: {
-          fontSize: 9,
-          overflow: 'linebreak',
-          cellPadding: { top: 5, right: 8, bottom: 5, left: 8 },
-          lineColor: [220, 220, 220],
-          lineWidth: 0.5,
-        },
+        headStyles: { fillColor: [16, 185, 129], textColor: 255, fontStyle: 'bold', fontSize: 10, cellPadding: { top: 6, right: 8, bottom: 6, left: 8 } },
+        styles: { fontSize: 9, overflow: 'linebreak', cellPadding: { top: 5, right: 8, bottom: 5, left: 8 }, lineColor: [220, 220, 220], lineWidth: 0.5 },
         margin: { left: m, right: m },
         tableWidth: 'auto',
         pageBreak: 'auto',
         columnStyles: {
-          0: { cellWidth: 70, fontStyle: 'bold', textColor: [16, 185, 129] },
+          0: { cellWidth: 90, fontStyle: 'bold', textColor: [16, 185, 129] },
           1: { cellWidth: 'auto' },
         },
       });
       y = doc.lastAutoTable.finalY + 20;
     }
 
-    // ---- Keywords ----
+    // Keywords
     if (currentAnalysis.keywordsAnalysis) {
       if (y > pageH - 100) { doc.addPage(); y = 30; }
       doc.setFont('helvetica', 'bold');
@@ -502,11 +402,9 @@ const CVAnalyzer = ({ offers = [], currentOfferId = null }) => {
       doc.setTextColor(30, 30, 30);
       doc.text('Palabras Clave', m, y);
       y += 14;
-
       const kw = currentAnalysis.keywordsAnalysis;
       const matched = Array.isArray(kw.matched) && kw.matched.length > 0 ? kw.matched.join(', ') : 'Ninguna';
       const missing = Array.isArray(kw.missing) && kw.missing.length > 0 ? kw.missing.join(', ') : 'Ninguna';
-
       doc.setFont('helvetica', 'bold');
       doc.setFontSize(10);
       doc.setTextColor(5, 150, 105);
@@ -515,7 +413,6 @@ const CVAnalyzer = ({ offers = [], currentOfferId = null }) => {
       const mLines = doc.splitTextToSize(matched, contentW - 10);
       doc.text(mLines, m + 58, y);
       y += mLines.length * 13 + 6;
-
       doc.setFont('helvetica', 'bold');
       doc.setTextColor(220, 38, 38);
       doc.text('Faltantes:', m, y);
@@ -525,7 +422,7 @@ const CVAnalyzer = ({ offers = [], currentOfferId = null }) => {
       y += miLines.length * 13 + 10;
     }
 
-    // ---- Footer ----
+    // Footer
     const pageCount = doc.getNumberOfPages();
     for (let i = 1; i <= pageCount; i++) {
       doc.setPage(i);
@@ -539,8 +436,7 @@ const CVAnalyzer = ({ offers = [], currentOfferId = null }) => {
       doc.text(`Página ${i} de ${pageCount}`, pageW - m - 60, pageH - 22);
     }
 
-    const fileName = `Reporte_CV_${dateStr.replace(/[\/\s:]/g, '_')}.pdf`;
-    doc.save(fileName);
+    doc.save(`Reporte_CV_${dateStr.replace(/[/\s:]/g, '_')}.pdf`);
   };
 
   const tabs = [
@@ -557,108 +453,43 @@ const CVAnalyzer = ({ offers = [], currentOfferId = null }) => {
           <div className="p-2 bg-emerald-100 rounded-lg">
             <Sparkles className="w-5 h-5 text-emerald-700" />
           </div>
-          <div className="flex-1">
-            <h3 className="text-lg font-semibold text-gray-900">Análisis de CV con IA</h3>
-            <p className="text-sm text-gray-500">
-              Obtén feedback detallado para mejorar tu CV antes de postular
+          <div className="flex-1 min-w-0">
+            <h3 className="text-lg font-semibold text-gray-900">Análisis de CV para esta oferta</h3>
+            <p className="text-sm text-gray-500 truncate">
+              {offer ? `${offer.title} · ${companyName(offer.company)}` : 'Selecciona una oferta'}
             </p>
           </div>
+          {onClose && (
+            <button onClick={onClose} className="p-2 rounded-lg hover:bg-gray-100" aria-label="Cerrar">
+              <X className="w-5 h-5 text-gray-500" />
+            </button>
+          )}
         </div>
       </div>
 
       {/* Controles */}
-      <div className="px-6 py-4 border-b border-gray-200 bg-gray-50">
-        <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center">
-          {offers.length > 0 && (
-            <select
-              value={selectedOfferId || ''}
-              onChange={(e) => setSelectedOfferId(e.target.value ? parseInt(e.target.value, 10) : null)}
-              className="w-full sm:flex-1 sm:max-w-sm px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
-            >
-              <option value="">Análisis general (sin oferta específica)</option>
-              {offers.map((offer) => (
-                <option key={offer.id} value={offer.id}>
-                  {offer.title} - {offer.company?.legalName}
-                </option>
-              ))}
-            </select>
-          )}
-
-          <div className="flex flex-wrap items-center gap-2 sm:ml-auto">
-            <button
-              onClick={handleAnalyze}
-              disabled={isAnalyzing}
-              className="shrink-0 flex items-center gap-2 px-5 py-2.5 bg-emerald-600 text-white rounded-lg font-semibold hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-sm"
-            >
-              {isAnalyzing ? (
-                <>
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                  Analizando...
-                </>
-              ) : (
-                <>
-                  <Sparkles className="w-4 h-4" />
-                  Analizar CV
-                </>
-              )}
-            </button>
-
-            <button
-              onClick={() => setShowHistory(!showHistory)}
-              className="shrink-0 flex items-center gap-2 px-4 py-2 border border-gray-300 bg-white text-gray-700 rounded-lg font-medium hover:bg-gray-50 transition-colors"
-            >
-              <History className="w-4 h-4" />
-              Historial
-              {showHistory ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
-            </button>
-
-            {currentAnalysis && (
-              <button
-                onClick={downloadReport}
-                className="shrink-0 flex items-center gap-2 px-4 py-2 border border-emerald-300 bg-emerald-50 text-emerald-700 rounded-lg font-medium hover:bg-emerald-100 transition-colors"
-              >
-                <Download className="w-4 h-4" />
-                Descargar
-              </button>
-            )}
-          </div>
-        </div>
-
-        {selectedOfferId && (
-          <p className="mt-2 text-xs text-emerald-600 flex items-center gap-1">
-            <Target className="w-3 h-3" />
-            El análisis se contextualizará según los requisitos de la oferta seleccionada
-          </p>
+      <div className="px-6 py-4 border-b border-gray-200 bg-gray-50 flex flex-wrap items-center gap-2">
+        <button
+          onClick={handleAnalyze}
+          disabled={isAnalyzing || !offer?.id}
+          className="flex items-center gap-2 px-5 py-2.5 bg-emerald-600 text-white rounded-lg font-semibold hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-sm"
+        >
+          {isAnalyzing ? (<><Loader2 className="w-4 h-4 animate-spin" />Analizando...</>) : (<><Sparkles className="w-4 h-4" />Analizar mi CV</>)}
+        </button>
+        {currentAnalysis && (
+          <button
+            onClick={downloadReport}
+            className="flex items-center gap-2 px-4 py-2 border border-emerald-300 bg-emerald-50 text-emerald-700 rounded-lg font-medium hover:bg-emerald-100 transition-colors"
+          >
+            <Download className="w-4 h-4" />
+            Descargar reporte
+          </button>
         )}
+        <p className="w-full text-xs text-emerald-600 flex items-center gap-1">
+          <Target className="w-3 h-3" />
+          El análisis se contextualiza según los requisitos de esta oferta.
+        </p>
       </div>
-
-      {/* Historial (colapsable) */}
-      {showHistory && (
-        <div className="px-6 py-4 border-b border-gray-200 bg-gray-50">
-          <h4 className="text-sm font-medium text-gray-700 mb-3">Historial de análisis</h4>
-          {isLoadingHistory ? (
-            <div className="flex items-center justify-center py-8">
-              <Loader2 className="w-6 h-6 animate-spin text-gray-400" />
-            </div>
-          ) : analysisHistory.length === 0 ? (
-            <p className="text-sm text-gray-500 text-center py-4">
-              No hay análisis previos. ¡Realiza tu primer análisis!
-            </p>
-          ) : (
-            <div className="grid gap-2 max-h-64 overflow-y-auto">
-              {analysisHistory.map((item) => (
-                <HistoryItem
-                  key={item.id}
-                  item={item}
-                  onSelect={handleSelectHistory}
-                  onDelete={handleDelete}
-                  isSelected={currentAnalysis?.id === item.id}
-                />
-              ))}
-            </div>
-          )}
-        </div>
-      )}
 
       {/* Error */}
       {error && (
@@ -673,10 +504,17 @@ const CVAnalyzer = ({ offers = [], currentOfferId = null }) => {
         </div>
       )}
 
+      {/* Estado inicial */}
+      {!currentAnalysis && !isAnalyzing && !error && (
+        <div className="p-10 text-center">
+          <Sparkles className="w-12 h-12 text-emerald-300 mx-auto mb-3" />
+          <p className="text-gray-600">Pulsa <strong>Analizar mi CV</strong> para obtener feedback contextualizado para esta oferta.</p>
+        </div>
+      )}
+
       {/* Resultados */}
       {currentAnalysis && (
         <div className="p-6">
-          {/* Tabs */}
           <div className="flex gap-1 mb-6 bg-gray-100 p-1 rounded-lg">
             {tabs.map((tab) => {
               const Icon = tab.icon;
@@ -685,9 +523,7 @@ const CVAnalyzer = ({ offers = [], currentOfferId = null }) => {
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id)}
                   className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-                    activeTab === tab.id
-                      ? 'bg-white text-gray-900 shadow-sm'
-                      : 'text-gray-600 hover:text-gray-900'
+                    activeTab === tab.id ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-600 hover:text-gray-900'
                   }`}
                 >
                   <Icon className="w-4 h-4" />
@@ -697,20 +533,14 @@ const CVAnalyzer = ({ offers = [], currentOfferId = null }) => {
             })}
           </div>
 
-          {/* Contenido según tab */}
           {activeTab === 'overview' && (
             <div className="space-y-6">
-              {/* Puntuación global */}
               <div className="flex flex-col sm:flex-row items-center gap-6 p-6 bg-gray-50 rounded-xl">
                 <ScoreRing score={currentAnalysis.overallScore} />
                 <div className="text-center sm:text-left">
-                  <p className="text-2xl font-bold text-gray-900">
-                    {currentAnalysis.scoreCategory?.label}
-                  </p>
+                  <p className="text-2xl font-bold text-gray-900">{currentAnalysis.scoreCategory?.label}</p>
                   <p className="text-sm text-gray-500 mt-1">
-                    {currentAnalysis.offer
-                      ? `Análisis contextualizado para: ${currentAnalysis.offer.title}`
-                      : 'Análisis general de tu CV'}
+                    Análisis para: {offer?.title || currentAnalysis.offer?.title}
                   </p>
                   <p className="text-xs text-gray-400 mt-2">
                     {new Date(currentAnalysis.createdAt || Date.now()).toLocaleString('es-PE')}
@@ -718,36 +548,14 @@ const CVAnalyzer = ({ offers = [], currentOfferId = null }) => {
                 </div>
               </div>
 
-              {/* Puntuaciones por sección */}
               <div className="grid gap-3 sm:grid-cols-2">
-                <SectionScore
-                  label="Claridad"
-                  score={currentAnalysis.sectionScores?.clarity || 0}
-                  icon={FileText}
-                />
-                <SectionScore
-                  label="Impacto"
-                  score={currentAnalysis.sectionScores?.impact || 0}
-                  icon={TrendingUp}
-                />
-                <SectionScore
-                  label="Ortografía"
-                  score={currentAnalysis.sectionScores?.grammar || 0}
-                  icon={CheckCircle}
-                />
-                <SectionScore
-                  label="Extensión"
-                  score={currentAnalysis.sectionScores?.length || 0}
-                  icon={Award}
-                />
-                <SectionScore
-                  label="Palabras Clave"
-                  score={currentAnalysis.sectionScores?.keywords || 0}
-                  icon={Sparkles}
-                />
+                <SectionScore label="Claridad" score={currentAnalysis.sectionScores?.clarity || 0} icon={FileText} />
+                <SectionScore label="Impacto" score={currentAnalysis.sectionScores?.impact || 0} icon={TrendingUp} />
+                <SectionScore label="Ortografía" score={currentAnalysis.sectionScores?.grammar || 0} icon={CheckCircle} />
+                <SectionScore label="Extensión" score={currentAnalysis.sectionScores?.length || 0} icon={Award} />
+                <SectionScore label="Palabras Clave" score={currentAnalysis.sectionScores?.keywords || 0} icon={Sparkles} />
               </div>
 
-              {/* Recomendaciones principales */}
               {Array.isArray(currentAnalysis.recommendations) && currentAnalysis.recommendations.length > 0 && (
                 <div className="p-4 bg-emerald-50 rounded-xl border border-emerald-200">
                   <h4 className="text-sm font-semibold text-emerald-800 mb-3 flex items-center gap-2">
@@ -772,9 +580,7 @@ const CVAnalyzer = ({ offers = [], currentOfferId = null }) => {
                   <p className="text-gray-600">¡Excelente! No se encontraron observaciones.</p>
                 </div>
               ) : (
-                currentAnalysis.observations.map((obs, i) => (
-                  <ObservationCard key={i} observation={obs} />
-                ))
+                currentAnalysis.observations.map((obs, i) => <ObservationCard key={i} observation={obs} />)
               )}
             </div>
           )}
@@ -784,39 +590,10 @@ const CVAnalyzer = ({ offers = [], currentOfferId = null }) => {
               {currentAnalysis.keywordsAnalysis ? (
                 <KeywordsAnalysis keywords={currentAnalysis.keywordsAnalysis} />
               ) : (
-                <p className="text-center text-gray-500 py-8">
-                  No hay análisis de palabras clave disponible.
-                </p>
+                <p className="text-sm text-gray-500 text-center py-8">No hay análisis de palabras clave disponible.</p>
               )}
             </div>
           )}
-        </div>
-      )}
-
-      {/* Estado vacío */}
-      {!currentAnalysis && !isAnalyzing && !isLoadingDetails && (
-        <div className="p-12 text-center">
-          <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-            <Sparkles className="w-8 h-8 text-gray-400" />
-          </div>
-          <h4 className="text-lg font-medium text-gray-900 mb-2">
-            Aún no has analizado tu CV
-          </h4>
-          <p className="text-sm text-gray-500 max-w-md mx-auto">
-            Selecciona una oferta (opcional) y haz clic en &quot;Analizar CV&quot; para recibir feedback
-            personalizado de nuestra IA.
-          </p>
-        </div>
-      )}
-
-      {/* Loading estado */}
-      {(isAnalyzing || isLoadingDetails) && !currentAnalysis && (
-        <div className="p-12 text-center">
-          <Loader2 className="w-8 h-8 animate-spin text-emerald-600 mx-auto mb-4" />
-          <p className="text-gray-600">
-            {isAnalyzing ? 'Analizando tu CV con IA...' : 'Cargando análisis...'}
-          </p>
-          <p className="text-sm text-gray-400 mt-2">Esto puede tomar unos segundos</p>
         </div>
       )}
     </div>

@@ -7,7 +7,7 @@ PracHub es una plataforma web en arquitectura Cliente-Servidor que combina herra
 - Node.js (v18.x o superior)
 - MySQL
 
-## Configuraciï¿½n del Entorno
+## Configuración del Entorno
 1. Clona el repositorio.
 2. Copia `server/.env.example` a `server/.env` y completa tus credenciales de base de datos, JWT y demás variables.
 3. Copia `client/.env.example` a `client/.env` si requieres variables públicas.

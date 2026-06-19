@@ -1,6 +1,6 @@
 # PracHub
 
-PracHub es una plataforma web en arquitectura Cliente-Servidor que combina herramientas de preparaciÃ³n profesional y una bolsa de prÃ¡cticas, con el fin de aumentar la tasa de Ã©xito en la obtenciÃ³n de prÃ¡cticas preprofesionales de estudiantes.
+PracHub es una plataforma web en arquitectura Cliente-Servidor que combina herramientas de preparación profesional y una bolsa de prácticas, con el fin de aumentar la tasa de éxito en la obtención de prácticas preprofesionales de estudiantes.
 
 
 ## Requisitos Previos

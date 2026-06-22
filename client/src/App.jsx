@@ -36,6 +36,7 @@ const AdminLoginPage          = lazy(() => import('./pages/AdminLoginPage'));
 const VerifyEmailPage         = lazy(() => import('./pages/VerifyEmailPage'));
 const CompanyFeedPage         = lazy(() => import('./pages/CompanyFeedPage'));
 const InboxPage               = lazy(() => import('./pages/InboxPage'));
+const CompanyMetricsPage      = lazy(() => import('./pages/CompanyMetricsPage'));
 
 // ── Fallback de Suspense ──────────────────────────────────────────────────────
 const PageLoader = () => (
@@ -137,6 +138,8 @@ const AppRoutes = () => {
 
       {/* ── Vistas autenticadas (con AppShell) ─────────────────────────── */}
       <Route element={<ShellLayout />}>
+        <Route path="/dashboard" element={<WelcomePage />} />
+
         {/* Solo estudiante */}
         <Route element={<StudentOnly />}>
           <Route path="/inbox" element={<InboxPage />} />
@@ -163,6 +166,7 @@ const AppRoutes = () => {
           <Route path="/company/offers/new" element={<CreateOfferPage />} />
           <Route path="/company/offers/edit" element={<CreateOfferPage />} />
           <Route path="/company/offers/:offerId/candidates" element={<OfferCandidatesPage />} />
+          <Route path="/company/metrics" element={<CompanyMetricsPage />} />
         </Route>
       </Route>
 

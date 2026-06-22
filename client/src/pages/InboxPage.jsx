@@ -1,10 +1,12 @@
 import { useEffect, useState, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
-  ArrowLeft, MessageSquare, Send, Building2, CheckCheck, Clock, RefreshCw, Search, Users,
+  ArrowLeft, MessageSquare, Send, Building2, CheckCheck, Clock, RefreshCw, Search, Users, Mail, AlertCircle,
 } from 'lucide-react';
 import useMessageStore from '../store/messageStore';
 import useAuthStore from '../store/authStore';
+import { useInvitations } from '../hooks/useInvitations';
+import InvitationCard from '../components/InvitationCard';
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 const formatDate = (date) => {
@@ -273,11 +275,14 @@ const InboxPage = () => {
   const navigate = useNavigate();
   const { userId: paramUserId } = useParams();
   const { user } = useAuthStore();
+  const [activeTab, setActiveTab] = useState('messages'); // 'messages' | 'invitations'
 
   const {
     conversations, currentMessages, currentOtherUser, isLoading, isSending, error,
     fetchInbox, fetchUnreadCount, fetchConversation, sendMessage, clearCurrentConversation,
   } = useMessageStore();
+
+  const { data: invitationsData, isLoading: invitationsLoading, refetch: refetchInvitations } = useInvitations('PENDING', user?.role === 'student');
 
   const [selectedUserId, setSelectedUserId] = useState(paramUserId ? parseInt(paramUserId) : null);
   const [mobileView, setMobileView] = useState(paramUserId ? 'thread' : 'list');
@@ -320,29 +325,57 @@ const InboxPage = () => {
     await sendMessage(selectedUserId, content);
   };
 
-  const totalUnread = conversations.reduce((sum, c) => sum + (c.unreadCount || 0), 0);
-
   return (
     <div className="flex h-full flex-col bg-white">
       {/* Header */}
       <header className="bg-white border-b border-gray-200 flex-shrink-0">
-        <div className="max-w-5xl mx-auto px-4 py-3 flex items-center gap-3">
-          <div className="flex items-center gap-2 flex-1">
+        <div className="max-w-5xl mx-auto px-4 py-3 flex items-center gap-3 justify-between">
+          <div className="flex items-center gap-2">
             <MessageSquare className="w-5 h-5 text-emerald-600" />
-            <h1 className="text-lg font-semibold text-gray-900">Mensajes</h1>
-            {totalUnread > 0 && (
-              <span className="min-w-[20px] h-5 bg-emerald-500 text-white text-xs font-bold rounded-full flex items-center justify-center px-1.5">
-                {totalUnread > 99 ? '99+' : totalUnread}
-              </span>
-            )}
+            <h1 className="text-lg font-semibold text-gray-900">Mensajes e Invitaciones</h1>
           </div>
           <button
-            onClick={() => { fetchInbox(); fetchUnreadCount(); }}
+            onClick={() => { fetchInbox(); fetchUnreadCount(); refetchInvitations(); }}
             className="p-2 hover:bg-gray-100 rounded-lg transition-colors text-gray-500"
-            aria-label="Actualizar mensajes"
+            aria-label="Actualizar"
           >
             <RefreshCw className="w-4 h-4" />
           </button>
+        </div>
+
+        {/* Tabs */}
+        <div className="max-w-5xl mx-auto px-4 border-t border-gray-200 flex gap-4">
+          <button
+            onClick={() => setActiveTab('messages')}
+            className={`px-4 py-3 font-medium text-sm border-b-2 transition-colors ${
+              activeTab === 'messages'
+                ? 'border-emerald-600 text-emerald-600'
+                : 'border-transparent text-gray-600 hover:text-gray-900'
+            }`}
+          >
+            <span className="flex items-center gap-2">
+              <MessageSquare className="w-4 h-4" />
+              Mensajes
+            </span>
+          </button>
+          {user?.role === 'student' && (
+            <button
+              onClick={() => setActiveTab('invitations')}
+              className={`px-4 py-3 font-medium text-sm border-b-2 transition-colors flex items-center gap-2 ${
+                activeTab === 'invitations'
+                  ? 'border-emerald-600 text-emerald-600'
+                  : 'border-transparent text-gray-600 hover:text-gray-900'
+              }`}
+            >
+              <Mail className="w-4 h-4" />
+              Invitaciones
+              {invitationsData?.data?.invitations?.filter(inv => inv.responseStatus === 'PENDING').length > 0 && (
+                <span className="ml-1 px-2 py-0.5 bg-red-500 text-white text-xs rounded-full font-bold">
+                  {invitationsData.data.invitations.filter(inv => inv.responseStatus === 'PENDING').length}
+                </span>
+              )}
+            </button>
+          )}
         </div>
       </header>
 
@@ -354,6 +387,36 @@ const InboxPage = () => {
       )}
 
       <div className="flex flex-1 min-h-0 max-w-5xl mx-auto w-full">
+        {activeTab === 'invitations' ? (
+          // ── Pestaña INVITACIONES (solo estudiantes) ──
+          <div className="w-full flex flex-col">
+            {invitationsLoading ? (
+              <div className="flex-1 flex items-center justify-center">
+                <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-emerald-600" />
+              </div>
+            ) : !invitationsData?.data?.invitations || invitationsData.data.invitations.length === 0 ? (
+              <div className="flex-1 flex flex-col items-center justify-center py-8 px-4 text-center">
+                <Mail className="w-12 h-12 text-gray-300 mb-3" />
+                <p className="text-sm font-medium text-gray-600 mb-1">Sin invitaciones</p>
+                <p className="text-xs text-gray-400">Los reclutadores pueden invitarte a postular aquí.</p>
+              </div>
+            ) : (
+              <div className="flex-1 overflow-y-auto p-4">
+                <div className="space-y-3">
+                  {invitationsData.data.invitations.map((invitation) => (
+                    <InvitationCard
+                      key={invitation.id}
+                      invitation={invitation}
+                      onRespond={() => refetchInvitations()}
+                    />
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        ) : (
+          // ── Pestaña MENSAJES ──
+          <>
         <div className={`w-full md:w-72 md:flex flex-shrink-0 border-r border-gray-200 flex-col ${mobileView === 'list' ? 'flex' : 'hidden md:flex'}`}>
           <div className="px-4 py-3 border-b border-gray-100 bg-gray-50 flex items-center justify-between">
             <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Conversaciones</p>
@@ -380,6 +443,8 @@ const InboxPage = () => {
             onBack={handleBackToList}
           />
         </div>
+          </>
+        )}
       </div>
     </div>
   );

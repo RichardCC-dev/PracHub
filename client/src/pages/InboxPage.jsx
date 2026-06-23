@@ -330,10 +330,21 @@ const InboxPage = () => {
       {/* Header */}
       <header className="bg-white border-b border-gray-200 flex-shrink-0">
         <div className="max-w-5xl mx-auto px-4 py-3 flex items-center gap-3 justify-between">
+          
+          {/* Lado izquierdo: Icono, Título y Contador */}
           <div className="flex items-center gap-2">
             <MessageSquare className="w-5 h-5 text-emerald-600" />
             <h1 className="text-lg font-semibold text-gray-900">Mensajes e Invitaciones</h1>
+            
+            {/* Contador de la versión anterior recuperado */}
+            {totalUnread > 0 && (
+              <span className="min-w-[20px] h-5 bg-emerald-500 text-white text-xs font-bold rounded-full flex items-center justify-center px-1.5">
+                {totalUnread > 99 ? '99+' : totalUnread}
+              </span>
+            )}
           </div>
+
+          {/* Lado derecho: Botón de actualizar */}
           <button
             onClick={() => { fetchInbox(); fetchUnreadCount(); refetchInvitations(); }}
             className="p-2 hover:bg-gray-100 rounded-lg transition-colors text-gray-500"
@@ -341,6 +352,7 @@ const InboxPage = () => {
           >
             <RefreshCw className="w-4 h-4" />
           </button>
+
         </div>
 
         {/* Tabs */}

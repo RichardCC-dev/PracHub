@@ -42,6 +42,14 @@ vi.mock('../store/messageStore', () => ({
   },
 }));
 
+vi.mock('../hooks/useInvitations', () => ({
+  useInvitations: () => ({
+    data: { data: { invitations: [] } },
+    isLoading: false,
+    refetch: vi.fn(),
+  }),
+}));
+
 import InboxPage from '../pages/InboxPage';
 
 // ── Helper de renderizado ─────────────────────────────────────────────────────
@@ -62,9 +70,9 @@ const renderInbox = (path = '/inbox') =>
 describe('InboxPage', () => {
   beforeEach(() => vi.clearAllMocks());
 
-  it('renderiza el header con título "Mensajes"', () => {
+  it('renderiza el header con título "Mensajes e Invitaciones"', () => {
     renderInbox();
-    expect(screen.getByText('Mensajes')).toBeInTheDocument();
+    expect(screen.getByText('Mensajes e Invitaciones')).toBeInTheDocument();
   });
 
   it('muestra "Conversaciones" como encabezado del panel izquierdo', () => {

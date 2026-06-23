@@ -42,6 +42,14 @@ vi.mock('../store/messageStore', () => ({
   },
 }));
 
+vi.mock('../hooks/useInvitations', () => ({
+  useInvitations: () => ({
+    data: { invitations: [] },
+    isLoading: false,
+    refetch: vi.fn(),
+  }),
+}));
+
 import InboxPage from '../pages/InboxPage';
 
 // ── Helper de renderizado ─────────────────────────────────────────────────────

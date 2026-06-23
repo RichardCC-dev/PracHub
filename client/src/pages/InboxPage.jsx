@@ -288,6 +288,7 @@ const InboxPage = () => {
   const [mobileView, setMobileView] = useState(paramUserId ? 'thread' : 'list');
 
   const canStart = user?.role === 'company';
+  const totalUnread = (conversations || []).reduce((sum, c) => sum + (c.unreadCount || 0), 0);
 
   useEffect(() => {
     fetchInbox();

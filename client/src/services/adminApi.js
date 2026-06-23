@@ -104,6 +104,20 @@ export const disableCompanyPublishing = async (token, companyId) => {
   return parseResponse(response);
 };
 
+export const getReports = async (token, filters = {}) => {
+  const params = new URLSearchParams();
+  if (filters.startDate) params.append('startDate', filters.startDate);
+  if (filters.endDate) params.append('endDate', filters.endDate);
+
+  const response = await fetch(`${API_URL}/admin/reports?${params.toString()}`, {
+    method: 'GET',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`,
+    },
+  });
+  return parseResponse(response);
+};
 export const getOffersByStatus = async (token, status, filters = {}) => {
   const params = new URLSearchParams();
   if (filters.tags && filters.tags.length > 0) params.append('tags', filters.tags.join(','));

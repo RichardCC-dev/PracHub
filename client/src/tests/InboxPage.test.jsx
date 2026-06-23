@@ -47,9 +47,17 @@ import InboxPage from '../pages/InboxPage';
 
 // ── Helper de renderizado ─────────────────────────────────────────────────────
 
+const createTestQueryClient = () =>
+  new QueryClient({
+    defaultOptions: {
+      queries: { retry: false },
+      mutations: { retry: false },
+    },
+  });
+
 const renderInbox = (path = '/inbox') =>
   render(
-    <QueryClientProvider client={new QueryClient()}>
+    <QueryClientProvider client={createTestQueryClient()}>
       <MemoryRouter initialEntries={[path]}>
         <Routes>
           <Route path="/inbox" element={<InboxPage />} />

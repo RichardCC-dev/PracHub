@@ -37,6 +37,11 @@ export const authHeaders = (withContentType = false) => {
 export const parseResponse = async (response) => {
   const data = await response.json().catch(() => ({}));
   if (!response.ok) {
+    // Si hay errores de validación detallados, los incluimos en el mensaje
+    if (Array.isArray(data.errors) && data.errors.length > 0) {
+      const details = data.errors.map((e) => `${e.field}: ${e.message}`).join('; ');
+      throw new Error(`${data.message} ${details}`);
+    }
     throw new Error(data.message || data.error || 'No se pudo completar la solicitud.');
   }
   return data;

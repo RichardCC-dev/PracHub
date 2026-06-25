@@ -36,6 +36,7 @@ const AdminLoginPage          = lazy(() => import('./pages/AdminLoginPage'));
 const VerifyEmailPage         = lazy(() => import('./pages/VerifyEmailPage'));
 const CompanyFeedPage         = lazy(() => import('./pages/CompanyFeedPage'));
 const InboxPage               = lazy(() => import('./pages/InboxPage'));
+const CompanyMetricsPage      = lazy(() => import('./pages/CompanyMetricsPage'));
 
 // ── Fallback de Suspense ──────────────────────────────────────────────────────
 const PageLoader = () => (
@@ -137,13 +138,14 @@ const AppRoutes = () => {
 
       {/* ── Vistas autenticadas (con AppShell) ─────────────────────────── */}
       <Route element={<ShellLayout />}>
-        {/* Dashboard común (estudiante y empresa) — WelcomePage ramifica por rol */}
         <Route path="/dashboard" element={<WelcomePage />} />
+
+        {/* Compartido: estudiante + empresa (no admin) */}
+        <Route path="/inbox" element={<InboxPage />} />
+        <Route path="/inbox/:userId" element={<InboxPage />} />
 
         {/* Solo estudiante */}
         <Route element={<StudentOnly />}>
-          <Route path="/inbox" element={<InboxPage />} />
-          <Route path="/inbox/:userId" element={<InboxPage />} />
           <Route path="/student/profile" element={<StudentProfilePage />} />
           <Route path="/offers" element={<StudentOffersPage />} />
           <Route path="/offers/:offerId" element={<OfferDetailPage />} />
@@ -159,13 +161,12 @@ const AppRoutes = () => {
 
         {/* Solo empresa */}
         <Route element={<CompanyOnly />}>
-          <Route path="/inbox" element={<InboxPage />} />
-          <Route path="/inbox/:userId" element={<InboxPage />} />
           <Route path="/company/profile" element={<CompanyProfilePage />} />
           <Route path="/company/offers" element={<CompanyOffersPage />} />
           <Route path="/company/offers/new" element={<CreateOfferPage />} />
           <Route path="/company/offers/edit" element={<CreateOfferPage />} />
           <Route path="/company/offers/:offerId/candidates" element={<OfferCandidatesPage />} />
+          <Route path="/company/metrics" element={<CompanyMetricsPage />} />
         </Route>
       </Route>
 

@@ -34,6 +34,7 @@ const STUDENT_NAV = [
 const COMPANY_NAV = [
   { label: 'Inicio', icon: Home, to: '/dashboard', end: true },
   { label: 'Ofertas y candidatos', icon: ClipboardList, to: '/company/offers' },
+  { label: 'Métricas de seguidores', icon: BarChart3, to: '/company/metrics' },
   { label: 'Mensajes', icon: MessageSquare, to: '/inbox', badgeKey: 'messages' },
   { label: 'Perfil de empresa', icon: Building2, to: '/company/profile' },
 ];

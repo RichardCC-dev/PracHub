@@ -134,8 +134,40 @@ client/src/
 cd server && npm test
 ```
 
-- 26 tests en `server/src/tests/`
+- Tests en `server/tests/`
 - Configura `NODE_ENV=test` automáticamente (las rutas de test están habilitadas solo en test)
+
+### Tests de IA (backend)
+
+Los servicios de IA cubren dos sistemas: **Google Gemini** (3 modelos: FLASH, FLASH_2_5, FLASH_LITE) y el **motor TF-IDF** con `natural` (recomendaciones, no Gemini).
+
+**Tests unitarios** (deterministas, con mocks — corren siempre en CI sin API key):
+
+```bash
+cd server && npm test
+```
+
+Archivos:
+- `tests/geminiClient.test.js` — constantes de modelos y singleton del cliente.
+- `tests/aiService.test.js` — mejora de texto/secciones de CV (FLASH).
+- `tests/geminiService.test.js` — simulador de entrevistas, sanitización de historial, retry 429, fallback local (FLASH_2_5).
+- `tests/cvAnalysisService.test.js` — análisis de CV, validación de JSON, score categories (FLASH_LITE).
+- `tests/recommendationService.test.js` — motor TF-IDF, similitud coseno, umbral de compatibilidad.
+- `tests/alertService.test.js` — alertas que delegan al motor TF-IDF.
+
+**Tests de integración** (API real de Gemini — gated):
+
+```bash
+cd server
+# Requiere GEMINI_API_KEY en .env y activación explícita:
+# PowerShell:
+$env:RUN_AI_INTEGRATION='true'; npm test -- --testPathPatterns=aiIntegration
+# bash:
+RUN_AI_INTEGRATION=true npm test -- --testPathPatterns=aiIntegration
+```
+
+- `tests/integration/aiIntegration.test.js` — llama a la API real de Gemini para validar los 3 modelos.
+- Se omiten automáticamente (`describe.skip`) cuando no hay `GEMINI_API_KEY` o `RUN_AI_INTEGRATION != true`, para no gastar cuota en CI.
 
 ### Frontend — Vitest + Testing Library
 

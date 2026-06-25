@@ -31,6 +31,7 @@ const alertService = {
         frequency: 'immediate',
         emailEnabled: true,
         platformEnabled: true,
+        whatsappEnabled: false,
       });
     }
 
@@ -47,6 +48,7 @@ const alertService = {
       'frequency',
       'emailEnabled',
       'platformEnabled',
+      'whatsappEnabled',
       'dailyDigestTime',
       'weeklyDigestDay',
     ];

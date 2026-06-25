@@ -59,7 +59,7 @@ const LoginForm = ({ onForgotPassword, onGoToRegister, onLoginSuccess, role = 's
       });
       
       setSuccessMessage(`${result.message} Redirigiendo a tu panel...`);
-      setTimeout(() => onLoginSuccess(result.user), 800);
+      onLoginSuccess(result.user);
     } catch (err) {
       setLocalError(err.message || 'Error al iniciar sesión');
     } finally {

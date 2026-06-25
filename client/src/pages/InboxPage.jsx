@@ -1,10 +1,13 @@
 import { useEffect, useState, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
-  ArrowLeft, MessageSquare, Send, Building2, CheckCheck, Clock, RefreshCw, Search, Users,
+  ArrowLeft, MessageSquare, Send, Building2, CheckCheck, Clock, RefreshCw, Search, Users, Mail, AlertCircle,
 } from 'lucide-react';
 import useMessageStore from '../store/messageStore';
 import useAuthStore from '../store/authStore';
+import { useInvitations } from '../hooks/useInvitations';
+import InvitationCard from '../components/InvitationCard';
+import InvitationModal from '../components/InvitationModal';
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 const formatDate = (date) => {
@@ -176,7 +179,7 @@ const ConversationList = ({ conversations, selectedUserId, onSelect, isLoading, 
 };
 
 // ── MessageThread ─────────────────────────────────────────────────────────────
-const MessageThread = ({ messages, currentUserId, otherUser, isLoading, isSending, onSend, onBack }) => {
+const MessageThread = ({ messages, currentUserId, otherUser, isLoading, isSending, onSend, onBack, onInvite, isCompany }) => {
   const [text, setText] = useState('');
   const bottomRef = useRef(null);
 
@@ -206,16 +209,39 @@ const MessageThread = ({ messages, currentUserId, otherUser, isLoading, isSendin
 
   return (
     <div className="flex-1 flex flex-col min-h-0">
-      <div className="flex items-center gap-3 px-4 py-3 border-b border-gray-200 bg-white">
-        <button onClick={onBack} className="md:hidden p-1.5 hover:bg-gray-100 rounded-lg transition-colors flex-shrink-0" aria-label="Volver">
-          <ArrowLeft className="w-4 h-4 text-gray-600" />
-        </button>
-        <Avatar user={otherUser} size="md" />
-        <div className="flex-1 min-w-0">
-          <p className="font-semibold text-gray-900 text-sm truncate">{otherUser.displayName}</p>
-          <p className="text-xs text-gray-400 capitalize">{otherUser.role === 'company' ? 'Empresa reclutadora' : 'Estudiante'}</p>
+      <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200 bg-white">
+        <div className="flex items-center gap-3">
+          <button onClick={onBack} className="md:hidden p-1.5 hover:bg-gray-100 rounded-lg transition-colors flex-shrink-0" aria-label="Volver">
+            <ArrowLeft className="w-4 h-4 text-gray-600" />
+          </button>
+          <Avatar user={otherUser} size="md" />
+          <div className="flex-1 min-w-0">
+            <p className="font-semibold text-gray-900 text-sm truncate">{otherUser.displayName}</p>
+            <p className="text-xs text-gray-400 capitalize">{otherUser.role === 'company' ? 'Empresa reclutadora' : 'Estudiante'}</p>
+          </div>
         </div>
+        {isCompany && otherUser?.role === 'student' && (
+          <button
+            onClick={onInvite}
+            className="hidden md:flex items-center gap-2 px-3 py-1.5 text-xs font-semibold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 rounded-lg transition-colors"
+          >
+            <Send className="w-3 h-3" />
+            Invitar a postular
+          </button>
+        )}
       </div>
+
+      {isCompany && otherUser?.role === 'student' && (
+        <div className="md:hidden px-4 py-2 border-b border-gray-100 bg-white">
+          <button
+            onClick={onInvite}
+            className="w-full flex items-center justify-center gap-2 px-3 py-2 text-sm font-semibold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 rounded-lg transition-colors"
+          >
+            <Send className="w-4 h-4" />
+            Invitar a postular
+          </button>
+        </div>
+      )}
 
       <div className="flex-1 overflow-y-auto px-4 py-4 space-y-3 bg-gray-50">
         {isLoading ? (
@@ -273,14 +299,18 @@ const InboxPage = () => {
   const navigate = useNavigate();
   const { userId: paramUserId } = useParams();
   const { user } = useAuthStore();
+  const [activeTab, setActiveTab] = useState('messages'); // 'messages' | 'invitations'
 
   const {
     conversations, currentMessages, currentOtherUser, isLoading, isSending, error,
-    fetchInbox, fetchUnreadCount, fetchConversation, sendMessage, clearCurrentConversation,
+    unreadCount, fetchInbox, fetchUnreadCount, fetchConversation, sendMessage, clearCurrentConversation,
   } = useMessageStore();
+
+  const { data: invitationsData, isLoading: invitationsLoading, refetch: refetchInvitations } = useInvitations('PENDING', user?.role === 'student');
 
   const [selectedUserId, setSelectedUserId] = useState(paramUserId ? parseInt(paramUserId) : null);
   const [mobileView, setMobileView] = useState(paramUserId ? 'thread' : 'list');
+  const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
 
   const canStart = user?.role === 'company';
 
@@ -320,29 +350,69 @@ const InboxPage = () => {
     await sendMessage(selectedUserId, content);
   };
 
-  const totalUnread = conversations.reduce((sum, c) => sum + (c.unreadCount || 0), 0);
-
   return (
     <div className="flex h-full flex-col bg-white">
       {/* Header */}
       <header className="bg-white border-b border-gray-200 flex-shrink-0">
-        <div className="max-w-5xl mx-auto px-4 py-3 flex items-center gap-3">
-          <div className="flex items-center gap-2 flex-1">
+        <div className="max-w-5xl mx-auto px-4 py-3 flex items-center gap-3 justify-between">
+          
+          {/* Lado izquierdo: Icono, Título y Contador */}
+          <div className="flex items-center gap-2">
             <MessageSquare className="w-5 h-5 text-emerald-600" />
-            <h1 className="text-lg font-semibold text-gray-900">Mensajes</h1>
-            {totalUnread > 0 && (
+            <h1 className="text-lg font-semibold text-gray-900">Mensajes e Invitaciones</h1>
+            
+            {/* Contador de la versión anterior recuperado */}
+            {unreadCount > 0 && (
               <span className="min-w-[20px] h-5 bg-emerald-500 text-white text-xs font-bold rounded-full flex items-center justify-center px-1.5">
-                {totalUnread > 99 ? '99+' : totalUnread}
+                {unreadCount > 99 ? '99+' : unreadCount}
               </span>
             )}
           </div>
+
+          {/* Lado derecho: Botón de actualizar */}
           <button
-            onClick={() => { fetchInbox(); fetchUnreadCount(); }}
+            onClick={() => { fetchInbox(); fetchUnreadCount(); refetchInvitations(); }}
             className="p-2 hover:bg-gray-100 rounded-lg transition-colors text-gray-500"
-            aria-label="Actualizar mensajes"
+            aria-label="Actualizar"
           >
             <RefreshCw className="w-4 h-4" />
           </button>
+
+        </div>
+
+        {/* Tabs */}
+        <div className="max-w-5xl mx-auto px-4 border-t border-gray-200 flex gap-4">
+          <button
+            onClick={() => setActiveTab('messages')}
+            className={`px-4 py-3 font-medium text-sm border-b-2 transition-colors ${
+              activeTab === 'messages'
+                ? 'border-emerald-600 text-emerald-600'
+                : 'border-transparent text-gray-600 hover:text-gray-900'
+            }`}
+          >
+            <span className="flex items-center gap-2">
+              <MessageSquare className="w-4 h-4" />
+              Mensajes
+            </span>
+          </button>
+          {user?.role === 'student' && (
+            <button
+              onClick={() => setActiveTab('invitations')}
+              className={`px-4 py-3 font-medium text-sm border-b-2 transition-colors flex items-center gap-2 ${
+                activeTab === 'invitations'
+                  ? 'border-emerald-600 text-emerald-600'
+                  : 'border-transparent text-gray-600 hover:text-gray-900'
+              }`}
+            >
+              <Mail className="w-4 h-4" />
+              Invitaciones
+              {invitationsData?.data?.invitations?.filter(inv => inv.responseStatus === 'PENDING').length > 0 && (
+                <span className="ml-1 px-2 py-0.5 bg-red-500 text-white text-xs rounded-full font-bold">
+                  {invitationsData.data.invitations.filter(inv => inv.responseStatus === 'PENDING').length}
+                </span>
+              )}
+            </button>
+          )}
         </div>
       </header>
 
@@ -354,6 +424,36 @@ const InboxPage = () => {
       )}
 
       <div className="flex flex-1 min-h-0 max-w-5xl mx-auto w-full">
+        {activeTab === 'invitations' ? (
+          // ── Pestaña INVITACIONES (solo estudiantes) ──
+          <div className="w-full flex flex-col">
+            {invitationsLoading ? (
+              <div className="flex-1 flex items-center justify-center">
+                <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-emerald-600" />
+              </div>
+            ) : !invitationsData?.data?.invitations || invitationsData.data.invitations.length === 0 ? (
+              <div className="flex-1 flex flex-col items-center justify-center py-8 px-4 text-center">
+                <Mail className="w-12 h-12 text-gray-300 mb-3" />
+                <p className="text-sm font-medium text-gray-600 mb-1">Sin invitaciones</p>
+                <p className="text-xs text-gray-400">Los reclutadores pueden invitarte a postular aquí.</p>
+              </div>
+            ) : (
+              <div className="flex-1 overflow-y-auto p-4">
+                <div className="space-y-3">
+                  {invitationsData.data.invitations.map((invitation) => (
+                    <InvitationCard
+                      key={invitation.id}
+                      invitation={invitation}
+                      onRespond={() => refetchInvitations()}
+                    />
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        ) : (
+          // ── Pestaña MENSAJES ──
+          <>
         <div className={`w-full md:w-72 md:flex flex-shrink-0 border-r border-gray-200 flex-col ${mobileView === 'list' ? 'flex' : 'hidden md:flex'}`}>
           <div className="px-4 py-3 border-b border-gray-100 bg-gray-50 flex items-center justify-between">
             <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Conversaciones</p>
@@ -370,16 +470,33 @@ const InboxPage = () => {
         </div>
 
         <div className={`flex-1 min-w-0 flex flex-col ${mobileView === 'thread' ? 'flex' : 'hidden md:flex'}`}>
-          <MessageThread
-            messages={currentMessages}
-            currentUserId={user?.id}
-            otherUser={currentOtherUser}
-            isLoading={isLoading && selectedUserId !== null && currentMessages.length === 0}
-            isSending={isSending}
-            onSend={handleSend}
-            onBack={handleBackToList}
-          />
+          <>
+            <MessageThread
+              messages={currentMessages}
+              currentUserId={user?.id}
+              otherUser={currentOtherUser}
+              isLoading={isLoading && selectedUserId !== null && currentMessages.length === 0}
+              isSending={isSending}
+              onSend={handleSend}
+              onBack={handleBackToList}
+              onInvite={() => setIsInviteModalOpen(true)}
+              isCompany={canStart}
+            />
+            {isInviteModalOpen && currentOtherUser?.studentId && (
+              <InvitationModal
+                studentId={currentOtherUser.studentId}
+                isOpen={isInviteModalOpen}
+                onClose={() => setIsInviteModalOpen(false)}
+                onSuccess={() => {
+                  refetchInvitations();
+                  fetchInbox();
+                }}
+              />
+            )}
+          </>
         </div>
+          </>
+        )}
       </div>
     </div>
   );

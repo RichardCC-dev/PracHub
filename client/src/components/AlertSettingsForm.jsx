@@ -33,6 +33,7 @@ export default function AlertSettingsForm() {
       frequency: 'immediate',
       emailEnabled: true,
       platformEnabled: true,
+      whatsappEnabled: false,
       dailyDigestTime: '09:00',
       weeklyDigestDay: 'monday',
     },
@@ -52,6 +53,7 @@ export default function AlertSettingsForm() {
         frequency: settings.frequency,
         emailEnabled: settings.emailEnabled,
         platformEnabled: settings.platformEnabled,
+        whatsappEnabled: settings.whatsappEnabled || false,
         dailyDigestTime: settings.dailyDigestTime?.slice(0, 5) || '09:00',
         weeklyDigestDay: settings.weeklyDigestDay || 'monday',
       });
@@ -184,11 +186,22 @@ export default function AlertSettingsForm() {
             <label className="flex items-center">
               <input
                 type="checkbox"
-                {...register('platformEnabled')}
+                {...register('whatsappEnabled')}
                 className="h-4 w-4 text-emerald-600 focus:ring-emerald-500 border-gray-300 rounded"
               />
               <span className="ml-3 text-sm text-gray-700">
-                Recibir alertas en la plataforma
+                Recibir notificaciones prioritarias por WhatsApp
+              </span>
+            </label>
+            <label className="flex items-center">
+              <input
+                type="checkbox"
+                {...register('platformEnabled')}
+                className="h-4 w-4 text-emerald-600 focus:ring-emerald-500 border-gray-300 rounded"
+                disabled
+              />
+              <span className="ml-3 text-sm text-gray-700 opacity-70">
+                Recibir alertas en la plataforma (obligatorio)
               </span>
             </label>
           </div>

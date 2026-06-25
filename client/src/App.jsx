@@ -137,6 +137,9 @@ const AppRoutes = () => {
 
       {/* ── Vistas autenticadas (con AppShell) ─────────────────────────── */}
       <Route element={<ShellLayout />}>
+        {/* Dashboard común (estudiante y empresa) — WelcomePage ramifica por rol */}
+        <Route path="/dashboard" element={<WelcomePage />} />
+
         {/* Solo estudiante */}
         <Route element={<StudentOnly />}>
           <Route path="/inbox" element={<InboxPage />} />

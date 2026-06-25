@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { X, Send, AlertCircle } from 'lucide-react';
-import { useOffers } from '../hooks/useOffers';
+import { useMyOffers } from '../hooks/useOffers';
 import { useSendInvitation } from '../hooks/useInvitations';
 
 /**
@@ -16,13 +16,13 @@ export default function InvitationModal({ studentId, isOpen, onClose, onSuccess 
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
 
-  const { data: offersData, isLoading: offersLoading } = useOffers();
+  const { data: offersData, isLoading: offersLoading } = useMyOffers();
   const { mutate: sendInvitation, isPending } = useSendInvitation();
 
   // Filtrar solo ofertas activas del reclutador actual
   const offers = useMemo(() => {
-    if (!offersData?.data?.offers) return [];
-    return offersData.data.offers.filter(offer => offer.status === 'active');
+    if (!Array.isArray(offersData)) return [];
+    return offersData.filter(offer => offer.status === 'active');
   }, [offersData]);
 
   const handleSendInvitation = () => {

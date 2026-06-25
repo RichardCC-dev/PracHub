@@ -43,7 +43,7 @@ const StudentRegistrationForm = ({ onForgotPassword, onGoToLogin, onLoginSuccess
     const payload = sanitizePayload({ ...step1Data, ...values });
     const result = await registerStudent(payload);
     setSuccessMessage(`${result.message} Revisa tu correo y haz clic en el enlace de verificación para activar tu cuenta.`);
-    setTimeout(onLoginSuccess, 2000);
+    onLoginSuccess(result.user);
   };
 
   return (

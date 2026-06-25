@@ -178,13 +178,11 @@ const CompanyRegistrationForm = ({ onGoToLogin, onLoginSuccess }) => {
         responsiblePhone: formData.responsiblePhone,
       };
 
-      await registerCompany(payload);
+      const result = await registerCompany(payload);
       setSuccessMessage(
         '¡Registro exitoso! Hemos enviado un correo de verificación. Por favor revisa tu bandeja de entrada.'
       );
-      setTimeout(() => {
-        onLoginSuccess?.();
-      }, 3000);
+      onLoginSuccess?.(result.user);
     } catch (err) {
       setSubmitError(err.message || 'Ocurrió un error al registrar la empresa.');
     }

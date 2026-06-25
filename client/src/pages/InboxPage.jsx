@@ -303,7 +303,7 @@ const InboxPage = () => {
 
   const {
     conversations, currentMessages, currentOtherUser, isLoading, isSending, error,
-    fetchInbox, fetchUnreadCount, fetchConversation, sendMessage, clearCurrentConversation,
+    unreadCount, fetchInbox, fetchUnreadCount, fetchConversation, sendMessage, clearCurrentConversation,
   } = useMessageStore();
 
   const { data: invitationsData, isLoading: invitationsLoading, refetch: refetchInvitations } = useInvitations('PENDING', user?.role === 'student');
@@ -362,9 +362,9 @@ const InboxPage = () => {
             <h1 className="text-lg font-semibold text-gray-900">Mensajes e Invitaciones</h1>
             
             {/* Contador de la versión anterior recuperado */}
-            {totalUnread > 0 && (
+            {unreadCount > 0 && (
               <span className="min-w-[20px] h-5 bg-emerald-500 text-white text-xs font-bold rounded-full flex items-center justify-center px-1.5">
-                {totalUnread > 99 ? '99+' : totalUnread}
+                {unreadCount > 99 ? '99+' : unreadCount}
               </span>
             )}
           </div>

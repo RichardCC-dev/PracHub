@@ -40,10 +40,19 @@ export const companyName = (company) =>
   company?.tradeName || company?.legalName || 'Empresa';
 
 // ── Carreras / tags ──────────────────────────────────────────────────────────
-/** Normaliza careerTags (puede venir como array o string separado por comas). */
+/** Normaliza careerTags (puede venir como array, string JSON o string separado por comas). */
 export const careerTagsToArray = (tags) => {
   if (!tags) return [];
   if (Array.isArray(tags)) return tags.map((t) => String(t).trim()).filter(Boolean);
+  // Intentar parsear como JSON (ej: '["Ingeniería de Software"]')
+  if (typeof tags === 'string' && tags.trim().startsWith('[')) {
+    try {
+      const parsed = JSON.parse(tags);
+      if (Array.isArray(parsed)) return parsed.map((t) => String(t).trim()).filter(Boolean);
+    } catch {
+      // Si falla el parse, caer al split por comas
+    }
+  }
   return String(tags)
     .split(',')
     .map((t) => t.trim())

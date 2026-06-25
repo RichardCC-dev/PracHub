@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import useAuthStore from '../store/authStore';
 import { createOffer, updateOffer } from '../services/offerApi';
+import { careerTagsToArray } from '../utils/format';
 
 const AREAS = [
   'Tecnología', 'Marketing', 'Finanzas', 'Recursos Humanos', 'Operaciones',
@@ -30,7 +31,7 @@ const CreateOfferPage = () => {
     modality: editOffer?.modality || 'in_person',
     duration: editOffer?.duration || '',
     compensation: editOffer?.compensation || '',
-    careerTags: editOffer?.careerTags || [],
+    careerTags: careerTagsToArray(editOffer?.careerTags),
     expiresAt: editOffer?.expiresAt ? editOffer.expiresAt.split('T')[0] : '',
   });
 
@@ -46,7 +47,7 @@ const CreateOfferPage = () => {
 
   const handleCareerToggle = (career) => {
     setForm(prev => {
-      const current = prev.careerTags || [];
+      const current = Array.isArray(prev.careerTags) ? prev.careerTags : [];
       if (current.includes(career)) {
         return { ...prev, careerTags: current.filter(c => c !== career) };
       }

@@ -10,7 +10,8 @@
     "test:watch": "jest --watch --forceExit",
     "test:coverage": "jest --coverage --forceExit",
     "lint": "eslint .",
-    "sync-db": "node -e \"require('dotenv').config(); require('./src/models').sequelize.sync({ alter: true })\""
+    "sync-db": "node -e \"require('dotenv').config(); require('./src/models').sequelize.sync({ alter: true })\"",
+    "seed:demo": "node scripts/seedFullDemo.js"
   },
   "keywords": [],
   "author": "",

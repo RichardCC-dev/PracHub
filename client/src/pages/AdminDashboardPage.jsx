@@ -1,7 +1,7 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import useAuthStore from '../store/authStore';
-import { getPendingOffers, getOfferStats, approveOffer, rejectOffer, getModerationHistory, getCompanies, enableCompanyPublishing, disableCompanyPublishing, getOffersByStatus, getReports } from '../services/adminApi';
+import { getPendingOffers, getOfferStats, approveOffer, rejectOffer, getCompanies, enableCompanyPublishing, disableCompanyPublishing, getOffersByStatus, getReports } from '../services/adminApi';
 
 const AdminDashboardPage = () => {
   const { token, user, logout } = useAuthStore();
@@ -21,7 +21,6 @@ const AdminDashboardPage = () => {
   const [processingId, setProcessingId] = useState(null);
   const [activeTab, setActiveTab] = useState('offers');
   const [companies, setCompanies] = useState([]);
-  const [companiesLoading, setCompaniesLoading] = useState(false);
   const [companyFilter, setCompanyFilter] = useState('all');
   const [offerFilter, setOfferFilter] = useState('pending');
   const [searchQuery, setSearchQuery] = useState('');
@@ -37,8 +36,10 @@ const AdminDashboardPage = () => {
   const [reportsData, setReportsData] = useState(null);
   const [reportsLoading, setReportsLoading] = useState(false);
   const [reportFilters, setReportFilters] = useState({ startDate: '', endDate: '' });
+  const offerFilterRef = useRef(offerFilter);
+  const handleOfferFilterChangeRef = useRef();
 
-  const fetchReports = async () => {
+  const fetchReports = useCallback(async () => {
     try {
       setReportsLoading(true);
       const res = await getReports(token, reportFilters);
@@ -48,13 +49,13 @@ const AdminDashboardPage = () => {
     } finally {
       setReportsLoading(false);
     }
-  };
+  }, [token, reportFilters]);
 
   useEffect(() => {
     if (activeTab === 'reports') {
       fetchReports();
     }
-  }, [activeTab, reportFilters]);
+  }, [activeTab, reportFilters, fetchReports]);
 
   const handleExportCSV = () => {
     if (!reportsData) return;
@@ -79,17 +80,7 @@ const AdminDashboardPage = () => {
     document.body.removeChild(link);
   };
 
-  const CAREER_TAGS = [
-    'Ingeniería de Software', 'Sistemas de Información', 'Ingeniería Industrial',
-    'Administración', 'Marketing', 'Contabilidad', 'Economía', 'Derecho',
-    'Psicología', 'Comunicaciones', 'Diseño Gráfico', 'Arquitectura',
-  ];
-
-  useEffect(() => {
-    loadData();
-  }, []);
-
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
@@ -108,7 +99,17 @@ const AdminDashboardPage = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [token]);
+
+  useEffect(() => {
+    loadData();
+  }, [loadData]);
+
+  const CAREER_TAGS = [
+    'Ingeniería de Software', 'Sistemas de Información', 'Ingeniería Industrial',
+    'Administración', 'Marketing', 'Contabilidad', 'Economía', 'Derecho',
+    'Psicología', 'Comunicaciones', 'Diseño Gráfico', 'Arquitectura',
+  ];
 
   const handleApprove = async (offerId) => {
     try {
@@ -212,6 +213,7 @@ const AdminDashboardPage = () => {
   });
 
   const handleOfferFilterChange = (filter) => {
+    offerFilterRef.current = filter;
     setOfferFilter(filter);
     setPagination(prev => ({ ...prev, page: 1 }));
     // Recargar datos según el filtro
@@ -227,6 +229,7 @@ const AdminDashboardPage = () => {
       loadAllOffers(1);
     }
   };
+  handleOfferFilterChangeRef.current = handleOfferFilterChange;
 
   const buildFilters = (page = 1) => ({
     tags: selectedTags.length > 0 ? selectedTags : undefined,
@@ -241,7 +244,7 @@ const AdminDashboardPage = () => {
   useEffect(() => {
     if (activeTab === 'offers') {
       const timer = setTimeout(() => {
-        handleOfferFilterChange(offerFilter);
+        handleOfferFilterChangeRef.current(offerFilterRef.current);
       }, 500); // Debounce para no hacer muchas requests
       return () => clearTimeout(timer);
     }

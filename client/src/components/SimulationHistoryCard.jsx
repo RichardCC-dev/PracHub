@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 
 const ScoreCircle = ({ score }) => {
   if (score == null) return null;
@@ -29,7 +29,7 @@ const SimulationHistoryCard = ({ sim, onView }) => {
       if (parsed.general) {
         summaryText = parsed.general;
       }
-    } catch (e) {
+    } catch {
       // Ignorar, dejamos text original
     }
   }

@@ -3,7 +3,6 @@ import {
   getInvitations,
   sendInvitation,
   respondToInvitation,
-  getInvitationStats,
 } from '../services/invitationApi';
 
 /**
@@ -62,23 +61,6 @@ export function useRespondToInvitation() {
       // También invalidar aplicaciones si aceptó
       queryClient.invalidateQueries({ queryKey: ['applications'] });
     },
-    retry: 1,
-  });
-}
-
-/**
- * useInvitationStats - Obtener estadísticas de invitaciones
- * @param {number} offerId
- * @param {boolean} enabled
- * @returns {object}
- */
-export function useInvitationStats(offerId, enabled = true) {
-  return useQuery({
-    queryKey: ['invitation-stats', offerId],
-    queryFn: () => getInvitationStats(offerId),
-    staleTime: 10 * 60 * 1000, // 10 minutos
-    gcTime: 30 * 60 * 1000,
-    enabled: enabled && !!offerId,
     retry: 1,
   });
 }

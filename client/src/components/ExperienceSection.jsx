@@ -3,7 +3,7 @@ import CVSuggestion from './CVSuggestion';
 import useCVStore from '../store/cvStore';
 
 const ExperienceSection = ({ section, title, data }) => {
-  const { updateSection, requestSectionSuggestion, acceptSectionSuggestion, clearSuggestion, suggestion, isLoading, activeSection } = useCVStore();
+  const { updateSection, requestSectionSuggestion, clearSuggestion, suggestion, isLoading, activeSection } = useCVStore();
   const [experiences, setExperiences] = useState(data?.items || []);
   const saveTimeoutRef = useRef(null);
 

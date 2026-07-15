@@ -1,4 +1,4 @@
-import { API_URL, getToken, authHeaders, parseResponse } from './apiBase';
+import { API_URL, authHeaders, parseResponse } from './apiBase';
 
 /**
  * Servicio para obtener métricas de seguidores de empresa.

@@ -16,7 +16,7 @@ const sections = [
 ];
 
 const CVWizard = () => {
-  const { resume, fetchResume, isLoading, error, selectedTemplate, restoreCount } = useCVStore();
+  const { resume, fetchResume, error, selectedTemplate, restoreCount } = useCVStore();
 
   useEffect(() => {
     fetchResume();

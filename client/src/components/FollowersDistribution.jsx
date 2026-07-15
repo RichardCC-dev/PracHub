@@ -1,4 +1,3 @@
-import React from 'react';
 import { BookOpen, Building2 } from 'lucide-react';
 
 /**
@@ -10,7 +9,7 @@ const FollowersDistribution = ({
   byUniversity = [], 
   totalFollowers = 0 
 }) => {
-  const renderDistributionList = (items, title, Icon) => {
+  const renderDistributionList = (items) => {
     if (!items || items.length === 0) {
       return (
         <div className="rounded-xl bg-gray-50 p-4 text-center text-sm text-gray-500">

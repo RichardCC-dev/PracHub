@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
-  Search, FileText, Briefcase, Bot, BarChart3, Building2, Rss, Bell,
-  MessageSquare, Sparkles, ChevronRight, Send, FileCheck2, Users, ClipboardList,
+  Search, FileText, Bot, BarChart3, Building2, Bell,
+  MessageSquare, Sparkles, ChevronRight, FileCheck2, Users, ClipboardList,
   CheckCircle2, Clock, AlertCircle,
 } from 'lucide-react';
 import useAuthStore from '../store/authStore';

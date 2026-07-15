@@ -9,30 +9,6 @@ import {
 } from '../services/notificationApi';
 import useAuthStore from '../store/authStore';
 
-const TYPE_STYLES = {
-  aceptada:   'bg-green-50 border-green-200',
-  descartada: 'bg-red-50 border-red-200',
-  revision:   'bg-yellow-50 border-yellow-200',
-  offer_match: 'bg-emerald-50 border-emerald-200',
-  followed_company_offer: 'bg-amber-50 border-amber-200',
-  default:    'bg-gray-50 border-gray-200',
-};
-
-const getStyle = (notification) => {
-  // Primero verificar por tipo explícito
-  if (notification.type === 'offer_match') return TYPE_STYLES.offer_match;
-  if (notification.type === 'followed_company_offer') return TYPE_STYLES.followed_company_offer;
-  
-  // Fallback a detección por mensaje/título
-  if (notification.message?.includes('aceptada') || notification.title?.includes('aceptada')) return TYPE_STYLES.aceptada;
-  if (notification.message?.includes('seleccionada') || notification.title?.includes('seleccionada')) return TYPE_STYLES.descartada;
-  if (notification.message?.includes('revisión') || notification.title?.includes('revisión')) return TYPE_STYLES.revision;
-  if (notification.message?.includes('compatible') || notification.title?.includes('compatible')) return TYPE_STYLES.offer_match;
-  if (notification.message?.includes('empresa que sigues') || notification.title?.includes('empresa que sigues')) return TYPE_STYLES.followed_company_offer;
-  
-  return TYPE_STYLES.default;
-};
-
 const formatDate = (date) => {
   const d = new Date(date);
   const now = new Date();
@@ -57,16 +33,13 @@ const NotificationBell = () => {
   const [loading, setLoading] = useState(false);
   const dropdownRef = useRef(null);
 
-  // Solo para estudiantes
-  if (!user || user.role !== 'student') return null;
-
   useEffect(() => {
-    if (token) {
+    if (token && user?.role === 'student') {
       loadUnreadCount();
       const interval = setInterval(loadUnreadCount, 30000);
       return () => clearInterval(interval);
     }
-  }, [token]);
+  }, [token, user?.role]);
 
   useEffect(() => {
     const handleClickOutside = (e) => {
@@ -78,11 +51,13 @@ const NotificationBell = () => {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
+  if (!user || user.role !== 'student') return null;
+
   const loadUnreadCount = async () => {
     try {
       const data = await getUnreadCount();
       setUnreadCount(data.count || 0);
-    } catch {}
+    } catch { void 0; }
   };
 
   const handleOpen = async () => {
@@ -92,7 +67,7 @@ const NotificationBell = () => {
       try {
         const data = await getMyNotifications();
         setNotifications(data.data || []);
-      } catch {}
+      } catch { void 0; }
       setLoading(false);
     }
   };
@@ -104,7 +79,7 @@ const NotificationBell = () => {
         prev.map((n) => (n.id === notificationId ? { ...n, isRead: true } : n))
       );
       setUnreadCount((prev) => Math.max(0, prev - 1));
-    } catch {}
+    } catch { void 0; }
   };
 
   const handleNotificationClick = async (n) => {
@@ -144,7 +119,7 @@ const NotificationBell = () => {
       await markAllNotificationsAsRead();
       setNotifications((prev) => prev.map((n) => ({ ...n, isRead: true })));
       setUnreadCount(0);
-    } catch {}
+    } catch { void 0; }
   };
 
   return (

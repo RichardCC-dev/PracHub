@@ -12,7 +12,6 @@ import {
   MessageSquare,
   LogOut,
   ClipboardList,
-  Users,
 } from 'lucide-react';
 import useAuthStore from '../../store/authStore';
 import useMessageStore from '../../store/messageStore';

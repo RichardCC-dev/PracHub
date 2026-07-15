@@ -8,7 +8,7 @@ import {
   getSimulationStats
 } from '../services/api';
 
-const useSimulationStore = create((set, get) => ({
+const useSimulationStore = create((set) => ({
   simulationsHistory: [],
   currentSimulation: null,
   simulationStats: null,

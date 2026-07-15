@@ -2,7 +2,7 @@ import { useState, useRef, useCallback, useEffect } from 'react';
 import useCVStore from '../store/cvStore';
 
 const EducationSection = ({ section, title, data }) => {
-  const { updateSection, isSaving } = useCVStore();
+  const { updateSection } = useCVStore();
   const [entries, setEntries] = useState(
     data?.items?.length > 0
       ? data.items

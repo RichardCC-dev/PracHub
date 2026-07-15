@@ -15,7 +15,7 @@ const CULTURE_TAG_OPTIONS = [
   'innovación',
 ];
 
-const CompanyProfileForm = ({ company, token, onUpdate }) => {
+const CompanyProfileForm = ({ company, onUpdate }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(false);

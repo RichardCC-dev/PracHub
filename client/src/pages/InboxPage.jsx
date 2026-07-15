@@ -1,7 +1,7 @@
 import { useEffect, useState, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
-  ArrowLeft, MessageSquare, Send, Building2, CheckCheck, Clock, RefreshCw, Search, Users, Mail, AlertCircle,
+  ArrowLeft, MessageSquare, Send, Building2, CheckCheck, Clock, RefreshCw, Search, Users, Mail,
 } from 'lucide-react';
 import useMessageStore from '../store/messageStore';
 import useAuthStore from '../store/authStore';

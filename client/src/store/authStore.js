@@ -42,7 +42,7 @@ const getStoredUser = () => {
   } catch { return null; }
 };
 
-const useAuthStore = create((set, get) => ({
+const useAuthStore = create((set) => ({
   user: null,
   token: null,
   isLoading: true,

@@ -435,7 +435,7 @@ const CompanyRegistrationForm = ({ onGoToLogin, onLoginSuccess }) => {
 
       <div className="rounded-lg bg-amber-50 p-4">
         <p className="text-sm text-amber-800">
-          <strong>Importante:</strong> Tu empresa quedará en estado "pendiente de verificación" hasta que validemos
+          <strong>Importante:</strong> Tu empresa quedará en estado &quot;pendiente de verificación&quot; hasta que validemos
           el RUC. Podrás preparar ofertas pero no publicarlas hasta que la verificación esté completa.
         </p>
       </div>

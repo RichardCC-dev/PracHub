@@ -25,7 +25,7 @@ PracHub/
 npm install          # instalar dependencias
 npm start            # producción (node src/server.js)
 npm run dev          # desarrollo (nodemon)
-npm test             # Jest + supertest (26 tests)
+npm test             # Jest + supertest (121 tests, 5 omitidos)
 npm run lint         # ESLint
 ```
 
@@ -35,7 +35,7 @@ npm run lint         # ESLint
 npm install          # instalar dependencias
 npm run dev          # Vite dev server (http://localhost:5173)
 npm run build        # build de producción → dist/
-npm test             # Vitest (18 tests)
+npm test             # Vitest (22 tests)
 npm run lint         # ESLint
 ```
 

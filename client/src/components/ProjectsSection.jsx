@@ -8,7 +8,7 @@ const normalizeProject = (p) => ({
 });
 
 const ProjectsSection = ({ section, title, data }) => {
-  const { updateSection, requestSectionSuggestion, acceptSectionSuggestion, clearSuggestion, suggestion, isLoading, activeSection } = useCVStore();
+  const { updateSection, requestSectionSuggestion, clearSuggestion, suggestion, isLoading, activeSection } = useCVStore();
   const [projects, setProjects] = useState((data?.items || []).map(normalizeProject));
   const saveTimeoutRef = useRef(null);
 

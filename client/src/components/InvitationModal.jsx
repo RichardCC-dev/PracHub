@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import { useState, useMemo } from 'react';
 import { X, Send, AlertCircle } from 'lucide-react';
 import { useMyOffers } from '../hooks/useOffers';
 import { useSendInvitation } from '../hooks/useInvitations';

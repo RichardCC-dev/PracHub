@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Save, History, Sparkles, Trash2, Loader2, X } from 'lucide-react';
+import { Save, History, Trash2, Loader2, X } from 'lucide-react';
 import CVWizard from '../components/CVWizard';
 import CVExportPanel from '../components/CVExportPanel';
 import CVVersionHistory from '../components/CVVersionHistory';

@@ -27,7 +27,6 @@ export default function AlertSettingsForm() {
     handleSubmit,
     watch,
     reset,
-    formState: { errors },
   } = useForm({
     defaultValues: {
       frequency: 'immediate',

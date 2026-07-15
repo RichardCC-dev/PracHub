@@ -38,17 +38,6 @@ export const getMyApplications = async () => {
 };
 
 /**
- * Verificar si se puede postular a una oferta
- * @param {number} offerId - ID de la oferta
- */
-export const canApply = async (offerId) => {
-  const response = await fetch(`${API_URL}/applications/can-apply/${offerId}`, {
-    headers: { 'Authorization': `Bearer ${getToken()}` },
-  });
-  return parseResponse(response);
-};
-
-/**
  * Obtener postulaciones de una oferta (para empresas)
  * @param {number} offerId - ID de la oferta
  */

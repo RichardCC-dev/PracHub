@@ -1,5 +1,4 @@
-import React from 'react';
-import { CheckCircle2, XCircle, Briefcase, MapPin, Clock } from 'lucide-react';
+import { Briefcase, MapPin, Clock } from 'lucide-react';
 import InvitationResponse from './InvitationResponse';
 
 /**
@@ -11,7 +10,7 @@ import InvitationResponse from './InvitationResponse';
  * - Botones de acción (si está en PENDING)
  */
 export default function InvitationCard({ invitation, onRespond, isLoading }) {
-  const { offer, message, recruiterMessage, responseStatus, createdAt } = invitation;
+  const { offer, recruiterMessage, responseStatus, createdAt } = invitation;
   const { title, modality, company } = offer;
   const { legalName: companyName, logoUrl } = company;
 
@@ -76,7 +75,7 @@ export default function InvitationCard({ invitation, onRespond, isLoading }) {
       {/* Mensaje personalizado del reclutador */}
       {recruiterMessage && (
         <div className="bg-white rounded p-3 mb-3 border-l-4 border-emerald-950">
-          <p className="text-sm text-gray-700 italic">"{recruiterMessage}"</p>
+          <p className="text-sm text-gray-700 italic">&quot;{recruiterMessage}&quot;</p>
           <p className="text-xs text-gray-500 mt-2">
             <Clock className="w-3 h-3 inline mr-1" />
             {formatDate(createdAt)}

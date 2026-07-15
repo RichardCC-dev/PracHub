@@ -12,6 +12,7 @@ build/
 
 # ── Cobertura de tests ────────────────────────────────────────────────────────
 coverage/
+vitest_out.txt
 
 # ── Cache de Vite / TypeScript ────────────────────────────────────────────────
 .vite/

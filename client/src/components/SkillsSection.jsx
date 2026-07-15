@@ -11,7 +11,7 @@ const normalizeSkills = (data) => {
 };
 
 const SkillsSection = ({ section, title, data }) => {
-  const { updateSection, isLoading } = useCVStore();
+  const { updateSection } = useCVStore();
   const [skills, setSkills] = useState(() => normalizeSkills(data));
   const saveTimeoutRef = useRef(null);
 

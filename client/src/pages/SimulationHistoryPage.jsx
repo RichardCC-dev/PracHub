@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useSimulationHistory, useSimulationStats } from '../hooks/useSimulations';
 import SimulationProgressStats from '../components/SimulationProgressStats';

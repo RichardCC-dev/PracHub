@@ -1,17 +1,8 @@
 import { useEffect, useState } from 'react';
-import { ArrowLeft, Bell, Building2, History, CheckCircle, Star, Percent, ArrowRight } from 'lucide-react';
+import { ArrowLeft, Bell, Building2, History, CheckCircle, ArrowRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { Star, Percent } from 'lucide-react';
 import useAlertStore from '../store/alertStore';
-
-const TYPE_ICONS = {
-  offer_match: <Percent className="w-5 h-5" />,
-  followed_company_offer: <Star className="w-5 h-5" />,
-};
-
-const TYPE_LABELS = {
-  offer_match: 'Oferta compatible',
-  followed_company_offer: 'Empresa que sigues',
-};
 
 const AlertHistoryPage = () => {
   const navigate = useNavigate();

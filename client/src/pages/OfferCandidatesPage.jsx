@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import {
   ArrowLeft,
@@ -9,7 +9,6 @@ import {
   Clock,
   Mail,
   MessageSquare,
-  Building2,
   FileText,
   AlertCircle,
   Loader2,
@@ -75,43 +74,31 @@ const OfferCandidatesPage = () => {
   // Descarga de CV
   const [downloadingCV, setDownloadingCV] = useState(null);
 
+  const loadData = useCallback(async () => {
+    try {
+      setLoading(true);
+      setError(null);
+
+      // Cargar ofertas para obtener info de la oferta actual
+      const offersData = await getMyOffers(token);
+      const currentOffer = offersData.offers?.find(o => o.id === parseInt(offerId));
+      setOffer(currentOffer);
+
+      // Cargar postulaciones
+      const appsData = await getOfferApplications(offerId);
+      setApplications(appsData.data || []);
+    } catch (err) {
+      setError(err.message || 'Error al cargar los datos');
+    } finally {
+      setLoading(false);
+    }
+  }, [token, offerId]);
+
   useEffect(() => {
-    let cancelled = false;
-    
-    const loadData = async () => {
-      try {
-        setLoading(true);
-        setError(null);
-        
-        // Cargar ofertas para obtener info de la oferta actual
-        const offersData = await getMyOffers(token);
-        if (cancelled) return;
-        
-        const currentOffer = offersData.offers?.find(o => o.id === parseInt(offerId));
-        setOffer(currentOffer);
-        
-        // Cargar postulaciones
-        const appsData = await getOfferApplications(offerId);
-        if (cancelled) return;
-        
-        setApplications(appsData.data || []);
-      } catch (err) {
-        if (!cancelled) {
-          setError(err.message || 'Error al cargar los datos');
-        }
-      } finally {
-        if (!cancelled) {
-          setLoading(false);
-        }
-      }
-    };
-    
     if (token && offerId) {
       loadData();
     }
-    
-    return () => { cancelled = true; };
-  }, [token, offerId]);
+  }, [token, offerId, loadData]);
 
   const handleStatusChange = async () => {
     if (!newStatus || !managingApplication) return;

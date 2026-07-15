@@ -1,4 +1,4 @@
-import { API_URL, getToken, authHeaders, parseResponse } from './apiBase';
+import { API_URL, authHeaders, parseResponse } from './apiBase';
 
 /**
  * API client para invitaciones a postular (HU-18)
@@ -54,20 +54,4 @@ export async function respondToInvitation(invitationId, response) {
     body: JSON.stringify({ response }),
   });
   return parseResponse(result);
-}
-
-/**
- * Obtener estadísticas de invitaciones para una oferta
- * @param {number} offerId - ID de la oferta
- * @returns {Promise}
- */
-export async function getInvitationStats(offerId) {
-  const response = await fetch(
-    `${API_URL}/invitations/stats/${offerId}`,
-    {
-      method: 'GET',
-      headers: authHeaders(),
-    }
-  );
-  return parseResponse(response);
 }

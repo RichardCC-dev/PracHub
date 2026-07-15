@@ -159,7 +159,7 @@ const formatSuggestionText = (data) => {
   return String(data);
 };
 
-const CVSection = ({ section, title, fields, data: rawData, isExperience, isProjects, isProfile, isCertifications, isEducation }) => {
+const CVSection = ({ section, title, fields, data: rawData, isExperience, isProjects, isCertifications, isEducation }) => {
   const data = safeParseData(rawData);
 
   if (isEducation) return <EducationSection section={section} title={title} data={data} />;

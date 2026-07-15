@@ -32,7 +32,7 @@ const ROUTE_TO_VIEW = {
   '/reset-password': 'reset',
 };
 
-const StudentOnboardingPage = ({ onLoginSuccess }) => {
+const StudentOnboardingPage = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const resetToken = useMemo(() => new URLSearchParams(window.location.search).get('token'), []);

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import useAuthStore from '../store/authStore';
 import useSimulationStore from '../store/simulationStore';
 
@@ -54,7 +54,7 @@ const SimulationChat = ({ simulationId, onEndSimulation }) => {
       setLocalError(null);
       fetchSimulationDetails(simulationId, token).catch(err => setLocalError(err.message));
     }
-  }, [simulationId, token]);
+  }, [simulationId, token, fetchSimulationDetails]);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -211,7 +211,7 @@ const SimulationChat = ({ simulationId, onEndSimulation }) => {
               if (feedback.startsWith('{')) {
                 parsed = JSON.parse(feedback);
               }
-            } catch (e) {
+            } catch {
               parsed = null;
             }
 

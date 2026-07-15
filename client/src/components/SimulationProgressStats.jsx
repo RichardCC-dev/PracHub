@@ -1,5 +1,3 @@
-import React from 'react';
-
 const ScoreBadge = ({ score, size = 'md' }) => {
   if (score == null) return <span className="text-gray-400 text-sm">—</span>;
   const color = score >= 75 ? 'text-green-700 bg-green-50 border-green-200'

@@ -7,6 +7,13 @@ export const getMyNotifications = async () => {
   return parseResponse(response);
 };
 
+export const getNotificationById = async (notificationId) => {
+  const response = await fetch(`${API_URL}/notifications/${notificationId}`, {
+    headers: { Authorization: `Bearer ${getToken()}` },
+  });
+  return parseResponse(response);
+};
+
 export const getUnreadCount = async () => {
   const response = await fetch(`${API_URL}/notifications/unread-count`, {
     headers: { Authorization: `Bearer ${getToken()}` },

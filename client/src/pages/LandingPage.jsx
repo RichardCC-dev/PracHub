@@ -27,13 +27,6 @@ const COMPANY_FEATURES = [
   { icon: MessageSquare, title: 'Contacta candidatos', desc: 'Comunícate directamente con los postulantes de tus ofertas.' },
 ];
 
-const STATS = [
-  { value: '200+', label: 'Empresas' },
-  { value: '5 000+', label: 'Estudiantes' },
-  { value: '1 200+', label: 'Prácticas activas' },
-  { value: '95%', label: 'Match con IA' },
-];
-
 const FeatureCard = ({ icon: Icon, title, desc }) => (
   <div className="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
     <span className="inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-700">
@@ -89,16 +82,6 @@ const LandingPage = () => {
                 Ya tengo cuenta
               </button>
             </div>
-          </div>
-
-          {/* Métricas en cajas redondeadas con números en negrita */}
-          <div className="mt-14 grid grid-cols-2 gap-4 sm:grid-cols-4">
-            {STATS.map((s) => (
-              <div key={s.label} className="rounded-2xl border border-white/10 bg-white/5 px-4 py-5 text-center backdrop-blur">
-                <p className="text-3xl font-extrabold text-emerald-300">{s.value}</p>
-                <p className="mt-1 text-xs text-emerald-100/70">{s.label}</p>
-              </div>
-            ))}
           </div>
         </div>
       </section>

@@ -211,9 +211,12 @@ const formatSuggestionText = (data) => {
   if (typeof data === 'string') return data;
   if (typeof data === 'object' && data !== null) {
     if (data.items && Array.isArray(data.items)) {
-      return data.items.map((item, index) => 
-        `Proyecto ${index + 1}:\nTítulo: ${item.title}\nDescripción: ${item.description}`
-      ).join('\n\n');
+      return data.items.map((item, index) => {
+        const bullets = Array.isArray(item.bullets)
+          ? item.bullets.filter(b => b && b.trim()).map(b => `  • ${b}`).join('\n')
+          : item.description ? `  • ${item.description}` : '';
+        return `Proyecto ${index + 1}:\nTítulo: ${item.title}\n${bullets}`;
+      }).join('\n\n');
     }
     const fieldLabels = {
       company: 'Empresa',

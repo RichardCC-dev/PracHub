@@ -58,6 +58,15 @@ export const loginUser = async (payload) => {
   return parseResponse(response);
 };
 
+export const updateStudentProfile = async (payload) => {
+  const response = await fetch(`${API_URL}/auth/students/profile`, {
+    method: 'PUT',
+    headers: getAuthHeaders(),
+    body: JSON.stringify(payload),
+  });
+  return parseResponse(response);
+};
+
 export const registerStudent = async (payload) => {
   const response = await fetch(`${API_URL}/auth/students/register`, {
     method: 'POST',
@@ -211,11 +220,11 @@ export const exportVersionPdf = async (versionId, template = 'harvard') => {
 
 // --- SIMULATIONS ---
 
-export const startSimulation = async (simulatedRole, career, sector) => {
+export const startSimulation = async (simulatedRole, career, sector, companyId) => {
   const response = await fetch(`${API_URL}/simulations/start`, {
     method: 'POST',
     headers: getAuthHeaders(),
-    body: JSON.stringify({ simulatedRole, career, sector }),
+    body: JSON.stringify({ simulatedRole, career, sector, companyId }),
   });
   return parseResponse(response);
 };

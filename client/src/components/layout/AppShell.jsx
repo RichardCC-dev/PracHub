@@ -10,8 +10,17 @@ import useMessageStore from '../../store/messageStore';
  * el botón único de retroceso, el ícono de mensajes con badge, las
  * notificaciones y el acceso al perfil.
  */
+const COLLAPSE_KEY = 'prachub.sidebar.collapsed';
+
 const AppShell = ({ children }) => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [collapsed, setCollapsed] = useState(() => {
+    try {
+      return localStorage.getItem(COLLAPSE_KEY) === 'true';
+    } catch {
+      return false;
+    }
+  });
   const token = useAuthStore((s) => s.token);
   const user = useAuthStore((s) => s.user);
   const fetchUnreadCount = useMessageStore((s) => s.fetchUnreadCount);
@@ -25,11 +34,23 @@ const AppShell = ({ children }) => {
     return () => clearInterval(interval);
   }, [token, user, fetchUnreadCount]);
 
+  const toggleCollapse = () => {
+    setCollapsed((prev) => {
+      const next = !prev;
+      try {
+        localStorage.setItem(COLLAPSE_KEY, String(next));
+      } catch {
+        /* ignore */
+      }
+      return next;
+    });
+  };
+
   return (
     <div className="flex h-screen overflow-hidden bg-gray-50">
       {/* Sidebar fijo (escritorio) */}
       <div className="hidden lg:block">
-        <Sidebar />
+        <Sidebar collapsed={collapsed} onToggleCollapse={toggleCollapse} />
       </div>
 
       {/* Drawer (móvil) */}

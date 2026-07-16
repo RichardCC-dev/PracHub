@@ -15,10 +15,10 @@ const useSimulationStore = create((set) => ({
   isLoading: false,
   error: null,
   
-  startNewSimulation: async (role, token, career, sector) => {
+  startNewSimulation: async (role, token, career, sector, companyId) => {
     set({ isLoading: true, error: null });
     try {
-      const data = await startSimulation(role, token, career, sector);
+      const data = await startSimulation(role, career, sector, companyId);
       set({ currentSimulation: data.simulation, isLoading: false });
       return data.simulation;
     } catch (error) {

@@ -40,7 +40,7 @@ const safeParseData = (data) => {
 };
 
 const CVSectionForm = ({ section, title, fields, data }) => {
-  const { updateSection, requestSectionSuggestion, acceptSectionSuggestion, clearSuggestion, suggestion, isLoading, activeSection } = useCVStore();
+  const { updateSection, requestSectionSuggestion, clearSuggestion, suggestion, isLoading, activeSection } = useCVStore();
   const { register, handleSubmit, setValue, reset } = useForm({ defaultValues: data });
 
   // Resetear valores del formulario cuando cambian los datos externos (ej: restaurar versión)
@@ -60,12 +60,12 @@ const CVSectionForm = ({ section, title, fields, data }) => {
 
   const handleAcceptSuggestion = async () => {
     if (suggestion) {
-      Object.entries(suggestion.improved).forEach(([field, value]) => {
+      const improved = suggestion.improved;
+      Object.entries(improved).forEach(([field, value]) => {
         setValue(field, value);
       });
-      await acceptSectionSuggestion(section);
-      handleSubmit(onSubmit)();
       clearSuggestion();
+      await updateSection(section, improved);
     }
   };
 

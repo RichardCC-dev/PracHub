@@ -6,6 +6,8 @@ import {
   requestPasswordReset,
   resetPassword,
 } from '../services/api';
+import queryClient from '../lib/queryClient';
+import useSimulationStore from './simulationStore';
 
 const KEY_TOKEN = 'prachub_token';
 const KEY_USER = 'prachub_user';
@@ -42,6 +44,17 @@ const getStoredUser = () => {
   } catch { return null; }
 };
 
+/**
+ * Limpia el estado de todos los stores de Zustand al cambiar de usuario.
+ * TanStack Query se limpia con queryClient.clear(), pero los stores de Zustand
+ * (simulationStore, etc.) mantienen su estado entre sesiones si no se limpian
+ * explícitamente.
+ */
+const clearAllStores = () => {
+  queryClient.clear();
+  useSimulationStore.getState().clearCurrentSimulation();
+};
+
 const useAuthStore = create((set) => ({
   user: null,
   token: null,
@@ -55,6 +68,8 @@ const useAuthStore = create((set) => ({
     set({ isLoading: true, error: null });
     try {
       const data = await loginUser(payload);
+      // Limpiar estado de stores del usuario anterior (caché de queries + stores Zustand)
+      clearAllStores();
       saveSession(data.token, data.user, remember);
       set({ user: data.user, token: data.token, isLoading: false, isInitialized: true, authVerified: true });
       return data;
@@ -113,6 +128,8 @@ const useAuthStore = create((set) => ({
   },
   logout: () => {
     clearSession();
+    // Limpiar estado de todos los stores (caché de queries + stores Zustand)
+    clearAllStores();
     set({ user: null, token: null, authVerified: false });
   },
   setUser: (user) => {

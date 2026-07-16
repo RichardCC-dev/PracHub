@@ -20,19 +20,6 @@ const HomePage = ({ onLoginStudent, onLoginCompany, onRegisterStudent, onRegiste
           <p className="mt-5 max-w-md text-lg text-emerald-50/75">
             Construye tu CV con IA, practica entrevistas y postula a las mejores empresas desde una sola plataforma.
           </p>
-
-          <div className="mt-10 grid grid-cols-3 gap-4">
-            {[
-              { label: 'Empresas', value: '200+' },
-              { label: 'Estudiantes', value: '5 000+' },
-              { label: 'Prácticas activas', value: '1 200+' },
-            ].map(({ label, value }) => (
-              <div key={label} className="rounded-2xl border border-white/10 bg-white/5 px-4 py-4 text-center backdrop-blur">
-                <p className="text-2xl font-bold text-emerald-300">{value}</p>
-                <p className="mt-1 text-xs text-emerald-100/70">{label}</p>
-              </div>
-            ))}
-          </div>
         </div>
 
       </aside>

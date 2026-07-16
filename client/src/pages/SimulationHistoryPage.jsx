@@ -3,15 +3,12 @@ import { useNavigate } from 'react-router-dom';
 import { useSimulationHistory, useSimulationStats } from '../hooks/useSimulations';
 import SimulationProgressStats from '../components/SimulationProgressStats';
 import SimulationHistoryCard from '../components/SimulationHistoryCard';
-import useAuthStore from '../store/authStore';
-import { getSimulationDetails } from '../services/api';
 
 const TAB_HISTORY = 'history';
 const TAB_PROGRESS = 'progress';
 
 const SimulationHistoryPage = () => {
   const navigate = useNavigate();
-  const { token } = useAuthStore();
   const [activeTab, setActiveTab] = useState(TAB_PROGRESS);
 
   const {
@@ -31,19 +28,13 @@ const SimulationHistoryPage = () => {
     ? statsError?.message
     : historyError?.message;
 
-  const handleViewSimulation = async (sim) => {
-    try {
-      await getSimulationDetails(sim.id, token);
-      navigate('/simulator', {
-        state: {
-          fromHistory: true,
-          simulationId: sim.id,
-          initialView: 'chat',
-        },
-      });
-    } catch (err) {
-      alert(err.message || 'Error al cargar la simulación.');
-    }
+  const handleViewSimulation = (sim) => {
+    navigate('/simulator', {
+      state: {
+        fromHistory: true,
+        simulationId: sim.id,
+      },
+    });
   };
 
   return (
